@@ -1,6 +1,13 @@
 # Antigravity Theme
 
-> [English](./README.md) | **简体中文**
+[![CI Gates](https://github.com/Django9944/antigravity-theme/actions/workflows/ci.yml/badge.svg)](https://github.com/Django9944/antigravity-theme/actions/workflows/ci.yml)
+[![GitHub Release](https://img.shields.io/github/v/release/Django9944/antigravity-theme?label=Release&color=1666aa)](https://github.com/Django9944/antigravity-theme/releases)
+[![Live Preview Workbench](https://img.shields.io/badge/Live_Preview-3--Pane_Workbench-005697)](https://django9944.github.io/antigravity-theme/preview/)
+[![Accessibility](https://img.shields.io/badge/Contrast-APCA_%2B_WCAG_2.1_Verified-00753f)](./tests/contrast.test.ts)
+[![Color Space](https://img.shields.io/badge/Tokens-OKLCH_%2B_W3C_DTCG-6355a2)](./src/palettes/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-383f47.svg)](./LICENSE)
+
+> [English](./README.md) | **简体中文** · **[在线打开三栏交互仿真预览台 ↗](https://django9944.github.io/antigravity-theme/preview/)**
 
 **Antigravity Theme** 是专为 **Antigravity 2.0 Agent 桌面端应用**打造的开源**高不透明度哑光毛玻璃（High-Opacity Matte Glass）**双变体主题包（`Antigravity Dark` 与 `Antigravity Light`）。
 
@@ -26,6 +33,23 @@
 - **CSS 变量表**：`@django9944/antigravity-theme/antigravity-dark/variables.css` / `antigravity-light/variables.css`
 - **W3C DTCG 设计令牌**：`@django9944/antigravity-theme/antigravity-dark/theme.json` / `antigravity-light/theme.json`
 
+## 核心色板速览表（Core Palette Swatches — `OKLCH` & Compiled Hex）
+
+| 语义层级角色 | 宿主 / Agent CSS 变量 | Antigravity Dark (`OKLCH` → Hex / RGBA) | Antigravity Light (`OKLCH` → Hex / RGBA) |
+| :--- | :--- | :--- | :--- |
+| **外框侧栏层（Elev 0 Shell）** | `--color-background-secondary` / `--agy-glass-bg-shell` | `oklch(0.195 0.015 255)` → `#10151c` (`α 0.86`) | `oklch(0.955 0.008 245)` → `#ecf1f5` (`α 0.88`) |
+| **主对话画布（Elev 1 Canvas）** | `--color-background-primary` / `--agy-glass-bg-canvas` | `oklch(0.220 0.016 255)` → `#161b22` (`α 0.94`) | `oklch(0.980 0.006 245)` → `#f5f9fc` (`α 0.95`) |
+| **卡片容器层（Elev 2 Card）** | `--color-background-tertiary` / `--agy-glass-bg-card` | `oklch(0.250 0.016 255)` → `#1d2229` (`α 0.82`) | `oklch(0.962 0.007 245)` → `#eff3f7` (`α 0.86`) |
+| **浮层菜单层（Elev 3 Popover）** | `--agy-surface-elevated` / `--agy-glass-bg-popover` | `oklch(0.275 0.017 255)` → `#222830` (`α 0.91`) | `oklch(0.992 0.004 245)` → `#fafdff` (`α 0.93`) |
+| **主正文文本（L1 Primary）** | `--color-text-primary` | `oklch(0.915 0.010 250)` → `#dee4e9` | `oklch(0.240 0.018 252)` → `#192028` |
+| **思考块 / 元信息（L3 Muted）** | `--color-text-tertiary` / `--agy-thinking-fg` | `oklch(0.715 0.014 250)` → `#9da4ac` | `oklch(0.495 0.014 248)` → `#5c636a` |
+| **失重钴蓝（主强调色 Cobalt）** | `--color-text-info` / `--color-ring-primary` | `oklch(0.795 0.120 250)` → `#86c1ff` | `oklch(0.448 0.140 250)` → `#005697` |
+| **运行态青色（Running Cyan）** | `--agy-running-accent` / `--agy-subagent-working` | `oklch(0.795 0.105 205)` → `#5cd0dc` | `oklch(0.442 0.105 205)` → `#005f67` |
+| **大气紫（Waiting / Important）** | `--agy-subagent-waiting` / `--agy-alert-important-fg` | `oklch(0.802 0.120 290)` → `#bdb3ff` | `oklch(0.445 0.140 290)` → `#55419a` |
+| **语义翠绿（Success / Done）** | `--color-text-success` / `--agy-done-accent` | `oklch(0.790 0.122 154)` → `#77d296` | `oklch(0.438 0.128 152)` → `#006330` |
+| **暖珀黄（Needs Approval）** | `--color-text-warning` / `--agy-approval-fg` | `oklch(0.810 0.122 78)` → `#ecb75f` | `oklch(0.452 0.120 68)` → `#794900` |
+| **克制绯红（Error / Caution）** | `--color-text-danger` / `--agy-error-accent` | `oklch(0.800 0.126 22)` → `#ffa09c` | `oklch(0.455 0.142 24)` → `#962b2d` |
+
 ## 核心特性
 
 - **高不透明度哑光毛玻璃体系（High-Opacity Matte Glass）**：分层半透明玻璃质感（`backdrop-filter` 模糊与饱和度增强、`1px` 顶部高光折射边、极端壁纸底色对比度兜底），并内置 `@media (prefers-reduced-transparency: reduce)` 自动不透明降级方案。
@@ -39,10 +63,13 @@
 
 - **当前版本**：`v0.1.0`（Phase 1–2 已落地 — OKLCH 编译器、高不透明度哑光毛玻璃 Theme Pack、三栏交互仿真预览台、自动化门禁与 CI/CD）
 - **下一里程碑**：`v1.0.0` — 对照真实 Antigravity 2.0 桌面端完成 [05 实机视觉对照验收清单](./docs/zh-CN/05-qa-testing-plan.md#5-layer-4antigravity-20-实机视觉对照验收清单发版前强制执行) 并接入 Playwright 像素回归 CI
-- **发布渠道**：GitHub Releases（Theme Pack ZIP + `SHA256SUMS.txt`）与 npm（`@django9944/antigravity-theme`）
+- **发布渠道**：[GitHub Releases](https://github.com/Django9944/antigravity-theme/releases)（Theme Pack ZIP + `SHA256SUMS.txt`）与 npm（`@django9944/antigravity-theme`）
 - **开源协议**：[MIT License](./LICENSE)（[合规说明](./docs/zh-CN/07-governance-roadmap.md#2-开源协议与合规要求mit)）
 
 ## 快速开始与交互预览
+
+- **免安装在线预览**：访问 **[https://django9944.github.io/antigravity-theme/preview/](https://django9944.github.io/antigravity-theme/preview/)**，即可在浏览器中实时切换 `Antigravity Dark` / `Antigravity Light`、测试极端壁纸（`#FFFFFF` / `#000000`）与 `Reduced Transparency` 降级模式。
+- **本地开发与构建**：
 
 ```bash
 pnpm install
@@ -51,8 +78,6 @@ pnpm build     # 编译确定性主题产物至 dist/
 pnpm test      # 运行 DTCG/CSS Schema、APCA/WCAG 对比度与 Shiki 快照门禁
 pnpm preview   # 在 http://127.0.0.1:4173/preview/ 启动三栏交互仿真预览台
 ```
-
-运行 `pnpm preview` 可在浏览器中实时切换 `Antigravity Dark` / `Antigravity Light`、极端壁纸（`#FFFFFF` / `#000000`）与 `Reduced Transparency` 降级模式。
 
 ## 文档导航
 

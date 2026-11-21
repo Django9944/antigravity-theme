@@ -1,6 +1,13 @@
 # Antigravity Theme
 
-> **English** | [简体中文](./README.zh-CN.md)
+[![CI Gates](https://github.com/Django9944/antigravity-theme/actions/workflows/ci.yml/badge.svg)](https://github.com/Django9944/antigravity-theme/actions/workflows/ci.yml)
+[![GitHub Release](https://img.shields.io/github/v/release/Django9944/antigravity-theme?label=Release&color=1666aa)](https://github.com/Django9944/antigravity-theme/releases)
+[![Live Preview Workbench](https://img.shields.io/badge/Live_Preview-3--Pane_Workbench-005697)](https://django9944.github.io/antigravity-theme/preview/)
+[![Accessibility](https://img.shields.io/badge/Contrast-APCA_%2B_WCAG_2.1_Verified-00753f)](./tests/contrast.test.ts)
+[![Color Space](https://img.shields.io/badge/Tokens-OKLCH_%2B_W3C_DTCG-6355a2)](./src/palettes/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-383f47.svg)](./LICENSE)
+
+> **English** | [简体中文](./README.zh-CN.md) · **[Launch Live Interactive 3-Pane Preview Workbench ↗](https://django9944.github.io/antigravity-theme/preview/)**
 
 **Antigravity Theme** is an open-source **High-Opacity Matte Glass** theme pack (`Antigravity Dark` & `Antigravity Light`) built for the **Antigravity 2.0 Agent Desktop App**.
 
@@ -26,6 +33,23 @@ Each variant in `dist/` (and `@django9944/antigravity-theme`) compiles into 4 de
 - **CSS Custom Properties**: `@django9944/antigravity-theme/antigravity-dark/variables.css` / `antigravity-light/variables.css`
 - **W3C DTCG Design Tokens**: `@django9944/antigravity-theme/antigravity-dark/theme.json` / `antigravity-light/theme.json`
 
+## Core Palette Swatches (`OKLCH` & Compiled Hex)
+
+| Semantic Role | Host / Agent CSS Variable | Antigravity Dark (`OKLCH` → Hex / RGBA) | Antigravity Light (`OKLCH` → Hex / RGBA) |
+| :--- | :--- | :--- | :--- |
+| **Shell Surface (Elev 0)** | `--color-background-secondary` / `--agy-glass-bg-shell` | `oklch(0.195 0.015 255)` → `#10151c` (`α 0.86`) | `oklch(0.955 0.008 245)` → `#ecf1f5` (`α 0.88`) |
+| **Chat Canvas (Elev 1)** | `--color-background-primary` / `--agy-glass-bg-canvas` | `oklch(0.220 0.016 255)` → `#161b22` (`α 0.94`) | `oklch(0.980 0.006 245)` → `#f5f9fc` (`α 0.95`) |
+| **Card Surface (Elev 2)** | `--color-background-tertiary` / `--agy-glass-bg-card` | `oklch(0.250 0.016 255)` → `#1d2229` (`α 0.82`) | `oklch(0.962 0.007 245)` → `#eff3f7` (`α 0.86`) |
+| **Popover Surface (Elev 3)** | `--agy-surface-elevated` / `--agy-glass-bg-popover` | `oklch(0.275 0.017 255)` → `#222830` (`α 0.91`) | `oklch(0.992 0.004 245)` → `#fafdff` (`α 0.93`) |
+| **Primary Prose (L1)** | `--color-text-primary` | `oklch(0.915 0.010 250)` → `#dee4e9` | `oklch(0.240 0.018 252)` → `#192028` |
+| **Thinking / Metadata (L3)** | `--color-text-tertiary` / `--agy-thinking-fg` | `oklch(0.715 0.014 250)` → `#9da4ac` | `oklch(0.495 0.014 248)` → `#5c636a` |
+| **Weightless Cobalt (Accent)** | `--color-text-info` / `--color-ring-primary` | `oklch(0.795 0.120 250)` → `#86c1ff` | `oklch(0.448 0.140 250)` → `#005697` |
+| **Running Cyan** | `--agy-running-accent` / `--agy-subagent-working` | `oklch(0.795 0.105 205)` → `#5cd0dc` | `oklch(0.442 0.105 205)` → `#005f67` |
+| **Atmospheric Violet** | `--agy-subagent-waiting` / `--agy-alert-important-fg` | `oklch(0.802 0.120 290)` → `#bdb3ff` | `oklch(0.445 0.140 290)` → `#55419a` |
+| **Emerald Green (Success)** | `--color-text-success` / `--agy-done-accent` | `oklch(0.790 0.122 154)` → `#77d296` | `oklch(0.438 0.128 152)` → `#006330` |
+| **Warm Amber (Approval)** | `--color-text-warning` / `--agy-approval-fg` | `oklch(0.810 0.122 78)` → `#ecb75f` | `oklch(0.452 0.120 68)` → `#794900` |
+| **Restrained Crimson (Error)** | `--color-text-danger` / `--agy-error-accent` | `oklch(0.800 0.126 22)` → `#ffa09c` | `oklch(0.455 0.142 24)` → `#962b2d` |
+
 ## Key Highlights
 
 - **High-Opacity Matte Glass System**: Layered glassmorphism (`backdrop-filter` blur/saturation, directional `1px` specular edge highlights, and worst-case wallpaper contrast guards) paired with automatic `@media (prefers-reduced-transparency: reduce)` opaque fallbacks.
@@ -39,10 +63,13 @@ Each variant in `dist/` (and `@django9944/antigravity-theme`) compiles into 4 de
 
 - **Current Version**: `v0.1.0` (Phase 1–2 Implemented — OKLCH Token Compiler, High-Opacity Matte Glass Theme Pack, 3-Pane Preview Workbench, Automated QA Gates & CI/CD)
 - **Next Milestone**: `v1.0.0` — Live Antigravity 2.0 Desktop App visual sign-off ([05 QA Plan](./docs/en/05-qa-testing-plan.md#5-layer-4-live-antigravity-20-visual-sign-off-checklist)) & Playwright pixel-diff CI
-- **Distribution**: GitHub Releases (Theme Pack ZIP + `SHA256SUMS.txt`) & npm (`@django9944/antigravity-theme`)
+- **Distribution**: [GitHub Releases](https://github.com/Django9944/antigravity-theme/releases) (Theme Pack ZIP + `SHA256SUMS.txt`) & npm (`@django9944/antigravity-theme`)
 - **License**: [MIT License](./LICENSE) ([Compliance Details](./docs/en/07-governance-roadmap.md#2-licensing--legal-compliance-mit))
 
 ## Quick Start & Live Preview
+
+- **Online Preview (Zero Install)**: Open **[https://django9944.github.io/antigravity-theme/preview/](https://django9944.github.io/antigravity-theme/preview/)** to switch between `Antigravity Dark` and `Antigravity Light`, test stress wallpapers (`#FFFFFF` / `#000000`), and toggle `Reduced Transparency`.
+- **Local Development**:
 
 ```bash
 pnpm install
@@ -51,8 +78,6 @@ pnpm build     # Compile deterministic theme artifacts into dist/
 pnpm test      # Run DTCG/CSS schema, APCA/WCAG contrast & Shiki snapshot gates
 pnpm preview   # Launch interactive 3-pane preview at http://127.0.0.1:4173/preview/
 ```
-
-Run `pnpm preview` to inspect `Antigravity Dark` and `Antigravity Light` live across stress wallpapers (`#FFFFFF` / `#000000`) and reduced-transparency fallback mode.
 
 ## Documentation Map
 

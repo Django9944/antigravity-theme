@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       replay_version:
-        description: 'Existing release version to replay idempotently (e.g. 1.0.0, without v prefix)'
+        description: 'Existing release version to replay idempotently (e.g. 0.1.0, without v prefix)'
         required: false
         type: string
       target:
@@ -34,6 +34,9 @@ jobs:
       contents: read
     outputs:
       has_changesets: ${{ steps.detect.outputs.has_changesets }}
+      version: ${{ steps.detect.outputs.version }}
+      needs_github_release: ${{ steps.detect.outputs.needs_github_release }}
+      needs_npm_publish: ${{ steps.detect.outputs.needs_npm_publish }}
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -57,14 +60,33 @@ jobs:
           test -z "$(git status --porcelain dist/)"
           pnpm test
 
-      - name: Detect pending changeset files
+      - name: Detect pending changeset files & release state
         id: detect
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           count=$(find .changeset -maxdepth 1 -type f -name '*.md' ! -name 'README.md' | wc -l | tr -d ' ')
           if [ "$count" -gt 0 ]; then
             echo "has_changesets=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_changesets=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          PKG_NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="v${VERSION}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "needs_github_release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "needs_github_release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+          if npm view "${PKG_NAME}@${VERSION}" version >/dev/null 2>&1; then
+            echo "needs_npm_publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "needs_npm_publish=true" >> "$GITHUB_OUTPUT"
           fi
 
   version_pr:
@@ -106,7 +128,16 @@ jobs:
   publish_release:
     name: Pack & Publish Theme Pack
     needs: prepare
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && needs.prepare.outputs.has_changesets == 'false') }}
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'push' &&
+        needs.prepare.outputs.has_changesets == 'false' &&
+        (
+          needs.prepare.outputs.needs_github_release == 'true' ||
+          (needs.prepare.outputs.needs_npm_publish == 'true' && vars.NPM_PUBLISH_ENABLED == 'true')
+        )
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: production-release
@@ -178,26 +209,8 @@ jobs:
             '
           fi
 
-      - name: Publish via Changesets (OIDC npm + GitHub tag/release)
-        if: ${{ github.event_name == 'push' }}
-        id: changesets
-        uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
-        with:
-          publish: pnpm ci:publish
-          createGithubReleases: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_CONFIG_PROVENANCE: 'true'
-
-      - name: Replay npm publish idempotently (workflow_dispatch)
-        if: ${{ github.event_name == 'workflow_dispatch' && (inputs.target == 'both' || inputs.target == 'npm') }}
-        env:
-          NPM_CONFIG_PROVENANCE: 'true'
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm ci:publish
-
-      - name: Upload Theme Pack ZIP & SHA256SUMS to GitHub Release
-        if: ${{ (github.event_name == 'push' && steps.changesets.outputs.published == 'true') || (github.event_name == 'workflow_dispatch' && (inputs.target == 'both' || inputs.target == 'github')) }}
+      - name: Create or update GitHub Release with Theme Pack ZIP & SHA256SUMS.txt
+        if: ${{ (github.event_name == 'push' && needs.prepare.outputs.needs_github_release == 'true') || (github.event_name == 'workflow_dispatch' && (inputs.target == 'both' || inputs.target == 'github')) }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -207,5 +220,17 @@ jobs:
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" release/* --clobber
           else
-            gh release create "$TAG" release/* --title "Antigravity Theme $TAG" --generate-notes
+            gh release create "$TAG" release/* \
+              --target "${GITHUB_SHA}" \
+              --title "Antigravity Theme ${TAG}" \
+              --generate-notes
           fi
+
+      - name: Publish to npm Registry (when NPM_TOKEN or NPM_PUBLISH_ENABLED is configured)
+        if: ${{ (github.event_name == 'push' && needs.prepare.outputs.needs_npm_publish == 'true' && vars.NPM_PUBLISH_ENABLED == 'true') || (github.event_name == 'workflow_dispatch' && (inputs.target == 'both' || inputs.target == 'npm')) }}
+        env:
+          NPM_CONFIG_PROVENANCE: 'true'
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm ci:publish

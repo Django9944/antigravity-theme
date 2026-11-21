@@ -1,6 +1,6 @@
 # Contributing to Antigravity Theme
 
-Thank you for helping improve **Antigravity Theme**—an open-source, high-opacity matte frosted glass theme pack built **exclusively for the Antigravity 2.0 Agent Desktop App**.
+Thank you for helping improve **Antigravity Theme**—an open-source **High-Opacity Matte Glass** (`OKLCH`) theme pack (`Antigravity Dark` & `Antigravity Light`) built **exclusively for the Antigravity 2.0 Agent Desktop App**.
 
 For complete governance rules, triage policy, and variant admission criteria, see:
 - **English**: [07 Open-Source Governance, Contributing & Roadmap](./docs/en/07-governance-roadmap.md)
