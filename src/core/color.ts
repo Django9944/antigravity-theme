@@ -87,6 +87,22 @@ export function oklchToCssRgba(color: OklchColor): string {
 }
 
 /**
+ * Formats an OKLCH color's gamut-mapped sRGB channels as a comma-separated "r, g, b" tuple.
+ */
+export function oklchToRgbTuple(color: OklchColor): string {
+  const { r, g, b } = toRgbChannels(color);
+  return `${r}, ${g}, ${b}`;
+}
+
+/**
+ * Formats a hex color string into a comma-separated "r, g, b" tuple.
+ */
+export function hexToRgbTuple(hex: string): string {
+  const { r, g, b } = hexToRgb(hex);
+  return `${r}, ${g}, ${b}`;
+}
+
+/**
  * Resolves a structured GlassShadowSpec into both DTCG fields and CSS box-shadow string.
  */
 export function resolveShadow(shadow: GlassShadowSpec): ResolvedShadow {

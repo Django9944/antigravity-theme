@@ -3,10 +3,12 @@
     "com.antigravity-theme": {
       "description": "Orbital Slate Matte Glass — cool slate-blue dark theme with Weightless Cobalt accents and high-opacity frosted surfaces for Antigravity 2.0.",
       "displayName": "Antigravity Dark",
+      "family": "orbital",
+      "familyName": "Orbital",
       "id": "antigravity-dark",
       "mode": "dark",
       "targetSoftware": "Antigravity 2.0 Agent Desktop App",
-      "version": "0.1.0"
+      "version": "0.2.0"
     }
   },
   "agent": {
@@ -252,12 +254,12 @@
     "inlineCodeBg": {
       "$description": "Inline code pill background",
       "$type": "color",
-      "$value": "#2930388c"
+      "$value": "#2266a424"
     },
     "inlineCodeFg": {
       "$description": "Inline code pill foreground",
       "$type": "color",
-      "$value": "#bdb3ff"
+      "$value": "#86c1ff"
     },
     "katexFg": {
       "$description": "KaTeX math expression color",

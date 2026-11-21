@@ -1,0 +1,21 @@
+{
+  "anchorFallbackRegex": "void\\s+(?:loadHubWindowUrl\\s*\\(\\s*win\\s*,[^;]*|win\\.loadURL\\s*\\([^;]*)\\)\\s*;",
+  "anchors": [
+    "void loadHubWindowUrl(win, url, { skipBootstrapMint });",
+    "void win.loadURL(url);"
+  ],
+  "hookEndMarker": "/* === End Antigravity Custom Theme Hook === */",
+  "hookStartMarker": "/* === Antigravity Custom Theme Hook v1 === */",
+  "hookVersion": "v1",
+  "hostUpdaterUrl": "https://antigravity-hub-auto-updater-974169037036.us-central1.run.app/manifest",
+  "legacyMarker": "custom-theme injection hook",
+  "name": "antigravity-theme",
+  "payloadDir": "dist/runtime",
+  "payloads": [
+    "current.css",
+    "current.js"
+  ],
+  "repo": "Django9944/antigravity-theme",
+  "verifiedHostVersion": "2.34.0",
+  "version": "v0.2.0"
+}

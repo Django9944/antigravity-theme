@@ -1,13 +1,15 @@
-import { mkdirSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { emitCodeFenceTheme } from './adapters/code-fence.js';
 import { emitCssVariables } from './adapters/css-vars.js';
 import { emitDtcgThemeJson } from './adapters/dtcg-json.js';
 import { emitMermaidTheme } from './adapters/mermaid.js';
+import { emitDesktopRuntimeBundle } from './adapters/runtime-bundle.js';
 import { serializeDeterministicJson } from './core/json.js';
+import type { SemanticIR } from './core/types.js';
 import { resolveSemanticIR } from './tokens/semantic.js';
-import { VARIANTS } from './variants.js';
+import { THEME_FAMILIES, VARIANTS } from './variants.js';
 
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST_DIR = resolve(ROOT_DIR, 'dist');
@@ -33,6 +35,7 @@ export function buildAllThemes(): void {
   mkdirSync(STAGE_DIR, { recursive: true });
 
   const manifestVariants: Array<Record<string, unknown>> = [];
+  const compiledIrs: SemanticIR[] = [];
 
   try {
     for (const variant of VARIANTS) {
@@ -45,6 +48,7 @@ export function buildAllThemes(): void {
       seenIds.add(variant.id);
 
       const ir = resolveSemanticIR(variant, version);
+      compiledIrs.push(ir);
       const variantDir = resolve(STAGE_DIR, variant.id);
       mkdirSync(variantDir, { recursive: true });
 
@@ -68,6 +72,8 @@ export function buildAllThemes(): void {
 
       manifestVariants.push({
         id: variant.id,
+        family: variant.family,
+        familyName: variant.familyName,
         displayName: variant.displayName,
         description: variant.description,
         mode: variant.mode,
@@ -80,16 +86,70 @@ export function buildAllThemes(): void {
       });
     }
 
+    const runtimeDir = resolve(STAGE_DIR, 'runtime');
+    mkdirSync(runtimeDir, { recursive: true });
+    const runtimeBundle = emitDesktopRuntimeBundle(compiledIrs, version);
+    writeFileSync(resolve(runtimeDir, 'current.css'), runtimeBundle.currentCss, 'utf8');
+    writeFileSync(resolve(runtimeDir, 'current.js'), runtimeBundle.currentJs, 'utf8');
+
     const manifest = {
       name,
       version,
       license: 'MIT',
       targetSoftware: 'Antigravity 2.0 Agent Desktop App',
       material: 'high-opacity-matte-glass',
+      runtime: {
+        css: './runtime/current.css',
+        js: './runtime/current.js',
+      },
+      families: THEME_FAMILIES.map((f) => ({
+        id: f.family,
+        name: f.familyName,
+        nameZhDark: f.nameZhDark,
+        nameZhLight: f.nameZhLight,
+        darkId: f.darkId,
+        lightId: f.lightId,
+      })),
       variants: manifestVariants,
     };
 
     writeFileSync(resolve(STAGE_DIR, 'manifest.json'), serializeDeterministicJson(manifest), 'utf8');
+
+    // Sync root desktop installer manifest.json with package version
+    const rootManifestPath = resolve(ROOT_DIR, 'manifest.json');
+    let existingVerifiedHostVersion = '2.34.0';
+    if (existsSync(rootManifestPath)) {
+      try {
+        const prev = JSON.parse(readFileSync(rootManifestPath, 'utf8')) as {
+          verifiedHostVersion?: unknown;
+        };
+        if (typeof prev.verifiedHostVersion === 'string' && prev.verifiedHostVersion.trim()) {
+          existingVerifiedHostVersion = prev.verifiedHostVersion.trim();
+        }
+      } catch {
+        // Fallback to default verified host version
+      }
+    }
+    const rootDesktopManifest = {
+      name: 'antigravity-theme',
+      version: `v${version}`,
+      repo: 'Django9944/antigravity-theme',
+      hostUpdaterUrl: 'https://antigravity-hub-auto-updater-974169037036.us-central1.run.app/manifest',
+      verifiedHostVersion: existingVerifiedHostVersion,
+      hookVersion: 'v1',
+      hookStartMarker: '/* === Antigravity Custom Theme Hook v1 === */',
+      hookEndMarker: '/* === End Antigravity Custom Theme Hook === */',
+      legacyMarker: 'custom-theme injection hook',
+      anchors: [
+        'void loadHubWindowUrl(win, url, { skipBootstrapMint });',
+        'void win.loadURL(url);',
+      ],
+      anchorFallbackRegex:
+        'void\\s+(?:loadHubWindowUrl\\s*\\(\\s*win\\s*,[^;]*|win\\.loadURL\\s*\\([^;]*)\\)\\s*;',
+      payloadDir: 'dist/runtime',
+      payloads: ['current.css', 'current.js'],
+    };
+    writeFileSync(rootManifestPath, serializeDeterministicJson(rootDesktopManifest), 'utf8');
 
     // Replace dist/ only after all variants have compiled cleanly
     rmSync(DIST_DIR, { recursive: true, force: true });
@@ -99,7 +159,9 @@ export function buildAllThemes(): void {
     throw err;
   }
 
-  console.log(`Built ${VARIANTS.length} Antigravity theme variants into dist/ (v${version})`);
+  console.log(
+    `Built ${VARIANTS.length} Antigravity theme variants + desktop runtime into dist/ (v${version})`,
+  );
 }
 
 function isExecutedDirectly(): boolean {

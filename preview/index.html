@@ -6,28 +6,51 @@
   <title>Antigravity Theme — 2.0 Agent Desktop Preview Workbench</title>
   <link rel="stylesheet" href="../dist/antigravity-dark/variables.css" />
   <link rel="stylesheet" href="../dist/antigravity-light/variables.css" />
+  <link rel="stylesheet" href="../dist/antigravity-prism-dark/variables.css" />
+  <link rel="stylesheet" href="../dist/antigravity-prism-light/variables.css" />
+  <link rel="stylesheet" href="../dist/antigravity-zenith-dark/variables.css" />
+  <link rel="stylesheet" href="../dist/antigravity-zenith-light/variables.css" />
+  <link rel="stylesheet" href="../dist/antigravity-lagoon-dark/variables.css" />
+  <link rel="stylesheet" href="../dist/antigravity-lagoon-light/variables.css" />
+  <link rel="stylesheet" href="../dist/antigravity-solar-dark/variables.css" />
+  <link rel="stylesheet" href="../dist/antigravity-solar-light/variables.css" />
+  <link rel="stylesheet" href="../dist/antigravity-nova-dark/variables.css" />
+  <link rel="stylesheet" href="../dist/antigravity-nova-light/variables.css" />
+  <link rel="stylesheet" href="../dist/antigravity-nebula-dark/variables.css" />
+  <link rel="stylesheet" href="../dist/antigravity-nebula-light/variables.css" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
-<body class="backdrop-orbital">
+<body class="backdrop-aurora">
   <header class="preview-toolbar" aria-label="Theme preview controls">
     <div class="toolbar-group">
-      <span class="toolbar-badge">ADR-006 Matte Glass</span>
-      <div class="segmented" role="group" aria-label="Theme variant">
+      <span class="toolbar-badge">7 Families · 14 OKLCH Themes</span>
+      <label class="toolbar-label" for="family-select">Family:</label>
+      <select id="family-select" class="toolbar-select" aria-label="Theme family">
+        <option value="orbital" selected>Orbital (Flagship)</option>
+        <option value="prism">Prism</option>
+        <option value="zenith">Zenith</option>
+        <option value="lagoon">Lagoon</option>
+        <option value="solar">Solar</option>
+        <option value="nova">Nova</option>
+        <option value="nebula">Nebula</option>
+        <option value="stock">Stock (Native Default)</option>
+      </select>
+      <div class="segmented" role="group" aria-label="Color scheme">
         <button
           type="button"
           class="seg-btn is-active"
-          data-theme-btn="antigravity-dark"
+          data-scheme-btn="dark"
           aria-pressed="true"
         >
-          Antigravity Dark
+          Dark
         </button>
         <button
           type="button"
           class="seg-btn"
-          data-theme-btn="antigravity-light"
+          data-scheme-btn="light"
           aria-pressed="false"
         >
-          Antigravity Light
+          Light
         </button>
       </div>
     </div>
@@ -35,7 +58,8 @@
     <div class="toolbar-group">
       <label class="toolbar-label" for="backdrop-select">Wallpaper Stress:</label>
       <select id="backdrop-select" class="toolbar-select">
-        <option value="backdrop-orbital" selected>Orbital Horizon (Dark)</option>
+        <option value="backdrop-aurora" selected>Aurora Mesh (Active Theme)</option>
+        <option value="backdrop-orbital">Orbital Horizon (Dark)</option>
         <option value="backdrop-daylight">Daylight Sky (Light)</option>
         <option value="backdrop-white">Stress: Pure White (#FFFFFF)</option>
         <option value="backdrop-black">Stress: Pure Black (#000000)</option>
@@ -191,57 +215,88 @@
 
       <!-- 3. Right-hand Auxiliary Pane (Elevation 0 + Inner Elevation 2 Cards) -->
       <aside class="pane-aux">
-        <div class="aux-tabs" role="tablist" aria-label="Auxiliary Pane">
-          <button
-            type="button"
-            class="aux-tab is-active"
-            id="tab-artifacts"
-            role="tab"
-            data-tab="artifacts"
-            aria-selected="true"
-            aria-controls="panel-artifacts"
-            tabindex="0"
-          >Artifacts</button>
-          <button
-            type="button"
-            class="aux-tab"
-            id="tab-subagents"
-            role="tab"
-            data-tab="subagents"
-            aria-selected="false"
-            aria-controls="panel-subagents"
-            tabindex="-1"
-          >Subagents</button>
-          <button
-            type="button"
-            class="aux-tab"
-            id="tab-tasks"
-            role="tab"
-            data-tab="tasks"
-            aria-selected="false"
-            aria-controls="panel-tasks"
-            tabindex="-1"
-          >Tasks</button>
-          <button
-            type="button"
-            class="aux-tab"
-            id="tab-diff"
-            role="tab"
-            data-tab="diff"
-            aria-selected="false"
-            aria-controls="panel-diff"
-            tabindex="-1"
-          >Files Changed</button>
-          <button
-            type="button"
-            class="aux-tab"
-            id="tab-terminals"
-            role="tab"
-            data-tab="terminals"
-            aria-selected="false"
-            aria-controls="panel-terminals"
-            tabindex="-1"
-          >Terminals</button>
+        <div class="aux-header">
+          <div class="aux-tabs" role="tablist" aria-label="Auxiliary Pane">
+            <button
+              type="button"
+              class="aux-tab is-active"
+              id="tab-artifacts"
+              role="tab"
+              data-tab="artifacts"
+              aria-selected="true"
+              aria-controls="panel-artifacts"
+              tabindex="0"
+            >Artifacts</button>
+            <button
+              type="button"
+              class="aux-tab"
+              id="tab-subagents"
+              role="tab"
+              data-tab="subagents"
+              aria-selected="false"
+              aria-controls="panel-subagents"
+              tabindex="-1"
+            >Subagents</button>
+            <button
+              type="button"
+              class="aux-tab"
+              id="tab-tasks"
+              role="tab"
+              data-tab="tasks"
+              aria-selected="false"
+              aria-controls="panel-tasks"
+              tabindex="-1"
+            >Tasks</button>
+            <button
+              type="button"
+              class="aux-tab"
+              id="tab-diff"
+              role="tab"
+              data-tab="diff"
+              aria-selected="false"
+              aria-controls="panel-diff"
+              tabindex="-1"
+            >Files Changed</button>
+            <button
+              type="button"
+              class="aux-tab"
+              id="tab-terminals"
+              role="tab"
+              data-tab="terminals"
+              aria-selected="false"
+              aria-controls="panel-terminals"
+              tabindex="-1"
+            >Terminals</button>
+          </div>
+
+          <!-- Simulated Desktop Runtime Top-Right Ghost Theme Switcher -->
+          <div class="ghost-switcher-wrap" id="ghost-switcher-wrap">
+            <button
+              type="button"
+              class="ghost-switcher-btn"
+              id="ghost-switcher-btn"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              aria-controls="ghost-switcher-menu"
+              title="Simulated Antigravity top-right ghost switcher"
+            >
+              <span class="ghost-switcher-dot" aria-hidden="true"></span>
+              <span id="ghost-switcher-label">Orbital</span>
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+            </button>
+            <div class="ghost-switcher-menu" id="ghost-switcher-menu" role="menu" aria-label="Switch theme family" hidden>
+              <div class="ghost-menu-heading">Theme Family</div>
+              <button type="button" class="ghost-menu-item is-active" role="menuitemradio" aria-checked="true" data-ghost-family="orbital">Orbital <span class="ghost-menu-tag">Flagship</span></button>
+              <button type="button" class="ghost-menu-item" role="menuitemradio" aria-checked="false" data-ghost-family="prism">Prism</button>
+              <button type="button" class="ghost-menu-item" role="menuitemradio" aria-checked="false" data-ghost-family="zenith">Zenith</button>
+              <button type="button" class="ghost-menu-item" role="menuitemradio" aria-checked="false" data-ghost-family="lagoon">Lagoon</button>
+              <button type="button" class="ghost-menu-item" role="menuitemradio" aria-checked="false" data-ghost-family="solar">Solar</button>
+              <button type="button" class="ghost-menu-item" role="menuitemradio" aria-checked="false" data-ghost-family="nova">Nova</button>
+              <button type="button" class="ghost-menu-item" role="menuitemradio" aria-checked="false" data-ghost-family="nebula">Nebula</button>
+              <div class="ghost-menu-divider" role="separator"></div>
+              <button type="button" class="ghost-menu-item" role="menuitemradio" aria-checked="false" data-ghost-family="stock">Stock <span class="ghost-menu-tag">Reset</span></button>
+            </div>
+          </div>
         </div>
 
         <div class="aux-body">

@@ -16,6 +16,41 @@ export interface OklchColor {
 
 export type ThemeMode = 'dark' | 'light' | 'hc-dark' | 'hc-light';
 
+export type ThemeFamilyId =
+  | 'orbital'
+  | 'prism'
+  | 'zenith'
+  | 'lagoon'
+  | 'solar'
+  | 'nova'
+  | 'nebula';
+
+export interface AuroraRadialGlow {
+  readonly x: string;
+  readonly y: string;
+  readonly radius: string;
+  readonly color: OklchColor;
+}
+
+export interface AuroraLinearStop {
+  readonly color: OklchColor;
+  readonly pos: string;
+}
+
+export interface AuroraMeshSpec {
+  readonly titlebarTint: OklchColor;
+  readonly titlebarSymbol: OklchColor;
+  readonly topCapBlend: boolean;
+  readonly linearAngle: string;
+  readonly linearStops: readonly AuroraLinearStop[];
+  readonly glows: readonly AuroraRadialGlow[];
+  readonly sidebarTint: OklchColor;
+  readonly scrollbarStops: readonly [OklchColor, OklchColor, OklchColor];
+  readonly spinnerDots: readonly [OklchColor, OklchColor, OklchColor, OklchColor];
+  readonly mediaModalBg: OklchColor;
+  readonly userBubbleSolid: OklchColor;
+}
+
 export interface ChromaticGrade {
   readonly default: OklchColor;
   readonly bright: OklchColor;
@@ -121,9 +156,16 @@ export interface PrimitivePalette {
 
 export interface VariantDefinition {
   readonly id: string;
+  readonly family: ThemeFamilyId;
+  readonly familyName: string;
+  readonly nameZh: string;
   readonly displayName: string;
   readonly description: string;
   readonly mode: ThemeMode;
+  readonly accentRole: keyof ChromaticPalette;
+  readonly inlineCodeRole: keyof ChromaticPalette;
+  readonly iconSvg: string;
+  readonly aurora: AuroraMeshSpec;
   readonly palette: PrimitivePalette;
 }
 
@@ -199,10 +241,14 @@ export interface CodeSyntaxTokens {
 export interface SemanticIR {
   readonly meta: {
     readonly id: string;
+    readonly family: ThemeFamilyId;
+    readonly familyName: string;
+    readonly nameZh: string;
     readonly displayName: string;
     readonly description: string;
     readonly mode: ThemeMode;
     readonly version: string;
+    readonly iconSvg: string;
   };
   readonly surface: {
     readonly shell: string;
@@ -341,5 +387,28 @@ export interface SemanticIR {
     readonly cursor: string;
     readonly selectionBackground: string;
     readonly ansi: Ansi16Palette;
+  };
+  readonly runtime: {
+    readonly auroraMesh: string;
+    readonly sidebarUnifiedBg: string;
+    readonly titlebarColor: string;
+    readonly titlebarSymbolColor: string;
+    readonly accentRgb: string;
+    readonly accentDeep: string;
+    readonly accentGradient: string;
+    readonly scrollbarGradientV: string;
+    readonly scrollbarGradientH: string;
+    readonly spinnerDots: readonly [string, string, string, string];
+    readonly mediaModalBg: string;
+    readonly mediaCapsuleBg: string;
+    readonly mediaCapsuleBorder: string;
+    readonly mediaCapsuleHover: string;
+    readonly mediaCapsuleFg: string;
+    readonly inlineCodeBorder: string;
+    readonly selectionBg: string;
+    readonly settingsDialogBg: string;
+    readonly terminalPanelBg: string;
+    readonly userBubbleSolid: string;
+    readonly baseFallbackBg: string;
   };
 }

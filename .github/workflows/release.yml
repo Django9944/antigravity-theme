@@ -57,7 +57,7 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm typecheck
           pnpm build
-          test -z "$(git status --porcelain dist/)"
+          test -z "$(git status --porcelain dist/ manifest.json)"
           pnpm test
 
       - name: Detect pending changeset files & release state
@@ -195,7 +195,7 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm typecheck
           pnpm build
-          test -z "$(git status --porcelain dist/)"
+          test -z "$(git status --porcelain dist/ manifest.json)"
           pnpm test
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             node -e '
@@ -209,7 +209,7 @@ jobs:
             '
           fi
 
-      - name: Create or update GitHub Release with Theme Pack ZIP & SHA256SUMS.txt
+      - name: Create or update GitHub Release with Theme Pack ZIPs & SHA256SUMS.txt
         if: ${{ (github.event_name == 'push' && needs.prepare.outputs.needs_github_release == 'true') || (github.event_name == 'workflow_dispatch' && (inputs.target == 'both' || inputs.target == 'github')) }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

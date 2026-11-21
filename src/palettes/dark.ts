@@ -1,16 +1,55 @@
 import { oklch } from '../core/color.js';
 import type { VariantDefinition } from '../core/types.js';
 
+export const ORBITAL_ICON_SVG =
+  '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="ag-svg-orbital" x1="2" y1="2" x2="14" y2="14" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#86C1FF"/><stop offset="55%" stop-color="#3B82F6"/><stop offset="100%" stop-color="#6366F1"/></linearGradient></defs><ellipse cx="8" cy="8" rx="6.2" ry="2.7" transform="rotate(-28 8 8)" stroke="url(#ag-svg-orbital)" stroke-width="1.45"/><circle cx="8" cy="8" r="2.3" fill="url(#ag-svg-orbital)"/><circle cx="12.5" cy="5.5" r="1.1" fill="#5CD0DC"/></svg>';
+
 /**
  * Antigravity Dark — Orbital Slate Matte Glass (ADR-006).
  * Cool deep slate-blue base with Weightless Cobalt accent and high-opacity matte glass surfaces.
  */
 export const darkVariant: VariantDefinition = {
   id: 'antigravity-dark',
+  family: 'orbital',
+  familyName: 'Orbital',
+  nameZh: '星轨岩板',
   displayName: 'Antigravity Dark',
   description:
     'Orbital Slate Matte Glass — cool slate-blue dark theme with Weightless Cobalt accents and high-opacity frosted surfaces for Antigravity 2.0.',
   mode: 'dark',
+  accentRole: 'blue',
+  inlineCodeRole: 'blue',
+  iconSvg: ORBITAL_ICON_SVG,
+  aurora: {
+    titlebarTint: oklch(0.195, 0.015, 255),
+    titlebarSymbol: oklch(0.915, 0.010, 250),
+    topCapBlend: true,
+    linearAngle: '135deg',
+    linearStops: [
+      { color: oklch(0.165, 0.014, 255), pos: '0%' },
+      { color: oklch(0.195, 0.015, 255), pos: '50%' },
+      { color: oklch(0.220, 0.016, 255), pos: '100%' },
+    ],
+    glows: [
+      { x: '18%', y: '18%', radius: '48%', color: oklch(0.60, 0.14, 250, 0.18) },
+      { x: '82%', y: '16%', radius: '44%', color: oklch(0.62, 0.12, 205, 0.12) },
+      { x: '84%', y: '82%', radius: '50%', color: oklch(0.56, 0.14, 290, 0.14) },
+    ],
+    sidebarTint: oklch(0.180, 0.015, 255, 0.35),
+    scrollbarStops: [
+      oklch(0.795, 0.120, 250, 0.92),
+      oklch(0.795, 0.105, 205, 0.92),
+      oklch(0.802, 0.120, 290, 0.92),
+    ],
+    spinnerDots: [
+      oklch(0.795, 0.120, 250),
+      oklch(0.795, 0.105, 205),
+      oklch(0.802, 0.120, 290),
+      oklch(0.790, 0.122, 154),
+    ],
+    mediaModalBg: oklch(0.145, 0.014, 255),
+    userBubbleSolid: oklch(0.240, 0.018, 255),
+  },
   palette: {
     neutral: {
       bgDeep: oklch(0.175, 0.014, 255),
@@ -127,7 +166,7 @@ export const darkVariant: VariantDefinition = {
       approvalBg: 0.12,
       approvalBorder: 0.44,
       blockquoteBg: 0.50,
-      inlineCodeBg: 0.55,
+      inlineCodeBg: 0.14,
       tableStripeBg: 0.55,
       disabledFg: 0.65,
       terminalSelection: 0.28,

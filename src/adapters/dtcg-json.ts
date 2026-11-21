@@ -22,6 +22,8 @@ export interface DtcgThemeDocument {
   readonly $extensions: {
     readonly 'com.antigravity-theme': {
       readonly id: string;
+      readonly family: string;
+      readonly familyName: string;
       readonly displayName: string;
       readonly description: string;
       readonly mode: string;
@@ -97,6 +99,8 @@ export function emitDtcgThemeJson(ir: SemanticIR): DtcgThemeDocument {
     $extensions: {
       'com.antigravity-theme': {
         id: ir.meta.id,
+        family: ir.meta.family,
+        familyName: ir.meta.familyName,
         displayName: ir.meta.displayName,
         description: ir.meta.description,
         mode: ir.meta.mode,

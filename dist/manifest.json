@@ -1,12 +1,76 @@
 {
+  "families": [
+    {
+      "darkId": "antigravity-dark",
+      "id": "orbital",
+      "lightId": "antigravity-light",
+      "name": "Orbital",
+      "nameZhDark": "星轨岩板",
+      "nameZhLight": "星轨云瓷"
+    },
+    {
+      "darkId": "antigravity-prism-dark",
+      "id": "prism",
+      "lightId": "antigravity-prism-light",
+      "name": "Prism",
+      "nameZhDark": "暗夜棱光",
+      "nameZhLight": "流光棱镜"
+    },
+    {
+      "darkId": "antigravity-zenith-dark",
+      "id": "zenith",
+      "lightId": "antigravity-zenith-light",
+      "name": "Zenith",
+      "nameZhDark": "天穹深蓝",
+      "nameZhLight": "天穹澄蓝"
+    },
+    {
+      "darkId": "antigravity-lagoon-dark",
+      "id": "lagoon",
+      "lightId": "antigravity-lagoon-light",
+      "name": "Lagoon",
+      "nameZhDark": "沧澜暗青",
+      "nameZhLight": "沧澜青瓷"
+    },
+    {
+      "darkId": "antigravity-solar-dark",
+      "id": "solar",
+      "lightId": "antigravity-solar-light",
+      "name": "Solar",
+      "nameZhDark": "日珥暮橙",
+      "nameZhLight": "曦光暖橙"
+    },
+    {
+      "darkId": "antigravity-nova-dark",
+      "id": "nova",
+      "lightId": "antigravity-nova-light",
+      "name": "Nova",
+      "nameZhDark": "绯星绛夜",
+      "nameZhLight": "绯星初霞"
+    },
+    {
+      "darkId": "antigravity-nebula-dark",
+      "id": "nebula",
+      "lightId": "antigravity-nebula-light",
+      "name": "Nebula",
+      "nameZhDark": "星云夜紫",
+      "nameZhLight": "星云霞紫"
+    }
+  ],
   "license": "MIT",
   "material": "high-opacity-matte-glass",
   "name": "@django9944/antigravity-theme",
+  "runtime": {
+    "css": "./runtime/current.css",
+    "js": "./runtime/current.js"
+  },
   "targetSoftware": "Antigravity 2.0 Agent Desktop App",
   "variants": [
     {
       "description": "Orbital Slate Matte Glass — cool slate-blue dark theme with Weightless Cobalt accents and high-opacity frosted surfaces for Antigravity 2.0.",
       "displayName": "Antigravity Dark",
+      "family": "orbital",
+      "familyName": "Orbital",
       "files": {
         "codeTheme": "./antigravity-dark/code-theme.json",
         "cssVariables": "./antigravity-dark/variables.css",
@@ -19,6 +83,8 @@
     {
       "description": "Orbital Cloud Matte Glass — airy cloud-porcelain light theme with Weightless Cobalt accents and editorial reading comfort for Antigravity 2.0.",
       "displayName": "Antigravity Light",
+      "family": "orbital",
+      "familyName": "Orbital",
       "files": {
         "codeTheme": "./antigravity-light/code-theme.json",
         "cssVariables": "./antigravity-light/variables.css",
@@ -27,7 +93,175 @@
       },
       "id": "antigravity-light",
       "mode": "light"
+    },
+    {
+      "description": "Dark Prism matte glass — deep indigo slate with four-point spectral aurora glows.",
+      "displayName": "Antigravity Prism Dark",
+      "family": "prism",
+      "familyName": "Prism",
+      "files": {
+        "codeTheme": "./antigravity-prism-dark/code-theme.json",
+        "cssVariables": "./antigravity-prism-dark/variables.css",
+        "mermaid": "./antigravity-prism-dark/mermaid.json",
+        "theme": "./antigravity-prism-dark/theme.json"
+      },
+      "id": "antigravity-prism-dark",
+      "mode": "dark"
+    },
+    {
+      "description": "Spectral Prism matte glass — luminous porcelain base with four-point pastel aurora glows.",
+      "displayName": "Antigravity Prism Light",
+      "family": "prism",
+      "familyName": "Prism",
+      "files": {
+        "codeTheme": "./antigravity-prism-light/code-theme.json",
+        "cssVariables": "./antigravity-prism-light/variables.css",
+        "mermaid": "./antigravity-prism-light/mermaid.json",
+        "theme": "./antigravity-prism-light/theme.json"
+      },
+      "id": "antigravity-prism-light",
+      "mode": "light"
+    },
+    {
+      "description": "Deep Zenith matte glass — tranquil cerulean abyss with luminous sky-blue frosted highlights.",
+      "displayName": "Antigravity Zenith Dark",
+      "family": "zenith",
+      "familyName": "Zenith",
+      "files": {
+        "codeTheme": "./antigravity-zenith-dark/code-theme.json",
+        "cssVariables": "./antigravity-zenith-dark/variables.css",
+        "mermaid": "./antigravity-zenith-dark/mermaid.json",
+        "theme": "./antigravity-zenith-dark/theme.json"
+      },
+      "id": "antigravity-zenith-dark",
+      "mode": "dark"
+    },
+    {
+      "description": "Clear Zenith matte glass — bright azure top-fade into crisp cloud porcelain.",
+      "displayName": "Antigravity Zenith Light",
+      "family": "zenith",
+      "familyName": "Zenith",
+      "files": {
+        "codeTheme": "./antigravity-zenith-light/code-theme.json",
+        "cssVariables": "./antigravity-zenith-light/variables.css",
+        "mermaid": "./antigravity-zenith-light/mermaid.json",
+        "theme": "./antigravity-zenith-light/theme.json"
+      },
+      "id": "antigravity-zenith-light",
+      "mode": "light"
+    },
+    {
+      "description": "Deep Lagoon matte glass — calm emerald-teal dark surfaces crafted for glare-free long sessions.",
+      "displayName": "Antigravity Lagoon Dark",
+      "family": "lagoon",
+      "familyName": "Lagoon",
+      "files": {
+        "codeTheme": "./antigravity-lagoon-dark/code-theme.json",
+        "cssVariables": "./antigravity-lagoon-dark/variables.css",
+        "mermaid": "./antigravity-lagoon-dark/mermaid.json",
+        "theme": "./antigravity-lagoon-dark/theme.json"
+      },
+      "id": "antigravity-lagoon-dark",
+      "mode": "dark"
+    },
+    {
+      "description": "Aqua Lagoon matte glass — translucent mineral teal top-wash over soft porcelain surfaces.",
+      "displayName": "Antigravity Lagoon Light",
+      "family": "lagoon",
+      "familyName": "Lagoon",
+      "files": {
+        "codeTheme": "./antigravity-lagoon-light/code-theme.json",
+        "cssVariables": "./antigravity-lagoon-light/variables.css",
+        "mermaid": "./antigravity-lagoon-light/mermaid.json",
+        "theme": "./antigravity-lagoon-light/theme.json"
+      },
+      "id": "antigravity-lagoon-light",
+      "mode": "light"
+    },
+    {
+      "description": "Solar Flare matte glass — obsidian warmth with amber-copper highlights and high-legibility prose.",
+      "displayName": "Antigravity Solar Dark",
+      "family": "solar",
+      "familyName": "Solar",
+      "files": {
+        "codeTheme": "./antigravity-solar-dark/code-theme.json",
+        "cssVariables": "./antigravity-solar-dark/variables.css",
+        "mermaid": "./antigravity-solar-dark/mermaid.json",
+        "theme": "./antigravity-solar-dark/theme.json"
+      },
+      "id": "antigravity-solar-dark",
+      "mode": "dark"
+    },
+    {
+      "description": "Solar Horizon matte glass — warm apricot horizon gradient fading into soft warm porcelain.",
+      "displayName": "Antigravity Solar Light",
+      "family": "solar",
+      "familyName": "Solar",
+      "files": {
+        "codeTheme": "./antigravity-solar-light/code-theme.json",
+        "cssVariables": "./antigravity-solar-light/variables.css",
+        "mermaid": "./antigravity-solar-light/mermaid.json",
+        "theme": "./antigravity-solar-light/theme.json"
+      },
+      "id": "antigravity-solar-light",
+      "mode": "light"
+    },
+    {
+      "description": "Deep Nova matte glass — rich burgundy dark base with restrained rose-coral accents.",
+      "displayName": "Antigravity Nova Dark",
+      "family": "nova",
+      "familyName": "Nova",
+      "files": {
+        "codeTheme": "./antigravity-nova-dark/code-theme.json",
+        "cssVariables": "./antigravity-nova-dark/variables.css",
+        "mermaid": "./antigravity-nova-dark/mermaid.json",
+        "theme": "./antigravity-nova-dark/theme.json"
+      },
+      "id": "antigravity-nova-dark",
+      "mode": "dark"
+    },
+    {
+      "description": "Rose Nova matte glass — delicate blush rose top-wash transitioning into clean ivory.",
+      "displayName": "Antigravity Nova Light",
+      "family": "nova",
+      "familyName": "Nova",
+      "files": {
+        "codeTheme": "./antigravity-nova-light/code-theme.json",
+        "cssVariables": "./antigravity-nova-light/variables.css",
+        "mermaid": "./antigravity-nova-light/mermaid.json",
+        "theme": "./antigravity-nova-light/theme.json"
+      },
+      "id": "antigravity-nova-light",
+      "mode": "light"
+    },
+    {
+      "description": "Night Nebula matte glass — deep twilight plum with radiant violet-indigo aurora accents.",
+      "displayName": "Antigravity Nebula Dark",
+      "family": "nebula",
+      "familyName": "Nebula",
+      "files": {
+        "codeTheme": "./antigravity-nebula-dark/code-theme.json",
+        "cssVariables": "./antigravity-nebula-dark/variables.css",
+        "mermaid": "./antigravity-nebula-dark/mermaid.json",
+        "theme": "./antigravity-nebula-dark/theme.json"
+      },
+      "id": "antigravity-nebula-dark",
+      "mode": "dark"
+    },
+    {
+      "description": "Soft Nebula matte glass — translucent lavender gradient softening into crisp editorial white.",
+      "displayName": "Antigravity Nebula Light",
+      "family": "nebula",
+      "familyName": "Nebula",
+      "files": {
+        "codeTheme": "./antigravity-nebula-light/code-theme.json",
+        "cssVariables": "./antigravity-nebula-light/variables.css",
+        "mermaid": "./antigravity-nebula-light/mermaid.json",
+        "theme": "./antigravity-nebula-light/theme.json"
+      },
+      "id": "antigravity-nebula-light",
+      "mode": "light"
     }
   ],
-  "version": "0.1.0"
+  "version": "0.2.0"
 }

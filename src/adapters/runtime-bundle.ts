@@ -1,0 +1,194 @@
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import type { SemanticIR, ThemeFamilyId } from '../core/types.js';
+import { collectCssVariableGroups } from './css-vars.js';
+
+const RUNTIME_SRC_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../runtime');
+
+const STOCK_ICON_SVG =
+  '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="ag-svg-stock" x1="2" y1="2" x2="14" y2="14" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#3B82F6"/><stop offset="100%" stop-color="#64748B"/></linearGradient></defs><path d="M13.5 6.5C13 4.2 11 2.5 8.5 2.5C5.5 2.5 3 4.8 2.6 7.8M13.5 3V6.5H10" stroke="url(#ag-svg-stock)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 9.5C3 11.8 5 13.5 7.5 13.5C10.5 13.5 13 11.2 13.4 8.2M2.5 13V9.5H6" stroke="url(#ag-svg-stock)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+const FAMILY_ORDER: readonly ThemeFamilyId[] = [
+  'orbital',
+  'prism',
+  'zenith',
+  'lagoon',
+  'solar',
+  'nova',
+  'nebula',
+];
+
+function buildRuntimeTokenMap(ir: SemanticIR): Record<string, string> {
+  const isDark = ir.meta.mode === 'dark' || ir.meta.mode === 'hc-dark';
+  const { hostVars, glassVars, agentVars } = collectCssVariableGroups(ir);
+  const borderHairline = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.35)';
+
+  const rawEntries: Array<readonly [string, string]> = [
+    ...hostVars,
+    ...glassVars,
+    ...agentVars,
+    // Host Tailwind / Radix bridge variables
+    ['--ag-mesh', ir.runtime.auroraMesh],
+    ['--sidebar-unified-bg', ir.runtime.sidebarUnifiedBg],
+    ['--background', 'transparent !important'],
+    ['--color-background', 'transparent !important'],
+    ['--content', 'transparent !important'],
+    ['--color-content', 'transparent !important'],
+    ['--card', 'transparent !important'],
+    ['--color-card', 'transparent !important'],
+    ['--card-border', 'transparent !important'],
+    ['--color-card-border', 'transparent !important'],
+    ['--muted', 'transparent !important'],
+    ['--color-muted', 'transparent !important'],
+    ['--secondary', 'transparent !important'],
+    ['--color-secondary', 'transparent !important'],
+    ['--sidebar-muted', 'transparent !important'],
+    ['--color-sidebar-muted', 'transparent !important'],
+    ['--sidebar-secondary', 'transparent !important'],
+    ['--color-sidebar-secondary', 'transparent !important'],
+    ['--foreground', `${ir.fg.primary} !important`],
+    ['--color-foreground', `${ir.fg.primary} !important`],
+    ['--secondary-foreground', `${ir.fg.primary} !important`],
+    ['--color-secondary-foreground', `${ir.fg.primary} !important`],
+    ['--muted-foreground', `${ir.fg.muted} !important`],
+    ['--color-muted-foreground', `${ir.fg.muted} !important`],
+    ['--placeholder', `${ir.fg.muted} !important`],
+    ['--color-placeholder', `${ir.fg.muted} !important`],
+    ['--primary', `${ir.fg.accent} !important`],
+    ['--color-primary', `${ir.fg.accent} !important`],
+    ['--primary-foreground', `${ir.agent.approveBtnFg} !important`],
+    ['--color-primary-foreground', `${ir.agent.approveBtnFg} !important`],
+    ['--sidebar', `${ir.runtime.titlebarColor} !important`],
+    ['--color-sidebar', `${ir.runtime.titlebarColor} !important`],
+    ['--border', `${borderHairline} !important`],
+    ['--color-border', `${borderHairline} !important`],
+    ['--terminal-bg', `${ir.runtime.baseFallbackBg} !important`],
+    ['--selection', `${ir.runtime.selectionBg} !important`],
+    ['--media-modal-bg', `${ir.runtime.mediaModalBg} !important`],
+    ['--media-capsule-bg', `${ir.runtime.mediaCapsuleBg} !important`],
+    ['--media-capsule-border', `${ir.runtime.mediaCapsuleBorder} !important`],
+    ['--media-capsule-hover', `${ir.runtime.mediaCapsuleHover} !important`],
+    ['--media-capsule-fg', `${ir.runtime.mediaCapsuleFg} !important`],
+    // Semantic runtime tokens consumed by host-surfaces.css & host-dark-overrides.css
+    ['--ag-base-bg', ir.runtime.baseFallbackBg],
+    ['--ag-fg', ir.fg.primary],
+    ['--ag-fg-secondary', ir.fg.secondary],
+    ['--ag-fg-muted', ir.fg.muted],
+    ['--ag-fg-placeholder', ir.fg.muted],
+    ['--ag-accent', ir.fg.accent],
+    ['--ag-accent-deep', ir.runtime.accentDeep],
+    ['--ag-accent-solid', ir.agent.approveBtnBg],
+    ['--ag-accent-rgb', ir.runtime.accentRgb],
+    ['--ag-accent-gradient', ir.runtime.accentGradient],
+    ['--ag-scrollbar-v', ir.runtime.scrollbarGradientV],
+    ['--ag-scrollbar-h', ir.runtime.scrollbarGradientH],
+    ['--ag-spinner-1', ir.runtime.spinnerDots[0]],
+    ['--ag-spinner-2', ir.runtime.spinnerDots[1]],
+    ['--ag-spinner-3', ir.runtime.spinnerDots[2]],
+    ['--ag-spinner-4', ir.runtime.spinnerDots[3]],
+    ['--ag-inline-code-bg', ir.artifact.inlineCodeBg],
+    ['--ag-inline-code-fg', ir.artifact.inlineCodeFg],
+    ['--ag-inline-code-border', ir.runtime.inlineCodeBorder],
+    ['--ag-surface-popover', ir.surface.elevated],
+    ['--ag-surface-user-bubble', ir.runtime.userBubbleSolid],
+    ['--ag-terminal-panel-bg', ir.runtime.terminalPanelBg],
+    ['--ag-terminal-cursor', ir.terminal.cursor],
+    ['--ag-terminal-selection', ir.terminal.selectionBackground],
+    ['--ag-terminal-ansi-0', ir.terminal.ansi.black],
+    ['--ag-terminal-ansi-1', ir.terminal.ansi.red],
+    ['--ag-terminal-ansi-2', ir.terminal.ansi.green],
+    ['--ag-terminal-ansi-3', ir.terminal.ansi.yellow],
+    ['--ag-terminal-ansi-4', ir.terminal.ansi.blue],
+    ['--ag-terminal-ansi-5', ir.terminal.ansi.magenta],
+    ['--ag-terminal-ansi-6', ir.terminal.ansi.cyan],
+    ['--ag-terminal-ansi-7', ir.terminal.ansi.white],
+    ['--ag-terminal-ansi-8', ir.terminal.ansi.brightBlack],
+    ['--ag-terminal-ansi-9', ir.terminal.ansi.brightRed],
+    ['--ag-settings-bg', ir.runtime.settingsDialogBg],
+    ['--ag-danger', ir.status.danger.solid],
+    ['--ag-danger-hover', ir.agent.errorAccent],
+    ['--ag-mermaid-viewport-bg', ir.surface.canvas],
+  ];
+
+  rawEntries.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  return Object.fromEntries(rawEntries);
+}
+
+export interface CompiledRuntimeBundle {
+  readonly currentCss: string;
+  readonly currentJs: string;
+}
+
+/**
+ * Compiles all 14 OKLCH SemanticIRs and modular runtime sources into deterministic
+ * desktop Electron injection payloads: `dist/runtime/current.css` and `dist/runtime/current.js`.
+ */
+export function emitDesktopRuntimeBundle(
+  irs: readonly SemanticIR[],
+  version: string,
+  repoSlug = 'Django9944/antigravity-theme',
+): CompiledRuntimeBundle {
+  const byFamily = new Map<ThemeFamilyId, { light?: SemanticIR; dark?: SemanticIR }>();
+  for (const ir of irs) {
+    const slot = byFamily.get(ir.meta.family) ?? {};
+    if (ir.meta.mode === 'dark' || ir.meta.mode === 'hc-dark') slot.dark = ir;
+    else slot.light = ir;
+    byFamily.set(ir.meta.family, slot);
+  }
+
+  const runtimeThemes: Array<Record<string, unknown>> = [];
+  for (const family of FAMILY_ORDER) {
+    const pair = byFamily.get(family);
+    if (!pair?.light || !pair.dark) {
+      throw new Error(`Missing light/dark pair for runtime family "${family}"`);
+    }
+    runtimeThemes.push({
+      id: family,
+      variantIdLight: pair.light.meta.id,
+      variantIdDark: pair.dark.meta.id,
+      name: pair.light.meta.nameZh,
+      nameDark: pair.dark.meta.nameZh,
+      titlebarColor: pair.light.runtime.titlebarColor,
+      titlebarColorDark: pair.dark.runtime.titlebarColor,
+      symbolColor: pair.light.runtime.titlebarSymbolColor,
+      symbolColorDark: pair.dark.runtime.titlebarSymbolColor,
+      icon: pair.light.meta.iconSvg,
+      tokens: buildRuntimeTokenMap(pair.light),
+      tokensDark: buildRuntimeTokenMap(pair.dark),
+    });
+  }
+
+  runtimeThemes.push({
+    id: 'stock',
+    name: '官方原版',
+    nameDark: '官方原版',
+    icon: STOCK_ICON_SVG,
+  });
+
+  const normalizeLf = (s: string): string => s.replace(/\r\n/g, '\n');
+
+  const companionCss = normalizeLf(
+    readFileSync(resolve(RUNTIME_SRC_DIR, 'styles/companion.css'), 'utf8'),
+  );
+  const hostSurfacesCss = normalizeLf(
+    readFileSync(resolve(RUNTIME_SRC_DIR, 'styles/host-surfaces.css'), 'utf8'),
+  );
+  const hostDarkCss = normalizeLf(
+    readFileSync(resolve(RUNTIME_SRC_DIR, 'styles/host-dark-overrides.css'), 'utf8'),
+  );
+  const templateJs = normalizeLf(readFileSync(resolve(RUNTIME_SRC_DIR, 'engine-template.js'), 'utf8'));
+
+  const versionTag = version.startsWith('v') ? version : `v${version}`;
+  const currentJs = templateJs
+    .replace('__THEME_PACK_VERSION__', JSON.stringify(versionTag))
+    .replace('__THEME_PACK_REPO__', JSON.stringify(repoSlug))
+    .replace('__BASE_CSS__', JSON.stringify(hostSurfacesCss))
+    .replace('__DARK_DELTA_CSS__', JSON.stringify(hostDarkCss))
+    .replace('__THEMES_JSON__', JSON.stringify(runtimeThemes));
+
+  return {
+    currentCss: companionCss,
+    currentJs,
+  };
+}

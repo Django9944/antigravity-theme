@@ -9,75 +9,100 @@
 
 > **English** | [简体中文](./README.zh-CN.md) · **[Launch Live Interactive 3-Pane Preview Workbench ↗](https://django9944.github.io/antigravity-theme/preview/)**
 
-**Antigravity Theme** is an open-source **High-Opacity Matte Glass** theme pack (`Antigravity Dark` & `Antigravity Light`) built for the **Antigravity 2.0 Agent Desktop App**.
+**Antigravity Theme** (`@django9944/antigravity-theme`) is an open-source **OKLCH Matte & Aurora Glass Theme System + Zero-Resign Cross-Platform Desktop Installer** built exclusively for the **Antigravity 2.0 Agent Desktop App** (`macOS` & `Windows`).
 
-It is engineered from a single TypeScript `OKLCH` design token source with automated `APCA` and `WCAG 2.1` contrast gates, delivering a cohesive visual hierarchy across all three Antigravity Agent surfaces while staying aligned with the host CSS variable protocol (`--color-*`):
+It unifies two capabilities from a single TypeScript `OKLCH` + `APCA`/`WCAG 2.1` Design Token pipeline:
 
-- **Left-hand Sidebar** — Agent sessions, workspace navigation, and active status indicators
-- **Chat Canvas** — User prompts, agent prose, thinking traces, tool execution cards, `/` slash commands, and `@` mentions
-- **Auxiliary Pane** — Subagents, Background Tasks, Artifacts (Markdown, Alerts, Mermaid, KaTeX, Carousels), Files Changed Diffs, Terminals, and Browser Pane
+1. **Standard Design Token & Theme Packs (`dist/<variant>/`)** — Deterministic W3C DTCG JSON, `--color-*` & `--agy-*` CSS Custom Properties, Shiki syntax themes, and Mermaid configs across **7 theme families × Dark / Light (14 variants)**.
+2. **One-Click Zero-Resign Desktop Runtime (`dist/runtime/` + `core/`)** — Semantic runtime stylesheets (`current.css`) and host-aware controller (`current.js` with floating top-right switcher & non-intrusive `Stock` reset), injected cleanly via `core/asar-patcher.js` (`Hook v1`) without breaking macOS TCC permissions (`_CodeSignature` / `Info.plist` untouched).
 
 > [!NOTE]
-> **Scope Boundary**: Purpose-built exclusively for the **Antigravity 2.0 Agent Desktop App**. It is not a code editor theme (excludes Antigravity IDE, VS Code, and other code editors).
+> **Scope Boundary**: Purpose-built exclusively for the **Antigravity 2.0 Agent Desktop App** (Left-hand Sidebar · Chat Canvas · Auxiliary Pane). It is not a code editor theme (excludes Antigravity IDE, VS Code, and other code editors).
 
-## Theme Variants & Package Exports
+## Theme Families (7 Families × Dark / Light = 14 Variants + `Stock`)
 
-Each variant in `dist/` (and `@django9944/antigravity-theme`) compiles into 4 deterministic artifacts:
-
-| Variant | ID | Palette & Material | Compiled Artifacts (`dist/<id>/`) |
-| :--- | :--- | :--- | :--- |
-| **Antigravity Dark** | `antigravity-dark` | **Orbital Slate Matte Glass** — cool slate-blue dark surfaces with Weightless Cobalt accents | `variables.css` · `theme.json` · `code-theme.json` · `mermaid.json` |
-| **Antigravity Light** | `antigravity-light` | **Orbital Cloud Matte Glass** — airy cloud-porcelain light surfaces for editorial reading comfort | `variables.css` · `theme.json` · `code-theme.json` · `mermaid.json` |
+| Family | Dark ID (`displayName`) | Light ID (`displayName`) | Visual Character & Material | Compiled Artifacts |
+| :--- | :--- | :--- | :--- | :--- |
+| **Orbital** *(Flagship)* | `antigravity-dark` | `antigravity-light` | Slate/Cloud Matte Glass · Weightless Cobalt | `variables.css` · `theme.json` · `code-theme.json` · `mermaid.json` |
+| **Prism** *(Spectral)* | `antigravity-prism-dark` | `antigravity-prism-light` | Multi-point Spectral Aurora Slate & Porcelain Glass | `variables.css` · `theme.json` · `code-theme.json` · `mermaid.json` |
+| **Zenith** *(Azure)* | `antigravity-zenith-dark` | `antigravity-zenith-light` | Deep Ocean & Clear Azure Aurora Glass | `variables.css` · `theme.json` · `code-theme.json` · `mermaid.json` |
+| **Lagoon** *(Teal)* | `antigravity-lagoon-dark` | `antigravity-lagoon-light` | Deep Lagoon & Aqua Mineral Teal Glass | `variables.css` · `theme.json` · `code-theme.json` · `mermaid.json` |
+| **Solar** *(Amber)* | `antigravity-solar-dark` | `antigravity-solar-light` | Solar Flare & Warm Horizon Amber Glass | `variables.css` · `theme.json` · `code-theme.json` · `mermaid.json` |
+| **Nova** *(Crimson)* | `antigravity-nova-dark` | `antigravity-nova-light` | Deep Burgundy & Rose Nova Aurora Glass | `variables.css` · `theme.json` · `code-theme.json` · `mermaid.json` |
+| **Nebula** *(Violet)* | `antigravity-nebula-dark` | `antigravity-nebula-light` | Twilight Indigo & Soft Lavender Nebula Glass | `variables.css` · `theme.json` · `code-theme.json` · `mermaid.json` |
+| **Stock** *(Runtime only)* | `stock` | `stock` | Restores native un-themed Antigravity appearance | Non-intrusive strip in `current.js` |
 
 - **Manifest Index**: [`dist/manifest.json`](./dist/manifest.json) (`@django9944/antigravity-theme/manifest.json`)
-- **CSS Custom Properties**: `@django9944/antigravity-theme/antigravity-dark/variables.css` / `antigravity-light/variables.css`
-- **W3C DTCG Design Tokens**: `@django9944/antigravity-theme/antigravity-dark/theme.json` / `antigravity-light/theme.json`
+- **Desktop Runtime Bundle**: `./runtime/current.css` · `./runtime/current.js` (`@django9944/antigravity-theme/runtime/*`)
+- **Per-Variant Tokens**: `@django9944/antigravity-theme/<variant-id>/{variables.css,theme.json,code-theme.json,mermaid.json}`
 
-## Core Palette Swatches (`OKLCH` & Compiled Hex)
+## Desktop Quick Install (macOS & Windows)
 
-| Semantic Role | Host / Agent CSS Variable | Antigravity Dark (`OKLCH` → Hex / RGBA) | Antigravity Light (`OKLCH` → Hex / RGBA) |
-| :--- | :--- | :--- | :--- |
-| **Shell Surface (Elev 0)** | `--color-background-secondary` / `--agy-glass-bg-shell` | `oklch(0.195 0.015 255)` → `#10151c` (`α 0.86`) | `oklch(0.955 0.008 245)` → `#ecf1f5` (`α 0.88`) |
-| **Chat Canvas (Elev 1)** | `--color-background-primary` / `--agy-glass-bg-canvas` | `oklch(0.220 0.016 255)` → `#161b22` (`α 0.94`) | `oklch(0.980 0.006 245)` → `#f5f9fc` (`α 0.95`) |
-| **Card Surface (Elev 2)** | `--color-background-tertiary` / `--agy-glass-bg-card` | `oklch(0.250 0.016 255)` → `#1d2229` (`α 0.82`) | `oklch(0.962 0.007 245)` → `#eff3f7` (`α 0.86`) |
-| **Popover Surface (Elev 3)** | `--agy-surface-elevated` / `--agy-glass-bg-popover` | `oklch(0.275 0.017 255)` → `#222830` (`α 0.91`) | `oklch(0.992 0.004 245)` → `#fafdff` (`α 0.93`) |
-| **Primary Prose (L1)** | `--color-text-primary` | `oklch(0.915 0.010 250)` → `#dee4e9` | `oklch(0.240 0.018 252)` → `#192028` |
-| **Thinking / Metadata (L3)** | `--color-text-tertiary` / `--agy-thinking-fg` | `oklch(0.715 0.014 250)` → `#9da4ac` | `oklch(0.495 0.014 248)` → `#5c636a` |
-| **Weightless Cobalt (Accent)** | `--color-text-info` / `--color-ring-primary` | `oklch(0.795 0.120 250)` → `#86c1ff` | `oklch(0.448 0.140 250)` → `#005697` |
-| **Running Cyan** | `--agy-running-accent` / `--agy-subagent-working` | `oklch(0.795 0.105 205)` → `#5cd0dc` | `oklch(0.442 0.105 205)` → `#005f67` |
-| **Atmospheric Violet** | `--agy-subagent-waiting` / `--agy-alert-important-fg` | `oklch(0.802 0.120 290)` → `#bdb3ff` | `oklch(0.445 0.140 290)` → `#55419a` |
-| **Emerald Green (Success)** | `--color-text-success` / `--agy-done-accent` | `oklch(0.790 0.122 154)` → `#77d296` | `oklch(0.438 0.128 152)` → `#006330` |
-| **Warm Amber (Approval)** | `--color-text-warning` / `--agy-approval-fg` | `oklch(0.810 0.122 78)` → `#ecb75f` | `oklch(0.452 0.120 68)` → `#794900` |
-| **Restrained Crimson (Error)** | `--color-text-danger` / `--agy-error-accent` | `oklch(0.800 0.126 22)` → `#ffa09c` | `oklch(0.455 0.142 24)` → `#962b2d` |
+### macOS (`Antigravity.app`)
+
+1. Download **`antigravity-theme-v0.2.0-macos.zip`** from [GitHub Releases](https://github.com/Django9944/antigravity-theme/releases) and extract it, or clone this repository (`pnpm install && pnpm build`).
+2. Double-click **`install.command`** (or run in Terminal):
+
+```bash
+./install.sh --install             # Backup stock app.asar, inject Hook v1, deploy dist/runtime/current.{css,js}
+./install.sh --doctor              # Read-only ASAR compatibility, anchor & SHA-256 block integrity check
+./install.sh --enable-auto-heal    # Enable LaunchAgent (re-injects automatically after host app upgrades)
+./install.sh --update              # Download latest release, verify SHA256SUMS.txt, hot-patch if hook unchanged
+./install.sh --uninstall           # Byte-exact stock restore & clean LaunchAgent + legacy antigravity-custom-themes tasks
+```
+
+### Windows (`%LOCALAPPDATA%\Programs\Antigravity`)
+
+1. Download **`antigravity-theme-v0.2.0-windows.zip`** from [GitHub Releases](https://github.com/Django9944/antigravity-theme/releases) and extract it.
+2. Double-click **`install.bat`** (or run in PowerShell):
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1                     # Install & deploy payloads
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -Doctor             # Read-only ASAR diagnostic
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -EnableAutoHeal     # Register logon auto-heal task
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -Update             # Verified self-update
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -Uninstall          # Restore stock & cleanup tasks
+```
+
+> [!TIP]
+> **Upgrading from `antigravity-custom-themes`**: Both installers reuse the compatible `Hook v1` & `custom-theme/` storage contract, default fresh installs to **Orbital** while respecting your saved theme preference, and automatically clean up legacy `com.django9944.antigravity-custom-themes.autoheal` LaunchAgents / `AntigravityCustomThemes-AutoHeal` Scheduled Tasks.
 
 ## Key Highlights
 
-- **High-Opacity Matte Glass System**: Layered glassmorphism (`backdrop-filter` blur/saturation, directional `1px` specular edge highlights, and worst-case wallpaper contrast guards) paired with automatic `@media (prefers-reduced-transparency: reduce)` opaque fallbacks.
-- **Agent-First Surface Hierarchy**: Purpose-built visual grammar for multi-agent orchestration—differentiating user prompts, agent prose, collapsed thinking traces, tool execution states, permission approvals, subagent trees, and rich Artifacts.
-- **Perceptual Design Token Pipeline**: Single source of truth authored in TypeScript (`OKLCH`), compiling deterministically into W3C DTCG Theme JSON, standard CSS Custom Properties (`--color-background-*`, `--color-text-*`, `--color-border-*`, `--color-ring-*`, `--agy-*`), Shiki code-block themes, and Mermaid palettes.
-- **Verified Accessibility**: Automated `APCA` (`Lc` thresholds) and `WCAG 2.1` (AA/AAA) unit gates covering solid surfaces, translucent diff washes, status badges, and 16-color agent terminal output.
-- **Official & Safe Delivery Model**: Strictly adheres to Antigravity 2.0 appearance settings, configuration schemas, and official theme import standards—zero binary patching or Electron tampering.
-- **Automated Upstream Sync & Release Pipeline**: Weekly monitoring of Antigravity App release notes (`antigravity.google/docs/changelog.md`) that automatically updates `.upstream-baseline.json` and opens a sync PR, paired with Changesets-driven releases that synchronize iteration history directly into `README.md`.
+- **Perceptual `OKLCH` + Quantitative `APCA`/`WCAG 2.1` Gates**: Every palette across all 14 variants is verified against pure `#FFFFFF` / `#000000` worst-case backdrops for prose (`L1 ≥ 75`, `L2 ≥ 60`, `L3 ≥ 45`), rings, diffs, alerts, and 16-color terminal ANSI tokens.
+- **Zero-Resign ASAR Injection (`core/asar-patcher.js`)**: Rebuilds the ASAR header JSON + per-file & 4 MB multi-block SHA-256 integrity hashes cleanly while leaving `Info.plist` and `_CodeSignature` untouched so macOS Accessibility / Screen Recording permissions stay intact.
+- **Self-Healing & Smart Updater (`core/updater.js`)**: Automatically strips and heals corrupted/missing stock backups, detects when upstream upgrades overwrite `app.asar`, and selects zero-restart hot CSS/JS swap when `hookVersion` is unchanged.
+- **Dual Upstream CI Watch**: `.github/workflows/upstream-sync.yml` tracks Antigravity changelog CSS variables weekly, while `.github/workflows/antigravity-watch.yml` monitors official Electron update channels daily and validates real `app.asar` compatibility.
+- **Interactive 3-Pane Preview Workbench**: Test all 7 families, Dark/Light schemes, Aurora mesh backdrop, stress wallpapers (`#FFFFFF` / `#000000`), `Reduced Transparency`, and the simulated top-right ghost switcher at **[Preview Workbench ↗](https://django9944.github.io/antigravity-theme/preview/)**.
+
+## Release Assets & Verification
+
+| Asset | Audience | Contents |
+| :--- | :--- | :--- |
+| `antigravity-theme-v<ver>.zip` | Theme consumers & token pipelines | `dist/` (14 variants DTCG/CSS + `runtime/`), `LICENSE`, `README*`, `CHANGELOG.md` |
+| `antigravity-theme-v<ver>-macos.zip` | macOS desktop users | `install.sh`, `*.command`, `manifest.json`, `core/{package.json,asar-patcher.js,updater.js}`, `dist/runtime/` |
+| `antigravity-theme-v<ver>-windows.zip` | Windows desktop users | `install.ps1`, `*.bat`, `manifest.json`, `core/{package.json,asar-patcher.js,updater.js}`, `dist/runtime/` |
+| `SHA256SUMS.txt` | All users & updater | Unified SHA-256 checksums covering all three release archives |
 
 ## Project Status
 
-- **Current Version**: `v0.1.0` (OKLCH Token Compiler, High-Opacity Matte Glass Theme Pack, 3-Pane Preview Workbench, Automated QA Gates & CI/CD)
-- **Next Milestone**: `v1.0.0` — Live Antigravity 2.0 Desktop App visual sign-off & Playwright pixel-diff CI
-- **Distribution**: [GitHub Releases](https://github.com/Django9944/antigravity-theme/releases) (Theme Pack ZIP + `SHA256SUMS.txt`) & npm (`@django9944/antigravity-theme`)
+- **Current Version**: `v0.2.0` (7 Families × Dark/Light OKLCH Token Compiler, Semantic Desktop Runtime, Zero-Resign Cross-Platform ASAR Installer, Upgraded 3-Pane Preview Workbench, Dual Upstream Watch & Multi-Archive CI)
+- **Distribution**: [GitHub Releases](https://github.com/Django9944/antigravity-theme/releases) (`ZIP` bundles + `SHA256SUMS.txt`) & npm (`@django9944/antigravity-theme`)
 - **License**: [MIT License](./LICENSE)
 
-## Quick Start & Live Preview
-
-- **Online Preview (Zero Install)**: Open **[https://django9944.github.io/antigravity-theme/preview/](https://django9944.github.io/antigravity-theme/preview/)** to switch between `Antigravity Dark` and `Antigravity Light`, test stress wallpapers (`#FFFFFF` / `#000000`), and toggle `Reduced Transparency`.
-- **Local Development**:
+## Local Development
 
 ```bash
 pnpm install
 pnpm typecheck
-pnpm build        # Compile deterministic theme artifacts into dist/
-pnpm test         # Run DTCG/CSS schema, APCA/WCAG contrast & Shiki snapshot gates
-pnpm sync:readme  # Synchronize CHANGELOG.md iteration history into README.md & README.zh-CN.md
-pnpm preview      # Launch interactive 3-pane preview at http://127.0.0.1:4173/preview/
+pnpm build            # Compile 14 OKLCH variants + dist/runtime/current.{css,js}
+pnpm test             # Run DTCG/CSS schema, APCA/WCAG contrast, Shiki & ASAR tests
+pnpm test:asar        # Run standalone cross-platform ASAR, updater & sandbox tests
+pnpm doctor           # Inspect local Antigravity.app ASAR compatibility
+pnpm check:host-compat -- --json
+pnpm pack:release     # Stage & verify standard, -macos.zip, -windows.zip + SHA256SUMS.txt
+pnpm sync:readme      # Synchronize CHANGELOG.md history into README.md & README.zh-CN.md
+pnpm preview          # Launch interactive 3-pane preview at http://127.0.0.1:4173/preview/
 ```
 
 ## Release History & Iteration Log
@@ -86,7 +111,14 @@ pnpm preview      # Launch interactive 3-pane preview at http://127.0.0.1:4173/p
 
 <!-- RELEASE_HISTORY:START -->
 
-### [v0.1.0](https://github.com/Django9944/antigravity-theme/releases/tag/v0.1.0) (Latest Release)
+### [v0.2.0](https://github.com/Django9944/antigravity-theme/releases/tag/v0.2.0) (Latest Release)
+
+- **7 Theme Families × Dark / Light (14 OKLCH Variants) + Stock Reset**: Expanded flagship `Orbital` (`antigravity-dark`, `antigravity-light`) with six celestial OKLCH families (`prism`, `zenith`, `lagoon`, `solar`, `nova`, `nebula` × Dark/Light), all passing APCA & WCAG 2.1 contrast gates plus non-intrusive `stock` restore.
+- **Modular Semantic Desktop Runtime (`dist/runtime/current.{css,js}`)**: Replaced hand-numbered monolithic CSS/JS with a SemanticIR-compiled desktop runtime featuring Aurora multi-layer mesh glass, floating top-right ghost switcher, dual media capsules, xterm ANSI bridge, and modal chrome polish.
+- **Zero-Resign Cross-Platform ASAR Installer, Auto-Heal & Self-Updater**: Added `core/asar-patcher.js`, `core/updater.js`, macOS (`install.sh`, `*.command`, LaunchAgent auto-heal), and Windows (`install.ps1`, `*.bat`, Scheduled Task auto-heal) with SHA-256 verification and automatic migration from `antigravity-custom-themes`.
+- **Upgraded 3-Pane Preview Workbench & 3-Archive Release Pipeline**: Added 7-family selector, Aurora mesh stage backdrop, and simulated ghost switcher to `preview/`; updated `pack-release.ts` to emit standard, `-macos.zip`, and `-windows.zip` with unified `SHA256SUMS.txt` plus daily `antigravity-watch.yml` CI monitoring.
+
+### [v0.1.0](https://github.com/Django9944/antigravity-theme/releases/tag/v0.1.0)
 
 - Initial OKLCH Design Token compiler and deterministic multi-format adapters (`theme.json`, `variables.css`, `code-theme.json`, `mermaid.json`).
 - Option A (`ADR-006`) High-Opacity Matte Frosted Glass palettes: **Antigravity Dark (Orbital Slate Matte Glass)** and **Antigravity Light (Orbital Cloud Matte Glass)**.
@@ -97,4 +129,5 @@ pnpm preview      # Launch interactive 3-pane preview at http://127.0.0.1:4173/p
 
 ## License
 
-Copyright (c) 2026 Antigravity Theme Contributors. Licensed under the **MIT License**.
+- Copyright (c) 2026 Django9944 and Antigravity Theme Contributors ([MIT License](./LICENSE)).
+- **Disclaimer**: This is an independent, non-commercial open-source community theme project not affiliated with Google or Antigravity. Desktop ASAR patching modifies only local Electron UI resource metadata cleanly (`_CodeSignature` untouched) and includes full reversible uninstall & stock backup recovery.

@@ -3,10 +3,12 @@
     "com.antigravity-theme": {
       "description": "Orbital Cloud Matte Glass — airy cloud-porcelain light theme with Weightless Cobalt accents and editorial reading comfort for Antigravity 2.0.",
       "displayName": "Antigravity Light",
+      "family": "orbital",
+      "familyName": "Orbital",
       "id": "antigravity-light",
       "mode": "light",
       "targetSoftware": "Antigravity 2.0 Agent Desktop App",
-      "version": "0.1.0"
+      "version": "0.2.0"
     }
   },
   "agent": {
@@ -252,12 +254,12 @@
     "inlineCodeBg": {
       "$description": "Inline code pill background",
       "$type": "color",
-      "$value": "#e0e6ecb8"
+      "$value": "#69a0d81f"
     },
     "inlineCodeFg": {
       "$description": "Inline code pill foreground",
       "$type": "color",
-      "$value": "#55419a"
+      "$value": "#005697"
     },
     "katexFg": {
       "$description": "KaTeX math expression color",

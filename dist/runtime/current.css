@@ -1,0 +1,579 @@
+/* Antigravity Theme — Companion Runtime Stylesheet (dist/runtime/current.css)
+   Compiled with OKLCH perceptual tokens by @django9944/antigravity-theme (Copyright (c) 2026 Django9944).
+
+   1. Theme-independent media/Mermaid lightbox fullscreen + symmetric dual glass capsules.
+   2. Maximized auxiliary-pane underlying column occlusion mask (zero bleed-through).
+   3. macOS frameless titlebar -webkit-app-region: no-drag interactive protection.
+   4. Low-distraction ghost icon toolbar switcher + native toolbar button feedback.
+   5. OKLCH-verified per-family inline code capsules & Markdown reading hierarchy. */
+
+/* ---------- 1. Stock Mode Media Lightbox Capsule Fallbacks ---------- */
+html:not([data-ag-custom-theme]):not(.dark):not(.theme-dark):not(.dark-theme) body.theme-light,
+html:not([data-ag-custom-theme]):not(.dark):not(.theme-dark):not(.dark-theme) body:not(.dark):not(.theme-dark):not(.dark-theme) {
+  --media-capsule-bg: rgba(240, 240, 242, 0.92);
+  --media-capsule-border: rgba(0, 0, 0, 0.10);
+  --media-capsule-hover: rgba(0, 0, 0, 0.06);
+  --media-capsule-fg: #374151;
+  --media-capsule-shadow: 0 6px 20px rgba(0, 0, 0, 0.10);
+}
+
+html:not([data-ag-custom-theme]).dark body,
+html:not([data-ag-custom-theme]).theme-dark body,
+html:not([data-ag-custom-theme]).dark-theme body,
+html:not([data-ag-custom-theme]) body.theme-dark,
+html:not([data-ag-custom-theme]) body.dark,
+html:not([data-ag-custom-theme]) body.dark-theme {
+  --media-capsule-bg: rgba(255, 255, 255, 0.16);
+  --media-capsule-border: rgba(255, 255, 255, 0.18);
+  --media-capsule-hover: rgba(255, 255, 255, 0.15);
+  --media-capsule-fg: #F8FAFC;
+  --media-capsule-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+
+/* ---------- 2. Media & Mermaid Lightbox Fullscreen + Dual Capsules ---------- */
+[data-testid="media-modal"],
+div[class*="animate-backdropFadeIn"]:has(~ * [data-testid="mermaid-lightbox-viewport"]) {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 5000 !important;
+}
+
+div[class*="animate-modalFadeIn"]:has([data-testid="mermaid-lightbox-viewport"]) {
+  position: fixed !important;
+  inset: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  z-index: 5001 !important;
+}
+
+[data-testid="media-modal-header"] {
+  position: absolute !important;
+  top: 18px !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: auto !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  z-index: 100 !important;
+  pointer-events: none !important;
+}
+
+[data-testid="media-modal-header"] > div {
+  pointer-events: auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  height: 40px !important;
+  box-sizing: border-box !important;
+  gap: 6px !important;
+  padding: 0 10px !important;
+  background: var(--media-capsule-bg, rgba(255, 255, 255, 0.16)) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--media-capsule-border, rgba(255, 255, 255, 0.18)) !important;
+  border-radius: 9999px !important;
+  box-shadow: var(--media-capsule-shadow, 0 6px 20px rgba(0, 0, 0, 0.18)) !important;
+}
+
+[data-testid="media-modal-header"] button {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: var(--media-capsule-fg, var(--foreground, #F8FAFC)) !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 9999px !important;
+  border: none !important;
+  box-shadow: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: background-color 0.15s ease, transform 0.15s ease !important;
+  padding: 0 !important;
+}
+
+[data-testid="media-modal-header"] button:hover {
+  background: var(--media-capsule-hover, rgba(255, 255, 255, 0.15)) !important;
+  transform: scale(1.08) !important;
+}
+
+[data-testid="media-modal-header"] button:active {
+  transform: scale(0.95) !important;
+}
+
+[data-testid="media-modal-header"] button svg {
+  width: 16px !important;
+  height: 16px !important;
+  fill: currentColor !important;
+  color: var(--media-capsule-fg, var(--foreground, #F8FAFC)) !important;
+}
+
+[data-testid="media-modal-zoom-controls"] {
+  height: 40px !important;
+  box-sizing: border-box !important;
+  background: var(--media-capsule-bg, rgba(255, 255, 255, 0.16)) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--media-capsule-border, rgba(255, 255, 255, 0.18)) !important;
+  border-radius: 9999px !important;
+  box-shadow: var(--media-capsule-shadow, 0 6px 20px rgba(0, 0, 0, 0.18)) !important;
+  align-items: center !important;
+  color: var(--media-capsule-fg, var(--foreground, #F8FAFC)) !important;
+}
+
+[data-testid="media-modal-zoom-reset"] {
+  color: var(--media-capsule-fg, var(--foreground, #1B2A4A)) !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+}
+
+[data-testid="media-modal-zoom-controls"] button {
+  background: transparent !important;
+  color: var(--media-capsule-fg, var(--foreground, #F8FAFC)) !important;
+}
+
+[data-testid="media-modal-zoom-controls"] button:hover {
+  background: var(--media-capsule-hover, rgba(255, 255, 255, 0.15)) !important;
+}
+
+/* ---------- 3. Maximized Auxiliary Pane Underlying Column Occlusion ---------- */
+html[data-ag-custom-theme][data-aux-pane-maximized="true"] .agy-sheet > div.relative.flex.w-full.h-full.outline-none > div.flex:first-child {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* ---------- 4. macOS Frameless Titlebar No-Drag Click Protection ---------- */
+#antigravity-theme-selector,
+#antigravity-theme-selector *,
+#antigravity-theme-btn,
+#antigravity-theme-btn *,
+#antigravity-theme-dropdown,
+#antigravity-theme-dropdown *,
+.antigravity-theme-item {
+  -webkit-app-region: no-drag !important;
+  app-region: no-drag !important;
+  pointer-events: auto !important;
+}
+
+/* ---------- 5. Ghost Pure-Icon Toolbar Button & Right-Cluster Toolbar Polish ---------- */
+#antigravity-theme-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 26px !important;
+  min-width: 26px !important;
+  max-width: 26px !important;
+  height: 26px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  opacity: 0.55 !important;
+  filter: saturate(0.35) !important;
+  transition: opacity 0.15s ease, filter 0.15s ease, background-color 0.15s ease !important;
+}
+
+#antigravity-theme-btn:hover,
+#antigravity-theme-btn[aria-expanded="true"] {
+  opacity: 1 !important;
+  filter: saturate(1) !important;
+  background: rgba(0, 0, 0, 0.06) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+#antigravity-theme-btn[aria-expanded="true"] {
+  background: rgba(255, 255, 255, 0.66) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 22%, transparent) !important;
+}
+
+#antigravity-theme-btn[data-theme-mode="dark"]:hover {
+  background: rgba(255, 255, 255, 0.10) !important;
+}
+
+#antigravity-theme-btn[data-theme-mode="dark"][aria-expanded="true"] {
+  background: color-mix(in srgb, var(--primary) 20%, transparent) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 28%, transparent) !important;
+}
+
+html[data-ag-custom-theme] [data-testid="pane-titlebar-toolbar"] button:not(#antigravity-theme-btn):not([data-testid^="open-editor-"]):not([data-testid="install-editor"]):not([data-testid="editor-loading"]):hover {
+  background-color: rgba(255, 255, 255, 0.45) !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) [data-testid="pane-titlebar-toolbar"] button:not(#antigravity-theme-btn):not([data-testid^="open-editor-"]):not([data-testid="install-editor"]):not([data-testid="editor-loading"]):hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html[data-ag-custom-theme] [data-testid="pane-titlebar-toolbar"] button:is([aria-expanded="true"], [data-state="open"], .bg-secondary, [data-testid="toggle-overview-panel"]:not(.bg-transparent)):not(#antigravity-theme-btn):not([data-testid^="open-editor-"]):not([data-testid="install-editor"]):not([data-testid="editor-loading"]) {
+  background-color: rgba(255, 255, 255, 0.66) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 22%, transparent) !important;
+  color: var(--foreground) !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) [data-testid="pane-titlebar-toolbar"] button:is([aria-expanded="true"], [data-state="open"], .bg-secondary, [data-testid="toggle-overview-panel"]:not(.bg-transparent)):not(#antigravity-theme-btn):not([data-testid^="open-editor-"]):not([data-testid="install-editor"]):not([data-testid="editor-loading"]) {
+  background-color: color-mix(in srgb, var(--primary) 20%, transparent) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 28%, transparent) !important;
+  color: var(--foreground) !important;
+}
+
+html[data-ag-custom-theme] div:has(> [data-testid="right-cluster-fade"]),
+html[data-ag-custom-theme] div:has(> [data-testid="toggle-aux-sidebar"]) {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+html[data-ag-custom-theme] [data-testid="right-cluster-fade"] {
+  background-image: none !important;
+  opacity: 0 !important;
+}
+
+/* ---------- 5b. Theme-Adaptive Selection Highlight ---------- */
+html[data-ag-custom-theme] :not(.xterm):not(.xterm *):not(.monaco-editor):not(.monaco-editor *)::selection {
+  background-color: var(--selection, rgba(var(--ag-accent-rgb), 0.24)) !important;
+}
+
+/* ---------- 6. OKLCH Inline Code Capsules & Markdown Reading Hierarchy ---------- */
+html[data-ag-custom-theme] code:not(pre *):not(.xterm *):not(.monaco-editor *):not([data-testid="media-modal"] *):not(.settings-modal-container *) {
+  background-color: var(--ag-inline-code-bg, var(--agy-inline-code-bg)) !important;
+  color: var(--ag-inline-code-fg, var(--agy-inline-code-fg)) !important;
+  border: 1px solid var(--ag-inline-code-border, color-mix(in srgb, var(--agy-inline-code-fg) 26%, transparent)) !important;
+  border-radius: 5px !important;
+  padding: 1px 6px !important;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+html[data-ag-custom-theme] [data-markdown-root]:not(.settings-modal-container *):not([data-testid="media-modal"] *) pre > :is(div.rounded-xl, div.rounded-lg):not(.xterm *):not(.monaco-editor *) {
+  background-color: rgba(255, 255, 255, 0.72) !important;
+  border: 1px solid rgba(15, 23, 42, 0.09) !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) [data-markdown-root]:not(.settings-modal-container *):not([data-testid="media-modal"] *) pre > :is(div.rounded-xl, div.rounded-lg):not(.xterm *):not(.monaco-editor *) {
+  background-color: rgba(10, 16, 30, 0.62) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22) !important;
+}
+
+html[data-ag-custom-theme] [data-markdown-root]:not(.settings-modal-container *):not([data-testid="media-modal"] *) pre > div > div:first-child:has(button) {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.07) !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) [data-markdown-root]:not(.settings-modal-container *):not([data-testid="media-modal"] *) pre > div > div:first-child:has(button) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+html[data-ag-custom-theme] [data-markdown-root]:not(.settings-modal-container *):not([data-testid="media-modal"] *) .agy-md-table {
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  background-color: rgba(255, 255, 255, 0.48) !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) [data-markdown-root]:not(.settings-modal-container *):not([data-testid="media-modal"] *) .agy-md-table {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  background-color: rgba(15, 23, 42, 0.35) !important;
+}
+
+html[data-ag-custom-theme] [data-markdown-root]:not(.settings-modal-container *):not([data-testid="media-modal"] *) .agy-md-table th {
+  background-color: rgba(15, 23, 42, 0.05) !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.10) !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) [data-markdown-root]:not(.settings-modal-container *):not([data-testid="media-modal"] *) .agy-md-table th {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10) !important;
+}
+
+html[data-ag-custom-theme] [data-markdown-root]:not(.settings-modal-container *):not([data-testid="media-modal"] *) blockquote:not(.markdown-alert) {
+  background-color: color-mix(in srgb, var(--primary) 6%, transparent) !important;
+  border-radius: 0 8px 8px 0 !important;
+  padding: 6px 12px 6px 14px !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) [data-markdown-root]:not(.settings-modal-container *):not([data-testid="media-modal"] *) blockquote:not(.markdown-alert) {
+  background-color: color-mix(in srgb, var(--primary) 9%, transparent) !important;
+}
+
+html[data-ag-custom-theme] [data-markdown-root]:not(.settings-modal-container *):not([data-testid="media-modal"] *) blockquote:not(.markdown-alert)::before {
+  background-color: var(--primary) !important;
+  opacity: 0.85 !important;
+}
+
+html[data-ag-custom-theme] [data-markdown-root]:not(.settings-modal-container *):not([data-testid="media-modal"] *) :is(strong, b):not(a *):not(pre *) {
+  color: #0B1324 !important;
+  font-weight: 600 !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) [data-markdown-root]:not(.settings-modal-container *):not([data-testid="media-modal"] *) :is(strong, b):not(a *):not(pre *) {
+  color: #FFFFFF !important;
+}
+
+html[data-ag-custom-theme] [data-markdown-root]:not(.settings-modal-container *):not([data-testid="media-modal"] *) :is(p, li, td, th, blockquote) a:not(:has(svg)):not([role="button"]) {
+  color: var(--primary) !important;
+  text-underline-offset: 3px;
+}
+
+html[data-ag-custom-theme] [data-markdown-root]:not(.settings-modal-container *):not([data-testid="media-modal"] *) :is(p, li, td, th, blockquote) a:not(:has(svg)):not([role="button"]):hover {
+  text-decoration: underline !important;
+}
+
+html[data-ag-custom-theme] [data-markdown-root]:not(.settings-modal-container *):not([data-testid="media-modal"] *) hr {
+  background-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) [data-markdown-root]:not(.settings-modal-container *):not([data-testid="media-modal"] *) hr {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+html[data-ag-custom-theme] [data-markdown-root]:not(.settings-modal-container *):not([data-testid="media-modal"] *) :is(ul, ol):not(.contains-task-list) > li:not(.task-list-item)::marker {
+  color: color-mix(in srgb, var(--primary) 80%, var(--foreground)) !important;
+  font-weight: 600;
+}
+
+html[data-ag-custom-theme] [data-markdown-root]:not(.settings-modal-container *):not([data-testid="media-modal"] *) :is(ul, ol) :is(ul, ol) {
+  border-inline-start: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
+  padding-inline-start: 1.15em;
+  margin-top: 0.25em;
+}
+
+html[data-ag-custom-theme] [data-markdown-root]:not(.settings-modal-container *):not([data-testid="media-modal"] *) {
+  text-rendering: optimizeLegibility;
+}
+
+html[data-ag-custom-theme] :is([data-markdown-root], [data-testid="hover-card-subtitle"]):not(.settings-modal-container *):not([data-testid="media-modal"] *) :is(.text-muted-foreground, [class*="text-muted-foreground/"]) {
+  color: color-mix(in srgb, var(--foreground) 72%, transparent) !important;
+  opacity: 1 !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) :is([data-markdown-root], [data-testid="hover-card-subtitle"]):not(.settings-modal-container *):not([data-testid="media-modal"] *) :is(.text-muted-foreground, [class*="text-muted-foreground/"]) {
+  color: color-mix(in srgb, var(--foreground) 76%, transparent) !important;
+}
+
+/* ---------- 7. Interactive Mentions, Cards, Selection Pill, Files & Code Controls ---------- */
+html[data-ag-custom-theme] :is(bdi.context-scope-mention, [data-markdown-root] .inline-pill, [data-markdown-root] [data-testid="comment-pill"]):not(.settings-modal-container *):not([data-testid="media-modal"] *) {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  vertical-align: -2px !important;
+  line-height: 1.35 !important;
+  background-color: color-mix(in srgb, var(--primary) 8%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent) !important;
+  border-radius: 6px !important;
+  padding: 0 5px !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) :is(bdi.context-scope-mention, [data-markdown-root] .inline-pill, [data-markdown-root] [data-testid="comment-pill"]):not(.settings-modal-container *):not([data-testid="media-modal"] *) {
+  background-color: color-mix(in srgb, var(--primary) 13%, transparent) !important;
+  border-color: color-mix(in srgb, var(--primary) 28%, transparent) !important;
+}
+
+html[data-ag-custom-theme] :is(bdi.context-scope-mention, [data-markdown-root] .inline-pill, [data-markdown-root] [data-testid="comment-pill"]):not(.settings-modal-container *):not([data-testid="media-modal"] *):hover {
+  background-color: color-mix(in srgb, var(--primary) 18%, transparent) !important;
+  border-color: color-mix(in srgb, var(--primary) 48%, transparent) !important;
+}
+
+html[data-ag-custom-theme] :is(.rounded-lg, .rounded-xl):is(.border, [class*="border-border"]):is(.bg-card, .bg-muted, [class*="bg-muted/"]):not(.bg-sidebar *):not(.settings-modal-container *):not([data-testid="media-modal"] *):not([data-base-ui-portal] *):not(.monaco-editor *):not(.xterm *):not(#antigravity-theme-dropdown):not(pre > div):not([data-testid="artifact-card"]):not(.artifact-card) {
+  background-color: rgba(255, 255, 255, 0.56) !important;
+  border-color: rgba(15, 23, 42, 0.10) !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) :is(.rounded-lg, .rounded-xl):is(.border, [class*="border-border"]):is(.bg-card, .bg-muted, [class*="bg-muted/"]):not(.bg-sidebar *):not(.settings-modal-container *):not([data-testid="media-modal"] *):not([data-base-ui-portal] *):not(.monaco-editor *):not(.xterm *):not(#antigravity-theme-dropdown):not(pre > div):not([data-testid="artifact-card"]):not(.artifact-card) {
+  background-color: rgba(15, 23, 42, 0.36) !important;
+  border-color: rgba(255, 255, 255, 0.11) !important;
+}
+
+html[data-ag-custom-theme] :is(button, a, [role="button"], .cursor-pointer, [tabindex]:not([tabindex="-1"])):is([class*="hover:bg-secondary"], [class*="hover:bg-muted"]):not(.bg-sidebar *):not(.settings-modal-container *):not([data-testid="media-modal"] *):not([data-base-ui-portal] *):not(#antigravity-theme-selector *):not(#antigravity-theme-dropdown *):hover {
+  background-color: rgba(15, 23, 42, 0.06) !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) :is(button, a, [role="button"], .cursor-pointer, [tabindex]:not([tabindex="-1"])):is([class*="hover:bg-secondary"], [class*="hover:bg-muted"]):not(.bg-sidebar *):not(.settings-modal-container *):not([data-testid="media-modal"] *):not([data-base-ui-portal] *):not(#antigravity-theme-selector *):not(#antigravity-theme-dropdown *):hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html[data-ag-custom-theme] :is([data-testid="artifact-card"], .artifact-card, [data-testid="bubble-artifact-card"], [data-testid="changed-files-card-header"], [data-testid="automation-settings"]):not(.settings-modal-container *):not([data-testid="media-modal"] *) {
+  background-color: rgba(255, 255, 255, 0.48) !important;
+  border-color: rgba(15, 23, 42, 0.10) !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) :is([data-testid="artifact-card"], .artifact-card, [data-testid="bubble-artifact-card"], [data-testid="changed-files-card-header"], [data-testid="automation-settings"]):not(.settings-modal-container *):not([data-testid="media-modal"] *) {
+  background-color: rgba(15, 23, 42, 0.30) !important;
+  border-color: rgba(255, 255, 255, 0.11) !important;
+}
+
+html[data-ag-custom-theme] :is([data-testid="artifact-card"], .artifact-card, [data-testid="bubble-artifact-card"], [data-testid="changed-files-card-header"], [data-testid="automation-settings"], [data-testid="changed-files-card"] .cursor-pointer, [data-testid="changed-files-card"] [class*="hover:bg-"], [data-testid="empty-file-open-button"]):not(.settings-modal-container *):not([data-testid="media-modal"] *):hover {
+  background-color: rgba(255, 255, 255, 0.78) !important;
+  border-color: color-mix(in srgb, var(--primary) 34%, rgba(15, 23, 42, 0.14)) !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) :is([data-testid="artifact-card"], .artifact-card, [data-testid="bubble-artifact-card"], [data-testid="changed-files-card-header"], [data-testid="automation-settings"], [data-testid="changed-files-card"] .cursor-pointer, [data-testid="changed-files-card"] [class*="hover:bg-"], [data-testid="empty-file-open-button"]):not(.settings-modal-container *):not([data-testid="media-modal"] *):hover {
+  background-color: color-mix(in srgb, var(--primary) 16%, rgba(15, 23, 42, 0.46)) !important;
+  border-color: color-mix(in srgb, var(--primary) 38%, rgba(255, 255, 255, 0.14)) !important;
+}
+
+html[data-ag-custom-theme] [data-testid="changed-files-card-review"] {
+  background-color: rgba(255, 255, 255, 0.64) !important;
+  border-color: rgba(15, 23, 42, 0.14) !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) [data-testid="changed-files-card-review"] {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+html[data-ag-custom-theme] [data-testid="changed-files-card-review"]:hover {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+  border-color: color-mix(in srgb, var(--primary) 42%, rgba(15, 23, 42, 0.16)) !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) [data-testid="changed-files-card-review"]:hover {
+  background-color: color-mix(in srgb, var(--primary) 24%, rgba(255, 255, 255, 0.10)) !important;
+  border-color: color-mix(in srgb, var(--primary) 48%, rgba(255, 255, 255, 0.18)) !important;
+}
+
+html[data-ag-custom-theme] :is([data-testid="artifact-card"], .artifact-card, [data-testid="bubble-artifact-card"], [data-testid="changed-files-card-header"], [data-testid="changed-files-card-review"], [data-testid="automation-settings"]):not(.settings-modal-container *):not([data-testid="media-modal"] *):active {
+  background-color: rgba(255, 255, 255, 0.88) !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) :is([data-testid="artifact-card"], .artifact-card, [data-testid="bubble-artifact-card"], [data-testid="changed-files-card-header"], [data-testid="changed-files-card-review"], [data-testid="automation-settings"]):not(.settings-modal-container *):not([data-testid="media-modal"] *):active {
+  background-color: color-mix(in srgb, var(--primary) 24%, rgba(15, 23, 42, 0.56)) !important;
+}
+
+html[data-ag-custom-theme] :is(.agy-selection-pill, .selection-popup .agy-selection-pill):not(.settings-modal-container *):not([data-testid="media-modal"] *) {
+  background-color: rgba(255, 255, 255, 0.90) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.12), 0 1px 4px rgba(15, 23, 42, 0.06) !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) :is(.agy-selection-pill, .selection-popup .agy-selection-pill):not(.settings-modal-container *):not([data-testid="media-modal"] *) {
+  background-color: rgba(15, 23, 42, 0.88) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.42), 0 2px 6px rgba(0, 0, 0, 0.24) !important;
+}
+
+html[data-ag-custom-theme] :is(.agy-selection-pill button, [data-testid="pane-selection-add-to-chat"] button, [data-testid="selection-comment-button"]):not(.settings-modal-container *):not([data-testid="media-modal"] *):hover {
+  background-color: color-mix(in srgb, var(--primary) 16%, transparent) !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) :is(.agy-selection-pill button, [data-testid="pane-selection-add-to-chat"] button, [data-testid="selection-comment-button"]):not(.settings-modal-container *):not([data-testid="media-modal"] *):hover {
+  background-color: color-mix(in srgb, var(--primary) 24%, transparent) !important;
+}
+
+html[data-ag-custom-theme] :is(.agy-selection-pill button, [data-testid="pane-selection-add-to-chat"] button, [data-testid="selection-comment-button"]):not(.settings-modal-container *):not([data-testid="media-modal"] *):active {
+  background-color: color-mix(in srgb, var(--primary) 26%, transparent) !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) :is(.agy-selection-pill button, [data-testid="pane-selection-add-to-chat"] button, [data-testid="selection-comment-button"]):not(.settings-modal-container *):not([data-testid="media-modal"] *):active {
+  background-color: color-mix(in srgb, var(--primary) 34%, transparent) !important;
+}
+
+html[data-ag-custom-theme] [data-file-uri]:is(.cursor-pointer, [role="button"]):not(.bg-sidebar *):not(.settings-modal-container *):not([data-testid="media-modal"] *) {
+  border-radius: 6px !important;
+  transition: background-color 0.15s ease !important;
+}
+
+html[data-ag-custom-theme] [data-file-uri]:is(.cursor-pointer, [role="button"]):not(.bg-sidebar *):not(.settings-modal-container *):not([data-testid="media-modal"] *):is(:hover, :focus-visible) {
+  background-color: rgba(255, 255, 255, 0.72) !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) [data-file-uri]:is(.cursor-pointer, [role="button"]):not(.bg-sidebar *):not(.settings-modal-container *):not([data-testid="media-modal"] *):is(:hover, :focus-visible) {
+  background-color: color-mix(in srgb, var(--primary) 16%, rgba(15, 23, 42, 0.42)) !important;
+}
+
+html[data-ag-custom-theme] [data-testid="code-block-preview-toggle"] {
+  background-color: rgba(15, 23, 42, 0.06) !important;
+  border-radius: 6px !important;
+  padding: 2px !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) [data-testid="code-block-preview-toggle"] {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+html[data-ag-custom-theme] :is([data-testid="code-block-preview-button"], [data-testid="code-block-raw-button"]):is([data-state="active"], [aria-checked="true"], [aria-selected="true"], [aria-pressed="true"], .bg-secondary, .bg-background) {
+  background-color: rgba(255, 255, 255, 0.88) !important;
+  color: var(--foreground) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08) !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) :is([data-testid="code-block-preview-button"], [data-testid="code-block-raw-button"]):is([data-state="active"], [aria-checked="true"], [aria-selected="true"], [aria-pressed="true"], .bg-secondary, .bg-background) {
+  background-color: color-mix(in srgb, var(--primary) 24%, rgba(15, 23, 42, 0.65)) !important;
+  color: var(--foreground) !important;
+  box-shadow: none !important;
+}
+
+html[data-ag-custom-theme] button[aria-pressed="true"]:not(.bg-sidebar *):not(.settings-modal-container *):not([data-testid="media-modal"] *) {
+  background-color: color-mix(in srgb, var(--primary) 16%, rgba(255, 255, 255, 0.66)) !important;
+  color: var(--primary) !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) button[aria-pressed="true"]:not(.bg-sidebar *):not(.settings-modal-container *):not([data-testid="media-modal"] *) {
+  background-color: color-mix(in srgb, var(--primary) 22%, transparent) !important;
+  color: var(--primary) !important;
+}
+
+html[data-ag-custom-theme] [data-testid="revert-button"]:not([aria-disabled="true"]):hover {
+  background-color: rgba(15, 23, 42, 0.06) !important;
+  border-radius: 6px !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) [data-testid="revert-button"]:not([aria-disabled="true"]):hover {
+  background-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+html[data-ag-custom-theme] :is([data-testid="comment-group-count"], [data-testid="file-title-badge"]:not([class*="amber"]), span.rounded-full:is(.bg-muted, .bg-secondary)):not(.bg-sidebar *):not(.settings-modal-container *):not([data-testid="media-modal"] *) {
+  background-color: rgba(15, 23, 42, 0.07) !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) :is([data-testid="comment-group-count"], [data-testid="file-title-badge"]:not([class*="amber"]), span.rounded-full:is(.bg-muted, .bg-secondary)):not(.bg-sidebar *):not(.settings-modal-container *):not([data-testid="media-modal"] *) {
+  background-color: rgba(255, 255, 255, 0.10) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+html[data-ag-custom-theme] :is(.agy-user-bubble-header, [data-testid="side-question-origin"]):not(.settings-modal-container *):not([data-testid="media-modal"] *) {
+  background-color: rgba(255, 255, 255, 0.50) !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) :is(.agy-user-bubble-header, [data-testid="side-question-origin"]):not(.settings-modal-container *):not([data-testid="media-modal"] *) {
+  background-color: rgba(15, 23, 42, 0.36) !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+html[data-ag-custom-theme] :is(.agy-user-bubble-header, [data-testid="side-question-origin"]):not(.settings-modal-container *):not([data-testid="media-modal"] *):hover {
+  background-color: rgba(255, 255, 255, 0.78) !important;
+  border-color: color-mix(in srgb, var(--primary) 30%, rgba(15, 23, 42, 0.12)) !important;
+}
+
+html[data-ag-custom-theme]:is([data-ag-color-scheme="dark"], .dark, :has(> body.dark), .theme-dark, .dark-theme) :is(.agy-user-bubble-header, [data-testid="side-question-origin"]):not(.settings-modal-container *):not([data-testid="media-modal"] *):hover {
+  background-color: color-mix(in srgb, var(--primary) 16%, rgba(15, 23, 42, 0.48)) !important;
+  border-color: color-mix(in srgb, var(--primary) 36%, rgba(255, 255, 255, 0.14)) !important;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  [data-testid="media-modal-header"] > div,
+  [data-testid="media-modal-zoom-controls"],
+  html[data-ag-custom-theme] :is(.agy-selection-pill, .selection-popup .agy-selection-pill):not(.settings-modal-container *):not([data-testid="media-modal"] *) {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}

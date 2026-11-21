@@ -10,20 +10,18 @@ function toKebabCase(name: string): string {
   return name.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
 }
 
+export interface CssVariableGroups {
+  readonly hostVars: ReadonlyArray<readonly [string, string]>;
+  readonly glassVars: ReadonlyArray<readonly [string, string]>;
+  readonly agentVars: ReadonlyArray<readonly [string, string]>;
+  readonly reducedTransparencyVars: ReadonlyArray<readonly [string, string]>;
+}
+
 /**
- * Emits a deterministic variables.css stylesheet implementing:
- * - All 30 Antigravity host CSS color variables (--color-background/text/border/ring-*) + --font-sans/mono
- * - High-Opacity Matte Frosted Glass material variables (--agy-glass-*, incl. composite --agy-glass-backdrop-*)
- * - Full Antigravity 2.0 Agent Workbench variables (--agy-*, incl. Mermaid, Code Fence, Tables, Diffs, ANSI 16)
- * - Zero-specificity :where(:root:not([data-antigravity-theme])) under @media (prefers-color-scheme)
- * - Mandatory @media (prefers-reduced-transparency: reduce) opaque + backdrop-filter: none fallbacks
+ * Extracts deterministic CSS custom property groups from a SemanticIR.
+ * Shared across static variables.css and compiled desktop runtime-bundle outputs.
  */
-export function emitCssVariables(
-  ir: SemanticIR,
-  packageName = '@django9944/antigravity-theme',
-): string {
-  const colorScheme = ir.meta.mode === 'light' || ir.meta.mode === 'hc-light' ? 'light' : 'dark';
-  const isHighContrast = ir.meta.mode === 'hc-dark' || ir.meta.mode === 'hc-light';
+export function collectCssVariableGroups(ir: SemanticIR): CssVariableGroups {
 
   const hostVars: ReadonlyArray<readonly [string, string]> = [
     ['--color-background-danger', ir.status.danger.bg],
@@ -111,6 +109,7 @@ export function emitCssVariables(
     ['--agy-approval-fg', ir.agent.approvalFg],
     ['--agy-approve-btn-bg', ir.agent.approveBtnBg],
     ['--agy-approve-btn-fg', ir.agent.approveBtnFg],
+    ['--agy-aurora-mesh', ir.runtime.auroraMesh],
     ['--agy-blockquote-bg', ir.artifact.blockquoteBg],
     ['--agy-blockquote-border', ir.artifact.blockquoteBorder],
     ['--agy-border-strong', ir.border.strong],
@@ -195,6 +194,7 @@ export function emitCssVariables(
   ];
 
   const reducedTransparencyVars: ReadonlyArray<readonly [string, string]> = [
+    ['--agy-aurora-mesh', 'none'],
     ['--agy-glass-backdrop-canvas', 'none'],
     ['--agy-glass-backdrop-popover', 'none'],
     ['--agy-glass-backdrop-shell', 'none'],
@@ -210,6 +210,30 @@ export function emitCssVariables(
     ['--agy-glass-saturate-popover', '100%'],
     ['--agy-glass-saturate-shell', '100%'],
   ];
+
+  return {
+    hostVars,
+    glassVars,
+    agentVars,
+    reducedTransparencyVars,
+  };
+}
+
+/**
+ * Emits a deterministic variables.css stylesheet implementing:
+ * - All 30 Antigravity host CSS color variables (--color-background/text/border/ring-*) + --font-sans/mono
+ * - High-Opacity Matte Frosted Glass material variables (--agy-glass-*, incl. composite --agy-glass-backdrop-*)
+ * - Full Antigravity 2.0 Agent Workbench variables (--agy-*, incl. Mermaid, Code Fence, Tables, Diffs, ANSI 16)
+ * - Zero-specificity :where(:root:not([data-antigravity-theme])) under @media (prefers-color-scheme)
+ * - Mandatory @media (prefers-reduced-transparency: reduce) opaque + backdrop-filter: none fallbacks
+ */
+export function emitCssVariables(
+  ir: SemanticIR,
+  packageName = '@django9944/antigravity-theme',
+): string {
+  const colorScheme = ir.meta.mode === 'light' || ir.meta.mode === 'hc-light' ? 'light' : 'dark';
+  const isHighContrast = ir.meta.mode === 'hc-dark' || ir.meta.mode === 'hc-light';
+  const { hostVars, glassVars, agentVars, reducedTransparencyVars } = collectCssVariableGroups(ir);
 
   const buildRuleBlock = (selector: string, indent = ''): string[] => [
     `${indent}${selector} {`,

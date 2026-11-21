@@ -122,24 +122,28 @@ describe('Release Notes & README Iteration Sync', () => {
     }
 
     const releases = parseChangelogReleases(readFileSync(resolve(dir, 'CHANGELOG.md'), 'utf8'));
-    expect(releases.length).toBeGreaterThanOrEqual(1);
-    expect(releases[0]?.version).toBe('0.1.0');
+    expect(releases.length).toBeGreaterThanOrEqual(2);
+    expect(releases[0]?.version).toBe('0.2.0');
+    expect(releases.some((r) => r.version === '0.1.0')).toBe(true);
     expect(releases[0]?.bullets.length).toBeGreaterThan(0);
 
     const syncRes = syncReadmeReleaseHistory(dir);
-    expect(syncRes.version).toBe('0.1.0');
+    expect(syncRes.version).toBe('0.2.0');
     expect(syncRes.releaseCount).toBe(releases.length);
 
     const enReadme = readFileSync(resolve(dir, 'README.md'), 'utf8');
     const zhReadme = readFileSync(resolve(dir, 'README.zh-CN.md'), 'utf8');
-    expect(enReadme).toContain('### [v0.1.0](https://github.com/Django9944/antigravity-theme/releases/tag/v0.1.0) (Latest Release)');
-    expect(zhReadme).toContain('### [v0.1.0](https://github.com/Django9944/antigravity-theme/releases/tag/v0.1.0) （当前最新版本 / Latest）');
+    expect(enReadme).toContain('### [v0.2.0](https://github.com/Django9944/antigravity-theme/releases/tag/v0.2.0) (Latest Release)');
+    expect(zhReadme).toContain('### [v0.2.0](https://github.com/Django9944/antigravity-theme/releases/tag/v0.2.0) （当前最新版本 / Latest）');
 
-    const notes = generateReleaseNotes(dir, '0.1.0');
+    const notes = generateReleaseNotes(dir, '0.2.0');
     expect(notes).toContain('## Project Overview');
-    expect(notes).toContain('Matte glass Dark & Light theme pack for the Antigravity 2.0 Agent Desktop App');
-    expect(notes).toContain("## What's Changed in `v0.1.0` (Iteration Notes)");
-    expect(notes).toContain('antigravity-theme-v0.1.0.zip');
+    expect(notes).toContain('OKLCH matte & aurora glass theme system');
+    expect(notes).toContain("## What's Changed in `v0.2.0` (Iteration Notes)");
+    expect(notes).toContain('antigravity-theme-v0.2.0.zip');
+    expect(notes).toContain('antigravity-theme-v0.2.0-macos.zip');
+    expect(notes).toContain('antigravity-theme-v0.2.0-windows.zip');
+    expect(notes).toContain('SHA256SUMS.txt');
   });
 });
 
@@ -147,22 +151,40 @@ describe('packRelease Purity & Version Enforcement', () => {
   function stageValidWorkspace(): string {
     const dir = makeTempDir('agy-pack-');
     cpSync(resolve(ROOT_DIR, 'dist'), resolve(dir, 'dist'), { recursive: true });
+    cpSync(resolve(ROOT_DIR, 'core'), resolve(dir, 'core'), { recursive: true });
     for (const file of [
       'package.json',
+      'manifest.json',
       'LICENSE',
       'README.md',
       'README.zh-CN.md',
       'CHANGELOG.md',
+      'install.sh',
+      'install.command',
+      'uninstall.command',
+      '检查更新.command',
+      'install.ps1',
+      'install.bat',
+      'uninstall.bat',
+      '检查更新.bat',
     ]) {
       cpSync(resolve(ROOT_DIR, file), resolve(dir, file));
     }
     return dir;
   }
 
-  it('rejects extensionless executables, dotfiles, and symlinks inside dist/', () => {
+  it('rejects .js in variant dirs, invalid runtime files, dotfiles, and symlinks inside dist/', () => {
     const dir = stageValidWorkspace();
     writeFileSync(resolve(dir, 'dist', 'evil-script'), '#!/bin/sh\n', 'utf8');
     expect(() => packRelease(dir)).toThrow(/Unauthorized file extension/i);
+
+    const dirVariantJs = stageValidWorkspace();
+    writeFileSync(resolve(dirVariantJs, 'dist', 'antigravity-dark', 'evil.js'), 'alert(1);\n', 'utf8');
+    expect(() => packRelease(dirVariantJs)).toThrow(/Unauthorized file extension/i);
+
+    const dirRuntimeEvil = stageValidWorkspace();
+    writeFileSync(resolve(dirRuntimeEvil, 'dist', 'runtime', 'evil.sh'), '#!/bin/sh\n', 'utf8');
+    expect(() => packRelease(dirRuntimeEvil)).toThrow(/Unauthorized runtime file/i);
 
     const dir2 = stageValidWorkspace();
     writeFileSync(resolve(dir2, 'dist', '.DS_Store'), 'junk', 'utf8');
@@ -185,15 +207,27 @@ describe('packRelease Purity & Version Enforcement', () => {
     expect(() => packRelease(dir)).toThrow(/Stale dist\/manifest\.json version/i);
   });
 
-  it('packs a valid workspace into an archive with matching SHA256SUMS.txt', () => {
+  it('packs standard, macOS, and Windows archives with matching unified SHA256SUMS.txt', () => {
     const dir = stageValidWorkspace();
     const res = packRelease(dir);
+    expect(res.archives.length).toBe(3);
     expect(existsSync(res.archivePath)).toBe(true);
     expect(existsSync(res.checksumsPath)).toBe(true);
     expect(res.checksum).toMatch(/^[0-9a-f]{64}$/);
-    const archiveBase = basename(res.archivePath);
-    expect(readFileSync(res.checksumsPath, 'utf8')).toBe(`${res.checksum}  ${archiveBase}\n`);
-    const stageBase = archiveBase.replace(/\.(zip|tar\.gz)$/, '');
-    expect(existsSync(resolve(dir, 'release', stageBase))).toBe(false);
+
+    for (const entry of res.archives) {
+      expect(existsSync(entry.archivePath)).toBe(true);
+      expect(entry.checksum).toMatch(/^[0-9a-f]{64}$/);
+      const stageBase = entry.name.replace(/\.(zip|tar\.gz)$/, '');
+      expect(existsSync(resolve(dir, 'release', stageBase))).toBe(false);
+      expect(existsSync(resolve(dir, 'release', `.stage-${stageBase}`))).toBe(false);
+    }
+
+    const expectedSums =
+      res.archives.map((entry) => `${entry.checksum}  ${entry.name}`).join('\n') + '\n';
+    expect(readFileSync(res.checksumsPath, 'utf8')).toBe(expectedSums);
+    expect(basename(res.archives[0]!.archivePath)).toMatch(/^antigravity-theme-v0\.2\.0\.(zip|tar\.gz)$/);
+    expect(basename(res.archives[1]!.archivePath)).toMatch(/^antigravity-theme-v0\.2\.0-macos\.(zip|tar\.gz)$/);
+    expect(basename(res.archives[2]!.archivePath)).toMatch(/^antigravity-theme-v0\.2\.0-windows\.(zip|tar\.gz)$/);
   });
 });

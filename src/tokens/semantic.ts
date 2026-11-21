@@ -1,11 +1,13 @@
 import {
   oklchToCssRgba,
   oklchToHex,
+  oklchToRgbTuple,
   resolveShadow,
   withAlpha,
 } from '../core/color.js';
 import type {
   AlertTokenSet,
+  AuroraMeshSpec,
   ChromaticGrade,
   OklchColor,
   SemanticIR,
@@ -44,6 +46,25 @@ function buildAlertSet(
   };
 }
 
+function compileAuroraMesh(spec: AuroraMeshSpec): string {
+  const layers: string[] = [];
+  if (spec.topCapBlend) {
+    const capHex = oklchToHex(spec.titlebarTint);
+    const capClear = oklchToCssRgba(withAlpha(spec.titlebarTint, 0));
+    layers.push(`linear-gradient(180deg, ${capHex} 0px, ${capHex} 34px, ${capClear} 96px)`);
+  }
+  for (const glow of spec.glows) {
+    layers.push(
+      `radial-gradient(circle at ${glow.x} ${glow.y}, ${oklchToCssRgba(glow.color)} 0%, transparent ${glow.radius})`,
+    );
+  }
+  const linearStops = spec.linearStops
+    .map((stop) => `${oklchToHex(stop.color)} ${stop.pos}`)
+    .join(', ');
+  layers.push(`linear-gradient(${spec.linearAngle}, ${linearStops})`);
+  return layers.join(', ');
+}
+
 /**
  * Deterministically compiles a Layer 1 PrimitivePalette into the Layer 2 SemanticIR.
  * Handles dark, light, hc-dark, and hc-light modes via palette-driven parameters.
@@ -52,10 +73,13 @@ export function resolveSemanticIR(
   variant: VariantDefinition,
   version: string,
 ): SemanticIR {
-  const { palette, mode } = variant;
+  const { palette, mode, aurora } = variant;
   const { neutral, chromatic, solidColors, glass, alphas } = palette;
   const isDark = mode === 'dark' || mode === 'hc-dark';
   const isHighContrast = mode === 'hc-dark' || mode === 'hc-light';
+
+  const primaryAccentGrade = chromatic[variant.accentRole];
+  const inlineCodeGrade = chromatic[variant.inlineCodeRole];
 
   // Elevation surfaces (opaque anchors)
   const shellHex = oklchToHex(neutral.bgShell);
@@ -81,24 +105,41 @@ export function resolveSemanticIR(
     ? withAlpha(neutral.bgDeep, alphas.thinkingBg)
     : withAlpha(neutral.bgSurface, alphas.thinkingBg);
 
-  // Light mode uses recessed darker neutral (bgDeep) so inline code and quotes stay visible on porcelain canvas
+  // Light mode uses recessed darker neutral (bgDeep) for quotes so they stay visible on porcelain canvas
   const blockquoteBgColor = isDark
     ? withAlpha(neutral.bgElevated, alphas.blockquoteBg)
     : withAlpha(neutral.bgDeep, alphas.blockquoteBg);
-  const inlineCodeBgColor = isDark
-    ? withAlpha(neutral.bgOverlay, alphas.inlineCodeBg)
-    : withAlpha(neutral.bgDeep, alphas.inlineCodeBg);
+  const inlineCodeBgColor = withAlpha(inlineCodeGrade.tint, alphas.inlineCodeBg);
   const codeBlockBgHex = isDark ? oklchToHex(neutral.bgDeep) : cardHex;
 
   const disabledFg = oklchToHex(withAlpha(neutral.fgMuted, alphas.disabledFg));
+  const auroraMesh = compileAuroraMesh(aurora);
+  const sidebarTintRgba = oklchToCssRgba(aurora.sidebarTint);
+  const sidebarUnifiedBg = `linear-gradient(0deg, ${sidebarTintRgba}, ${sidebarTintRgba}), var(--ag-mesh)`;
+  const accentRgb = oklchToRgbTuple(primaryAccentGrade.default);
+  const [sb0, sb1, sb2] = aurora.scrollbarStops.map((c) => oklchToCssRgba(c)) as [
+    string,
+    string,
+    string,
+  ];
+  const spinnerDots = aurora.spinnerDots.map((c) => oklchToHex(c)) as [
+    string,
+    string,
+    string,
+    string,
+  ];
 
   return {
     meta: {
       id: variant.id,
+      family: variant.family,
+      familyName: variant.familyName,
+      nameZh: variant.nameZh,
       displayName: variant.displayName,
       description: variant.description,
       mode: variant.mode,
       version,
+      iconSvg: variant.iconSvg,
     },
     surface: {
       shell: shellHex,
@@ -108,7 +149,7 @@ export function resolveSemanticIR(
       elevated: popoverHex,
       input: oklchToHex(neutral.bgDeep),
       hover: oklchToHex(withAlpha(neutral.bgHover, alphas.hover)),
-      selected: oklchToHex(withAlpha(chromatic.blue.tint, alphas.selected)),
+      selected: oklchToHex(withAlpha(primaryAccentGrade.tint, alphas.selected)),
       disabled: oklchToHex(neutral.bgSurface),
       inverse: oklchToHex(neutral.fgPrimary),
     },
@@ -158,15 +199,15 @@ export function resolveSemanticIR(
       muted: oklchToHex(neutral.fgMuted),
       disabled: disabledFg,
       inverse: oklchToHex(neutral.fgInverse),
-      accent: oklchToHex(chromatic.blue.default),
-      link: oklchToHex(chromatic.blue.bright),
+      accent: oklchToHex(primaryAccentGrade.default),
+      link: oklchToHex(primaryAccentGrade.bright),
     },
     border: {
       subtle: oklchToHex(neutral.borderSubtle),
       default: oklchToHex(neutral.borderStrong),
       strong: oklchToHex(neutral.fgMuted),
       inverse: oklchToHex(neutral.fgInverse),
-      focusRing: oklchToHex(chromatic.blue.default),
+      focusRing: oklchToHex(primaryAccentGrade.default),
     },
     status: {
       info: buildStatusSet(
@@ -230,17 +271,17 @@ export function resolveSemanticIR(
       alertWarning: buildAlertSet(chromatic.amber, alphas.alertBg, alphas.alertBorder),
       alertCaution: buildAlertSet(chromatic.red, alphas.alertBg, alphas.alertBorder),
       blockquoteBg: oklchToHex(blockquoteBgColor),
-      blockquoteBorder: oklchToHex(chromatic.blue.default),
+      blockquoteBorder: oklchToHex(primaryAccentGrade.default),
       tableHeaderBg: oklchToHex(neutral.bgElevated),
       tableStripeBg: oklchToHex(withAlpha(neutral.bgSurface, alphas.tableStripeBg)),
       tableBorder: oklchToHex(neutral.borderSubtle),
       codeBlockBg: codeBlockBgHex,
       codeBlockBorder: oklchToHex(neutral.borderSubtle),
       inlineCodeBg: oklchToHex(inlineCodeBgColor),
-      inlineCodeFg: oklchToHex(chromatic.violet.default),
+      inlineCodeFg: oklchToHex(inlineCodeGrade.default),
       mermaid: {
         nodeBg: cardHex,
-        nodeBorder: oklchToHex(chromatic.blue.default),
+        nodeBorder: oklchToHex(primaryAccentGrade.default),
         nodeText: oklchToHex(neutral.fgPrimary),
         secondaryBg: popoverHex,
         tertiaryBg: shellHex,
@@ -291,8 +332,10 @@ export function resolveSemanticIR(
     terminal: {
       background: oklchToHex(neutral.bgDeep),
       foreground: oklchToHex(neutral.fgPrimary),
-      cursor: oklchToHex(chromatic.blue.default),
-      selectionBackground: oklchToHex(withAlpha(chromatic.blue.tint, alphas.terminalSelection)),
+      cursor: oklchToHex(primaryAccentGrade.default),
+      selectionBackground: oklchToHex(
+        withAlpha(primaryAccentGrade.tint, alphas.terminalSelection),
+      ),
       ansi: {
         black: oklchToHex(isDark ? neutral.bgSurface : neutral.fgPrimary),
         red: oklchToHex(chromatic.red.default),
@@ -311,6 +354,33 @@ export function resolveSemanticIR(
         brightCyan: oklchToHex(chromatic.cyan.bright),
         brightWhite: oklchToHex(isDark ? neutral.fgPrimary : neutral.bgElevated),
       },
+    },
+    runtime: {
+      auroraMesh,
+      sidebarUnifiedBg,
+      titlebarColor: oklchToHex(aurora.titlebarTint),
+      titlebarSymbolColor: oklchToHex(aurora.titlebarSymbol),
+      accentRgb,
+      accentDeep: oklchToHex(isDark ? primaryAccentGrade.default : primaryAccentGrade.bright),
+      accentGradient: `linear-gradient(90deg, ${sb0} 0%, ${sb1} 50%, ${sb2} 100%)`,
+      scrollbarGradientV: `linear-gradient(180deg, ${sb0} 0%, ${sb1} 50%, ${sb2} 100%)`,
+      scrollbarGradientH: `linear-gradient(90deg, ${sb0} 0%, ${sb1} 50%, ${sb2} 100%)`,
+      spinnerDots,
+      mediaModalBg: oklchToHex(aurora.mediaModalBg),
+      mediaCapsuleBg: isDark
+        ? oklchToCssRgba(withAlpha(neutral.bgShell, 0.84))
+        : oklchToCssRgba(withAlpha(neutral.bgElevated, 0.90)),
+      mediaCapsuleBorder: oklchToCssRgba(withAlpha(primaryAccentGrade.default, isDark ? 0.30 : 0.28)),
+      mediaCapsuleHover: oklchToCssRgba(withAlpha(primaryAccentGrade.default, isDark ? 0.22 : 0.14)),
+      mediaCapsuleFg: oklchToHex(neutral.fgPrimary),
+      inlineCodeBorder: oklchToCssRgba(withAlpha(inlineCodeGrade.default, isDark ? 0.28 : 0.24)),
+      selectionBg: oklchToHex(withAlpha(primaryAccentGrade.default, 0.22)),
+      settingsDialogBg: isDark ? shellHex : oklchToHex(neutral.bgCanvas),
+      terminalPanelBg: isDark
+        ? `linear-gradient(135deg, rgba(${accentRgb}, 0.08) 0%, ${oklchToCssRgba(withAlpha(neutral.bgDeep, 0.72))} 100%)`
+        : `linear-gradient(135deg, rgba(${accentRgb}, 0.06) 0%, rgba(255, 255, 255, 0.82) 100%)`,
+      userBubbleSolid: oklchToHex(aurora.userBubbleSolid),
+      baseFallbackBg: isDark ? shellHex : canvasHex,
     },
   };
 }

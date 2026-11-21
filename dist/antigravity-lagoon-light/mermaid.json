@@ -1,0 +1,33 @@
+{
+  "theme": "base",
+  "themeVariables": {
+    "actorBkg": "#eef4f3",
+    "actorBorder": "#006158",
+    "actorTextColor": "#152220",
+    "background": "#f4faf9",
+    "clusterBkg": "#ebf2f1",
+    "clusterBorder": "#b9c4c3",
+    "darkMode": false,
+    "defaultLinkColor": "#596563",
+    "edgeLabelBackground": "#f4faf9",
+    "fontFamily": "-apple-system, BlinkMacSystemFont, \"SF Pro Text\", \"Inter\", sans-serif",
+    "lineColor": "#596563",
+    "mainBkg": "#eef4f3",
+    "nodeBorder": "#006158",
+    "noteBkgColor": "#e3eff5",
+    "noteBorderColor": "#bad3e2",
+    "noteTextColor": "#152220",
+    "primaryBorderColor": "#006158",
+    "primaryColor": "#eef4f3",
+    "primaryTextColor": "#152220",
+    "secondaryBorderColor": "#95a1a0",
+    "secondaryColor": "#fafdfd",
+    "secondaryTextColor": "#152220",
+    "signalColor": "#152220",
+    "signalTextColor": "#152220",
+    "tertiaryBorderColor": "#b9c4c3",
+    "tertiaryColor": "#ebf2f1",
+    "tertiaryTextColor": "#354140",
+    "textColor": "#152220"
+  }
+}

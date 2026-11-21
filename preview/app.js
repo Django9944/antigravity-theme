@@ -1,8 +1,13 @@
 const htmlEl = document.documentElement;
 const bodyEl = document.body;
+const familySelect = document.getElementById('family-select');
 const backdropSelect = document.getElementById('backdrop-select');
 const reducedToggle = document.getElementById('reduced-transparency-toggle');
-const themeButtons = document.querySelectorAll('[data-theme-btn]');
+const schemeButtons = document.querySelectorAll('[data-scheme-btn]');
+const ghostSwitcherBtn = document.getElementById('ghost-switcher-btn');
+const ghostSwitcherMenu = document.getElementById('ghost-switcher-menu');
+const ghostSwitcherLabel = document.getElementById('ghost-switcher-label');
+const ghostMenuItems = document.querySelectorAll('[data-ghost-family]');
 const auxTabs = Array.from(document.querySelectorAll('.aux-tab'));
 const tabPanels = Array.from(document.querySelectorAll('.tab-panel'));
 const popoverBtn = document.getElementById('toggle-popover-btn');
@@ -13,8 +18,35 @@ const approvalCard = document.getElementById('approval-card');
 const approvalStatus = document.getElementById('approval-status');
 const tabLinks = document.querySelectorAll('[data-activate-tab]');
 
+const FAMILY_LABELS = {
+  orbital: 'Orbital',
+  prism: 'Prism',
+  zenith: 'Zenith',
+  lagoon: 'Lagoon',
+  solar: 'Solar',
+  nova: 'Nova',
+  nebula: 'Nebula',
+  stock: 'Stock',
+};
+
+const themeState = {
+  family: 'orbital',
+  scheme: 'dark',
+};
+
+function resolveThemeAttribute(family, scheme) {
+  if (family === 'stock') {
+    return `stock-${scheme}`;
+  }
+  if (family === 'orbital') {
+    return scheme === 'light' ? 'antigravity-light' : 'antigravity-dark';
+  }
+  return `antigravity-${family}-${scheme}`;
+}
+
 function setBackdrop(backdropClass) {
   bodyEl.classList.remove(
+    'backdrop-aurora',
     'backdrop-orbital',
     'backdrop-daylight',
     'backdrop-white',
@@ -26,23 +58,96 @@ function setBackdrop(backdropClass) {
   }
 }
 
-themeButtons.forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const themeId = btn.getAttribute('data-theme-btn');
-    if (!themeId) return;
-    htmlEl.setAttribute('data-antigravity-theme', themeId);
-    themeButtons.forEach((b) => {
-      const active = b === btn;
-      b.classList.toggle('is-active', active);
-      b.setAttribute('aria-pressed', String(active));
-    });
+function applyThemeState() {
+  const { family, scheme } = themeState;
+  htmlEl.setAttribute('data-antigravity-theme', resolveThemeAttribute(family, scheme));
 
-    const currentBackdrop = backdropSelect ? backdropSelect.value : 'backdrop-orbital';
-    if (currentBackdrop === 'backdrop-orbital' || currentBackdrop === 'backdrop-daylight') {
-      setBackdrop(themeId === 'antigravity-light' ? 'backdrop-daylight' : 'backdrop-orbital');
+  if (familySelect) {
+    familySelect.value = family;
+  }
+  if (ghostSwitcherLabel) {
+    ghostSwitcherLabel.textContent = FAMILY_LABELS[family] || family;
+  }
+
+  schemeButtons.forEach((btn) => {
+    const active = btn.getAttribute('data-scheme-btn') === scheme;
+    btn.classList.toggle('is-active', active);
+    btn.setAttribute('aria-pressed', String(active));
+  });
+
+  ghostMenuItems.forEach((item) => {
+    const active = item.getAttribute('data-ghost-family') === family;
+    item.classList.toggle('is-active', active);
+    item.setAttribute('aria-checked', String(active));
+  });
+
+  const currentBackdrop = backdropSelect ? backdropSelect.value : 'backdrop-aurora';
+  if (currentBackdrop === 'backdrop-orbital' || currentBackdrop === 'backdrop-daylight') {
+    setBackdrop(scheme === 'light' ? 'backdrop-daylight' : 'backdrop-orbital');
+  }
+}
+
+function setGhostMenuOpen(open) {
+  if (!ghostSwitcherMenu || !ghostSwitcherBtn) return;
+  ghostSwitcherMenu.toggleAttribute('hidden', !open);
+  ghostSwitcherBtn.setAttribute('aria-expanded', String(open));
+}
+
+if (familySelect) {
+  familySelect.addEventListener('change', (e) => {
+    const target = e.target;
+    if (target instanceof HTMLSelectElement) {
+      themeState.family = target.value;
+      applyThemeState();
     }
   });
+}
+
+schemeButtons.forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const scheme = btn.getAttribute('data-scheme-btn');
+    if (scheme !== 'dark' && scheme !== 'light') return;
+    themeState.scheme = scheme;
+    applyThemeState();
+  });
 });
+
+if (ghostSwitcherBtn && ghostSwitcherMenu) {
+  ghostSwitcherBtn.addEventListener('click', () => {
+    const isHidden = ghostSwitcherMenu.hasAttribute('hidden');
+    setGhostMenuOpen(isHidden);
+  });
+
+  ghostMenuItems.forEach((item) => {
+    item.addEventListener('click', () => {
+      const nextFamily = item.getAttribute('data-ghost-family');
+      if (!nextFamily) return;
+      themeState.family = nextFamily;
+      applyThemeState();
+      setGhostMenuOpen(false);
+    });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !ghostSwitcherMenu.hasAttribute('hidden')) {
+      setGhostMenuOpen(false);
+      ghostSwitcherBtn.focus();
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (
+      !ghostSwitcherMenu.hasAttribute('hidden') &&
+      e.target instanceof Node &&
+      !ghostSwitcherMenu.contains(e.target) &&
+      !ghostSwitcherBtn.contains(e.target)
+    ) {
+      setGhostMenuOpen(false);
+    }
+  });
+}
+
+applyThemeState();
 
 if (backdropSelect) {
   backdropSelect.addEventListener('change', (e) => {

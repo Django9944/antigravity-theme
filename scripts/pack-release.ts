@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
+  chmodSync,
   cpSync,
   existsSync,
   lstatSync,
@@ -17,8 +18,41 @@ import { fileURLToPath } from 'node:url';
 const DEFAULT_ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 const ALLOWLIST_ROOT_FILES = ['LICENSE', 'README.md', 'README.zh-CN.md', 'CHANGELOG.md'] as const;
+const DESKTOP_SHARED_FILES = [
+  'manifest.json',
+  'core/package.json',
+  'core/asar-patcher.js',
+  'core/updater.js',
+  'dist/runtime/current.css',
+  'dist/runtime/current.js',
+  'LICENSE',
+  'README.md',
+  'README.zh-CN.md',
+] as const;
+const MACOS_DESKTOP_FILES = [
+  ...DESKTOP_SHARED_FILES,
+  'install.sh',
+  'install.command',
+  'uninstall.command',
+  '检查更新.command',
+] as const;
+const WINDOWS_DESKTOP_FILES = [
+  ...DESKTOP_SHARED_FILES,
+  'install.ps1',
+  'install.bat',
+  'uninstall.bat',
+  '检查更新.bat',
+] as const;
+
 const ALLOWED_DIST_EXTS = new Set(['.json', '.css']);
+const ALLOWED_RUNTIME_EXTS = new Set(['.css', '.js']);
 const SEMVER_RE = /^\d+\.\d+\.\d+([+-][0-9A-Za-z.-]+)?$/;
+
+export interface PackedArchiveEntry {
+  readonly name: string;
+  readonly archivePath: string;
+  readonly checksum: string;
+}
 
 function assertNoSymlinksAndCollect(dir: string): string[] {
   const results: string[] = [];
@@ -39,15 +73,95 @@ function assertNoSymlinksAndCollect(dir: string): string[] {
   return results;
 }
 
+function validateDistRelativePath(relPosix: string): void {
+  const base = basename(relPosix);
+  if (base.startsWith('.')) {
+    throw new Error(`Hidden dotfile forbidden in dist/: ${relPosix}`);
+  }
+  if (relPosix.startsWith('runtime/')) {
+    const sub = relPosix.slice('runtime/'.length);
+    if (!sub || sub.includes('/') || !ALLOWED_RUNTIME_EXTS.has(extname(base))) {
+      throw new Error(`Unauthorized runtime file in dist/: ${relPosix}`);
+    }
+    return;
+  }
+  if (!ALLOWED_DIST_EXTS.has(extname(base))) {
+    throw new Error(`Unauthorized file extension in dist/: ${relPosix}`);
+  }
+}
+
 function sha256File(path: string): string {
   const data = readFileSync(path);
   return createHash('sha256').update(data).digest('hex');
 }
 
+function copyCheckedRelativeFile(
+  rootDir: string,
+  stageDir: string,
+  relPosix: string,
+  preserveExecutable = false,
+): void {
+  const src = resolve(rootDir, relPosix);
+  if (!existsSync(src)) {
+    throw new Error(`Missing required release file: ${relPosix}`);
+  }
+  const stat = lstatSync(src);
+  if (stat.isSymbolicLink() || !stat.isFile()) {
+    throw new Error(`Release file must be a regular non-symlink file: ${relPosix}`);
+  }
+  const dst = resolve(stageDir, relPosix);
+  mkdirSync(dirname(dst), { recursive: true });
+  cpSync(src, dst, { dereference: false });
+  if (preserveExecutable && (relPosix.endsWith('.sh') || relPosix.endsWith('.command'))) {
+    chmodSync(dst, 0o755);
+  }
+}
+
+function createArchive(
+  stageDir: string,
+  archiveBaseName: string,
+  releaseDir: string,
+  options: { flattenRoot: boolean },
+): PackedArchiveEntry {
+  const zipName = `${archiveBaseName}.zip`;
+  const zipPath = resolve(releaseDir, zipName);
+  const packCwd = options.flattenRoot ? stageDir : releaseDir;
+  const targets = options.flattenRoot
+    ? readdirSync(stageDir).filter((entry) => !entry.startsWith('.'))
+    : [archiveBaseName];
+
+  let archiveFile = zipName;
+  let archivePath = zipPath;
+
+  try {
+    execFileSync('zip', ['-r', '-q', zipPath, '--', ...targets], { cwd: packCwd });
+  } catch (err: unknown) {
+    const code = (err as NodeJS.ErrnoException | undefined)?.code;
+    rmSync(zipPath, { force: true });
+    if (code !== 'ENOENT') {
+      throw err;
+    }
+    archiveFile = `${archiveBaseName}.tar.gz`;
+    archivePath = resolve(releaseDir, archiveFile);
+    execFileSync('tar', ['-czf', archivePath, '--', ...targets], { cwd: packCwd });
+  }
+
+  return {
+    name: archiveFile,
+    archivePath,
+    checksum: sha256File(archivePath),
+  };
+}
+
 export function packRelease(
   rootDir = DEFAULT_ROOT_DIR,
   releaseDir = resolve(rootDir, 'release'),
-): { archivePath: string; checksumsPath: string; checksum: string } {
+): {
+  archivePath: string;
+  checksumsPath: string;
+  checksum: string;
+  archives: readonly PackedArchiveEntry[];
+} {
   const pkg = JSON.parse(readFileSync(resolve(rootDir, 'package.json'), 'utf8')) as {
     version?: unknown;
   };
@@ -73,74 +187,83 @@ export function packRelease(
 
   // Validate source dist/ before copying
   for (const file of assertNoSymlinksAndCollect(distDir)) {
-    const base = basename(file);
-    const rel = relative(distDir, file);
-    if (base.startsWith('.')) {
-      throw new Error(`Hidden dotfile forbidden in dist/: ${rel}`);
-    }
-    if (!ALLOWED_DIST_EXTS.has(extname(base))) {
-      throw new Error(`Unauthorized file extension in dist/: ${rel}`);
-    }
+    const rel = relative(distDir, file).replace(/\\/g, '/');
+    validateDistRelativePath(rel);
   }
 
   const bundleName = `antigravity-theme-v${pkg.version}`;
-  const stageDir = resolve(releaseDir, bundleName);
   rmSync(releaseDir, { recursive: true, force: true });
-  mkdirSync(stageDir, { recursive: true });
+  mkdirSync(releaseDir, { recursive: true });
 
-  cpSync(distDir, resolve(stageDir, 'dist'), { recursive: true, dereference: false });
+  // 1. Standard W3C DTCG + CSS Variables Theme Pack (wrapped under bundleName/)
+  const standardStageDir = resolve(releaseDir, bundleName);
+  mkdirSync(standardStageDir, { recursive: true });
+  cpSync(distDir, resolve(standardStageDir, 'dist'), { recursive: true, dereference: false });
   for (const file of ALLOWLIST_ROOT_FILES) {
-    const src = resolve(rootDir, file);
-    if (!existsSync(src)) {
-      throw new Error(`Missing required release file: ${file}`);
-    }
-    const stat = lstatSync(src);
-    if (stat.isSymbolicLink() || !stat.isFile()) {
-      throw new Error(`Root release file must be a regular non-symlink file: ${file}`);
-    }
-    cpSync(src, resolve(stageDir, file), { dereference: false });
+    copyCheckedRelativeFile(rootDir, standardStageDir, file);
   }
-
-  // Re-verify staged tree strictly against root allowlist vs dist allowlist
   const allowRootSet = new Set<string>(ALLOWLIST_ROOT_FILES);
-  for (const file of assertNoSymlinksAndCollect(stageDir)) {
-    const rel = relative(stageDir, file).replace(/\\/g, '/');
+  for (const file of assertNoSymlinksAndCollect(standardStageDir)) {
+    const rel = relative(standardStageDir, file).replace(/\\/g, '/');
     if (rel.startsWith('dist/')) {
-      const base = basename(file);
-      if (base.startsWith('.') || !ALLOWED_DIST_EXTS.has(extname(base))) {
-        throw new Error(`Unauthorized dist file in staged bundle: ${rel}`);
-      }
+      validateDistRelativePath(rel.slice('dist/'.length));
     } else if (!allowRootSet.has(rel)) {
       throw new Error(`Unauthorized root file in staged bundle: ${rel}`);
     }
   }
+  const standardEntry = createArchive(standardStageDir, bundleName, releaseDir, { flattenRoot: false });
+  rmSync(standardStageDir, { recursive: true, force: true });
 
-  const zipName = `${bundleName}.zip`;
-  const zipPath = resolve(releaseDir, zipName);
-  let archiveFile = zipName;
-  let archivePath = zipPath;
-
-  try {
-    execFileSync('zip', ['-r', '-q', zipName, '--', bundleName], { cwd: releaseDir });
-  } catch (err: unknown) {
-    const code = (err as NodeJS.ErrnoException | undefined)?.code;
-    rmSync(zipPath, { force: true });
-    if (code !== 'ENOENT') {
-      throw err;
+  // 2. macOS Desktop Installer & Auto-Heal Bundle (flattened root with manifest.json at top level)
+  const macStageDir = resolve(releaseDir, `.stage-${bundleName}-macos`);
+  mkdirSync(macStageDir, { recursive: true });
+  for (const file of MACOS_DESKTOP_FILES) {
+    copyCheckedRelativeFile(rootDir, macStageDir, file, true);
+  }
+  const macAllowSet = new Set<string>(MACOS_DESKTOP_FILES);
+  for (const file of assertNoSymlinksAndCollect(macStageDir)) {
+    const rel = relative(macStageDir, file).replace(/\\/g, '/');
+    if (basename(file).startsWith('.') || !macAllowSet.has(rel)) {
+      throw new Error(`Unauthorized file in macOS staged bundle: ${rel}`);
     }
-    archiveFile = `${bundleName}.tar.gz`;
-    archivePath = resolve(releaseDir, archiveFile);
-    execFileSync('tar', ['-czf', archiveFile, '--', bundleName], { cwd: releaseDir });
+  }
+  const macEntry = createArchive(macStageDir, `${bundleName}-macos`, releaseDir, { flattenRoot: true });
+  rmSync(macStageDir, { recursive: true, force: true });
+
+  // 3. Windows Desktop Installer & Auto-Heal Bundle (flattened root with manifest.json at top level)
+  const winStageDir = resolve(releaseDir, `.stage-${bundleName}-windows`);
+  mkdirSync(winStageDir, { recursive: true });
+  for (const file of WINDOWS_DESKTOP_FILES) {
+    copyCheckedRelativeFile(rootDir, winStageDir, file, false);
+  }
+  const winAllowSet = new Set<string>(WINDOWS_DESKTOP_FILES);
+  for (const file of assertNoSymlinksAndCollect(winStageDir)) {
+    const rel = relative(winStageDir, file).replace(/\\/g, '/');
+    if (basename(file).startsWith('.') || !winAllowSet.has(rel)) {
+      throw new Error(`Unauthorized file in Windows staged bundle: ${rel}`);
+    }
+  }
+  const winEntry = createArchive(winStageDir, `${bundleName}-windows`, releaseDir, { flattenRoot: true });
+  rmSync(winStageDir, { recursive: true, force: true });
+
+  const archives = [standardEntry, macEntry, winEntry] as const;
+  const checksumsPath = resolve(releaseDir, 'SHA256SUMS.txt');
+  writeFileSync(
+    checksumsPath,
+    archives.map((entry) => `${entry.checksum}  ${entry.name}`).join('\n') + '\n',
+    'utf8',
+  );
+
+  for (const entry of archives) {
+    console.log(`Packed ${entry.name} (${entry.checksum})`);
   }
 
-  const checksum = sha256File(archivePath);
-  const checksumsPath = resolve(releaseDir, 'SHA256SUMS.txt');
-  writeFileSync(checksumsPath, `${checksum}  ${archiveFile}\n`, 'utf8');
-
-  rmSync(stageDir, { recursive: true, force: true });
-
-  console.log(`Packed ${archiveFile} (${checksum})`);
-  return { archivePath, checksumsPath, checksum };
+  return {
+    archivePath: standardEntry.archivePath,
+    checksumsPath,
+    checksum: standardEntry.checksum,
+    archives,
+  };
 }
 
 function isExecutedDirectly(): boolean {

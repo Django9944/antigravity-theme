@@ -1,9 +1,10 @@
 import { existsSync, lstatSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, extname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import vm from 'node:vm';
 import { Ajv } from 'ajv';
 import { describe, expect, it } from 'vitest';
-import { VARIANTS } from '../src/variants.js';
+import { THEME_FAMILIES, VARIANTS } from '../src/variants.js';
 
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST_DIR = resolve(ROOT_DIR, 'dist');
@@ -146,25 +147,53 @@ const EXPECTED_MERMAID_VAR_KEYS = [
 const MANIFEST_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['name', 'version', 'license', 'targetSoftware', 'material', 'variants'],
+  required: ['families', 'license', 'material', 'name', 'runtime', 'targetSoftware', 'variants', 'version'],
   properties: {
     name: { const: '@django9944/antigravity-theme' },
     version: { type: 'string', pattern: '^\\d+\\.\\d+\\.\\d+([+-][0-9A-Za-z.-]+)?$' },
     license: { const: 'MIT' },
     targetSoftware: { const: 'Antigravity 2.0 Agent Desktop App' },
     material: { const: 'high-opacity-matte-glass' },
-    variants: {
+    runtime: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['css', 'js'],
+      properties: {
+        css: { const: './runtime/current.css' },
+        js: { const: './runtime/current.js' },
+      },
+    },
+    families: {
       type: 'array',
-      minItems: 2,
+      minItems: 7,
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['id', 'displayName', 'description', 'mode', 'files'],
+        required: ['id', 'name', 'darkId', 'lightId', 'nameZhDark', 'nameZhLight'],
+        properties: {
+          id: { type: 'string', minLength: 1 },
+          name: { type: 'string', minLength: 1 },
+          darkId: { type: 'string', minLength: 1 },
+          lightId: { type: 'string', minLength: 1 },
+          nameZhDark: { type: 'string', minLength: 1 },
+          nameZhLight: { type: 'string', minLength: 1 },
+        },
+      },
+    },
+    variants: {
+      type: 'array',
+      minItems: 14,
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['id', 'displayName', 'description', 'mode', 'family', 'familyName', 'files'],
         properties: {
           id: { type: 'string', pattern: '^[a-z0-9-]+$' },
           displayName: { type: 'string', minLength: 1 },
           description: { type: 'string', minLength: 1 },
           mode: { enum: ['dark', 'light', 'hc-dark', 'hc-light'] },
+          family: { type: 'string', minLength: 1 },
+          familyName: { type: 'string', minLength: 1 },
           files: {
             type: 'object',
             additionalProperties: false,
@@ -333,11 +362,13 @@ export function parseCssVariableBlocks(
 describe('Distributable Theme Pack Schema & Purity (Layer 1)', () => {
   const ajv = new Ajv();
 
-  it('contains strictly static .json and .css files in dist/ with zero symlinks or unexpected files', () => {
+  it('contains strictly static variant assets + desktop runtime bundle in dist/ with zero symlinks or unexpected files', () => {
     expect(existsSync(DIST_DIR)).toBe(true);
     const files = collectAllFilesSafe(DIST_DIR).map((f) => relative(DIST_DIR, f).replace(/\\/g, '/'));
     const expected = [
       'manifest.json',
+      'runtime/current.css',
+      'runtime/current.js',
       ...VARIANTS.flatMap((v) => [
         `${v.id}/code-theme.json`,
         `${v.id}/mermaid.json`,
@@ -347,13 +378,19 @@ describe('Distributable Theme Pack Schema & Purity (Layer 1)', () => {
     ].sort();
     expect(files.sort()).toEqual(expected);
     for (const file of files) {
-      expect(['.json', '.css']).toContain(extname(file));
+      if (file === 'runtime/current.js') {
+        expect(extname(file)).toBe('.js');
+      } else {
+        expect(['.json', '.css']).toContain(extname(file));
+      }
     }
   });
 
-  it('validates dist/manifest.json and package.json#exports parity', () => {
+  it('validates dist/manifest.json, root manifest.json, and package.json#exports parity', () => {
     const manifest = JSON.parse(readFileSync(resolve(DIST_DIR, 'manifest.json'), 'utf8')) as {
       version: string;
+      families: Array<{ id: string }>;
+      runtime: { css: string; js: string };
       variants: Array<{ id: string; files: Record<string, string> }>;
     };
     const validate = ajv.compile(MANIFEST_SCHEMA);
@@ -365,9 +402,14 @@ describe('Distributable Theme Pack Schema & Purity (Layer 1)', () => {
     const manifestIds = manifest.variants.map((v) => v.id).sort();
     const sourceIds = VARIANTS.map((v) => v.id).sort();
     expect(manifestIds).toEqual(sourceIds);
+    expect(manifest.families.map((f) => f.id)).toEqual(THEME_FAMILIES.map((f) => f.family));
 
     expect(PKG_JSON.exports['./package.json']).toBe('./package.json');
     expect(PKG_JSON.exports['./manifest.json']).toBe('./dist/manifest.json');
+    expect(PKG_JSON.exports['./runtime/*']).toBe('./dist/runtime/*');
+    expect(existsSync(resolve(DIST_DIR, manifest.runtime.css))).toBe(true);
+    expect(existsSync(resolve(DIST_DIR, manifest.runtime.js))).toBe(true);
+
     for (const v of manifest.variants) {
       expect(PKG_JSON.exports[`./${v.id}/*`]).toBe(`./dist/${v.id}/*`);
       for (const relPath of Object.values(v.files)) {
@@ -375,6 +417,39 @@ describe('Distributable Theme Pack Schema & Purity (Layer 1)', () => {
           true,
         );
       }
+    }
+
+    const rootManifest = JSON.parse(readFileSync(resolve(ROOT_DIR, 'manifest.json'), 'utf8')) as {
+      version: string;
+      repo: string;
+      payloadDir: string;
+      payloads: string[];
+      anchors: string[];
+      hookVersion: string;
+    };
+    expect(rootManifest.version).toBe(`v${PKG_JSON.version}`);
+    expect(rootManifest.repo).toBe('Django9944/antigravity-theme');
+    expect(rootManifest.payloadDir).toBe('dist/runtime');
+    expect(rootManifest.payloads).toEqual(['current.css', 'current.js']);
+    expect(rootManifest.hookVersion).toBe('v1');
+    expect(rootManifest.anchors.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('compiles syntactically valid dist/runtime/current.{css,js} with all 7 families and stock reset', () => {
+    const runtimeCss = readFileSync(resolve(DIST_DIR, 'runtime/current.css'), 'utf8');
+    const cleanCss = runtimeCss.replace(/\/\*[\s\S]*?\*\//g, '');
+    const opens = (cleanCss.match(/\{/g) || []).length;
+    const closes = (cleanCss.match(/\}/g) || []).length;
+    expect(opens).toBe(closes);
+    expect(runtimeCss).toContain('html[data-ag-custom-theme]');
+
+    const runtimeJs = readFileSync(resolve(DIST_DIR, 'runtime/current.js'), 'utf8');
+    expect(() => new vm.Script(runtimeJs, { filename: 'dist/runtime/current.js' })).not.toThrow();
+    expect(runtimeJs).toContain(`const THEME_PACK_VERSION = "v${PKG_JSON.version}"`);
+    expect(runtimeJs).toMatch(/return\s+['"]orbital['"];/);
+    expect(runtimeJs).toContain('"id":"stock"');
+    for (const family of THEME_FAMILIES) {
+      expect(runtimeJs).toContain(`"id":"${family.family}"`);
     }
   });
 

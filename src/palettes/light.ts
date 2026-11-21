@@ -1,5 +1,6 @@
 import { oklch } from '../core/color.js';
 import type { VariantDefinition } from '../core/types.js';
+import { ORBITAL_ICON_SVG } from './dark.js';
 
 /**
  * Antigravity Light — Orbital Cloud Matte Glass (ADR-006).
@@ -7,10 +8,46 @@ import type { VariantDefinition } from '../core/types.js';
  */
 export const lightVariant: VariantDefinition = {
   id: 'antigravity-light',
+  family: 'orbital',
+  familyName: 'Orbital',
+  nameZh: '星轨云瓷',
   displayName: 'Antigravity Light',
   description:
     'Orbital Cloud Matte Glass — airy cloud-porcelain light theme with Weightless Cobalt accents and editorial reading comfort for Antigravity 2.0.',
   mode: 'light',
+  accentRole: 'blue',
+  inlineCodeRole: 'blue',
+  iconSvg: ORBITAL_ICON_SVG,
+  aurora: {
+    titlebarTint: oklch(0.955, 0.008, 245),
+    titlebarSymbol: oklch(0.240, 0.018, 252),
+    topCapBlend: true,
+    linearAngle: '135deg',
+    linearStops: [
+      { color: oklch(0.985, 0.005, 245), pos: '0%' },
+      { color: oklch(0.968, 0.008, 245), pos: '52%' },
+      { color: oklch(0.948, 0.010, 245), pos: '100%' },
+    ],
+    glows: [
+      { x: '18%', y: '18%', radius: '48%', color: oklch(0.68, 0.14, 250, 0.16) },
+      { x: '82%', y: '18%', radius: '45%', color: oklch(0.72, 0.11, 205, 0.12) },
+      { x: '84%', y: '82%', radius: '50%', color: oklch(0.68, 0.13, 290, 0.12) },
+    ],
+    sidebarTint: oklch(0.955, 0.010, 245, 0.35),
+    scrollbarStops: [
+      oklch(0.550, 0.140, 250, 0.88),
+      oklch(0.560, 0.110, 205, 0.88),
+      oklch(0.560, 0.135, 290, 0.88),
+    ],
+    spinnerDots: [
+      oklch(0.520, 0.145, 250),
+      oklch(0.520, 0.115, 205),
+      oklch(0.520, 0.140, 290),
+      oklch(0.510, 0.135, 152),
+    ],
+    mediaModalBg: oklch(0.900, 0.010, 245),
+    userBubbleSolid: oklch(0.996, 0.003, 245),
+  },
   palette: {
     neutral: {
       bgDeep: oklch(0.922, 0.010, 245),
@@ -127,7 +164,7 @@ export const lightVariant: VariantDefinition = {
       approvalBg: 0.11,
       approvalBorder: 0.36,
       blockquoteBg: 0.55,
-      inlineCodeBg: 0.72,
+      inlineCodeBg: 0.12,
       tableStripeBg: 0.55,
       disabledFg: 0.65,
       terminalSelection: 0.28,

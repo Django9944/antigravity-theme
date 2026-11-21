@@ -43,16 +43,16 @@ jobs:
       - name: Build deterministic Theme Pack
         run: pnpm build
 
-      - name: Assert dist/ matches committed artifacts (tracked and untracked)
+      - name: Assert dist/ & manifest.json match committed artifacts (tracked and untracked)
         run: |
-          if [ -n "$(git status --porcelain dist/)" ]; then
-            echo "dist/ is out of sync with src/. Run pnpm build and commit dist/."
-            git status --short dist/
-            git diff dist/
+          if [ -n "$(git status --porcelain dist/ manifest.json)" ]; then
+            echo "dist/ or manifest.json is out of sync with src/. Run pnpm build and commit."
+            git status --short dist/ manifest.json
+            git diff dist/ manifest.json
             exit 1
           fi
 
-      - name: Run Schema, Contrast, Shiki & Script Tests
+      - name: Run Schema, Contrast, Shiki, Script & ASAR Tests
         run: pnpm test
 
       - name: Smoke check upstream monitor, README release sync & release packager
@@ -75,3 +75,31 @@ jobs:
             dist/
             preview/
           retention-days: 14
+
+  cross-platform-asar:
+    name: Cross-Platform ASAR & Installer (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Verify Unix shell script syntax
+        if: runner.os != 'Windows'
+        run: bash -n install.sh install.command uninstall.command 检查更新.command
+
+      - name: Run ASAR Engine, Updater & Sandbox Installer Tests
+        run: node tests/test-asar-patcher.mjs

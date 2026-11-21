@@ -1,0 +1,128 @@
+name: Antigravity Host Watch
+
+on:
+  schedule:
+    # Run daily at 02:00 UTC (10:00 UTC+8)
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      force_verify_asar:
+        description: 'Download official Antigravity.zip and run real app.asar injection/strip test even if version unchanged'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  issues: write
+
+jobs:
+  watch-antigravity:
+    name: Monitor Official Antigravity Releases & Verify ASAR Compatibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+
+      - name: Query official Antigravity update manifest
+        id: probe
+        run: |
+          node scripts/check-antigravity-upstream.mjs --json > probe.json
+          cat probe.json
+          LATEST_VER="$(node -e "console.log(require('./probe.json').latestHostVersion)")"
+          BUILD_ID="$(node -e "console.log(require('./probe.json').buildId)")"
+          IS_NEW="$(node -e "console.log(require('./probe.json').isNewHostVersion ? 'true' : 'false')")"
+          echo "latest_ver=${LATEST_VER}" >> "$GITHUB_OUTPUT"
+          echo "build_id=${BUILD_ID}" >> "$GITHUB_OUTPUT"
+          echo "is_new=${IS_NEW}" >> "$GITHUB_OUTPUT"
+
+      - name: Check existing tracking Issue state
+        id: issue_state
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BUILD_ID: ${{ steps.probe.outputs.build_id }}
+        run: |
+          TITLE="[Antigravity Watch] Official IDE Update & Compatibility Status"
+          MARKER="antigravity-build:${BUILD_ID}"
+          EXISTING_NUM="$(gh issue list --state open --search "\"${TITLE}\" in:title" --json number,title --jq ".[] | select(.title == \"${TITLE}\") | .number" | head -n1)"
+          ALREADY_TRACKED="false"
+          if [ -n "$EXISTING_NUM" ]; then
+            EXISTING_BODY="$(gh issue view "$EXISTING_NUM" --json body --jq '.body')"
+            if printf '%s' "$EXISTING_BODY" | grep -Fq "$MARKER"; then
+              ALREADY_TRACKED="true"
+            fi
+          fi
+          echo "issue_num=${EXISTING_NUM}" >> "$GITHUB_OUTPUT"
+          echo "already_tracked=${ALREADY_TRACKED}" >> "$GITHUB_OUTPUT"
+
+      - name: Download official Antigravity.zip & run real app.asar injection test
+        id: verify_asar
+        if: steps.probe.outputs.is_new == 'true' || steps.issue_state.outputs.already_tracked == 'false' || github.event.inputs.force_verify_asar == 'true'
+        run: |
+          set +e
+          node scripts/check-antigravity-upstream.mjs --json --verify-remote-asar > verified.json
+          EXIT_CODE=$?
+          set -e
+          cat verified.json
+          echo "verify_exit=${EXIT_CODE}" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update compatibility tracking Issue
+        if: steps.probe.outputs.is_new == 'true' || steps.issue_state.outputs.already_tracked == 'false' || github.event.inputs.force_verify_asar == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUM: ${{ steps.issue_state.outputs.issue_num }}
+          ALREADY_TRACKED: ${{ steps.issue_state.outputs.already_tracked }}
+        run: |
+          TITLE="[Antigravity Watch] Official IDE Update & Compatibility Status"
+          BODY="$(node -e "
+            const d = require('./verified.json');
+            const v = d.asarVerification || {};
+            const doc = v.doctor || {};
+            const ok = Boolean(v.compatible);
+            const badge = ok ? '✅ COMPATIBLE (真实 app.asar 注入 & 字节级剥离校验通过)' : '❌ INCOMPATIBLE (注入锚点或结构变更，需适配 manifest.json)';
+            const hints = Array.isArray(v.candidateHints) && v.candidateHints.length
+              ? '\n### 候选锚点代码片段 (\`dist/utils.js\`)\n\`\`\`js\n' + v.candidateHints.join('\n') + '\n\`\`\`\n'
+              : '';
+            console.log([
+              '<!-- antigravity-build:' + d.buildId + ' -->',
+              '云端巡检已从 Google Antigravity 官方自动更新通道拉取最新版本并完成真实 \`app.asar\` 注入回归测试：',
+              '',
+              '| 项目 | 状态 |',
+              '| :--- | :--- |',
+              '| **官方最新版本** | \`' + d.latestHostVersion + '\` (build: \`' + d.buildId + '\`) |',
+              '| **仓库已登记版本** | \`' + d.verifiedHostVersion + '\` (主题版本: \`' + d.themeVersion + '\`) |',
+              '| **真实 ASAR 兼容性** | ' + badge + ' |',
+              '| **命中注入锚点** | \`' + (doc.matchedAnchor || '<NONE>') + '\` |',
+              '| **ASAR SHA256 (前16位)** | \`' + (doc.asarSha256 || 'N/A') + '...\` (' + (doc.asarSize || 0) + ' bytes) |',
+              '| **macOS arm64 官方包** | ' + (d.platforms?.mac_arm64?.url || 'N/A') + ' |',
+              '| **macOS x64 官方包** | ' + (d.platforms?.mac_x64?.url || 'N/A') + ' |',
+              '| **Windows x64 官方包** | ' + (d.platforms?.win_x64?.url || 'N/A') + ' |',
+              hints
+            ].join('\n'));
+          ")"
+
+          COMPAT="$(node -e "console.log(require('./verified.json').asarVerification?.compatible ? 'true' : 'false')")"
+          VER="$(node -e "console.log(require('./verified.json').latestHostVersion)")"
+          BUILD="$(node -e "console.log(require('./verified.json').buildId)")"
+
+          if [ -n "$ISSUE_NUM" ]; then
+            gh issue edit "$ISSUE_NUM" --body "$BODY"
+            if [ "$ALREADY_TRACKED" != "true" ]; then
+              gh issue comment "$ISSUE_NUM" --body "🔔 检测到 Antigravity 官方发布新构建 \`${VER}\` (\`${BUILD}\`)，云端真实 \`app.asar\` 校验结果：**compatible=${COMPAT}**"
+            fi
+          else
+            gh issue create --title "$TITLE" --body "$BODY"
+          fi
+
+          if [ "$COMPAT" != "true" ]; then
+            echo "::error::Official Antigravity ${VER} (${BUILD}) failed app.asar compatibility verification!"
+            exit 1
+          fi
