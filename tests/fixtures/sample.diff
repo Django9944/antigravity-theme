@@ -1,0 +1,9 @@
+diff --git a/src/palettes/dark.ts b/src/palettes/dark.ts
+index 1122334..5566778 100644
+--- a/src/palettes/dark.ts
++++ b/src/palettes/dark.ts
+@@ -42,2 +42,2 @@
+-  shellAlpha: 0.72,
+-  canvasAlpha: 0.86,
++  shellAlpha: 0.86,
++  canvasAlpha: 0.94,

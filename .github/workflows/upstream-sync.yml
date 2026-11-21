@@ -1,0 +1,119 @@
+name: Upstream Antigravity App Sync
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  check-upstream:
+    name: Inspect Antigravity App Changelog & Host CSS Variables
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run upstream Antigravity App monitor
+        id: monitor
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPORT=$(pnpm --silent check:upstream)
+          echo "$REPORT"
+          node -e '
+            const fs = require("node:fs");
+            const crypto = require("node:crypto");
+            const report = JSON.parse(fs.readFileSync(0, "utf8"));
+            if (typeof report.hasChanges !== "boolean") {
+              throw new Error("Invalid upstream check report payload");
+            }
+            const outFile = process.env.GITHUB_OUTPUT;
+            const writeMultiline = (key, val) => {
+              const delim = `EOF_${crypto.randomBytes(12).toString("hex")}`;
+              fs.appendFileSync(outFile, `${key}<<${delim}\n${val}\n${delim}\n`);
+            };
+            writeMultiline("has_changes", String(report.hasChanges));
+            writeMultiline("latest", String(report.latestHeading ?? "unknown"));
+            writeMultiline("added_entries", JSON.stringify(report.addedEntries ?? []));
+            writeMultiline("added_host_vars", JSON.stringify(report.addedHostVariables ?? []));
+          ' <<< "$REPORT"
+
+      - name: Open or update tracking issue if upstream Antigravity App changed
+        if: steps.monitor.outputs.has_changes == 'true'
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
+        env:
+          LATEST_HEADING: ${{ steps.monitor.outputs.latest }}
+          ADDED_ENTRIES_JSON: ${{ steps.monitor.outputs.added_entries }}
+          ADDED_HOST_VARS_JSON: ${{ steps.monitor.outputs.added_host_vars }}
+        with:
+          script: |
+            const latest = process.env.LATEST_HEADING || 'unknown';
+            const addedEntries = JSON.parse(process.env.ADDED_ENTRIES_JSON || '[]');
+            const addedHostVars = JSON.parse(process.env.ADDED_HOST_VARS_JSON || '[]');
+            const title = `[Upstream Sync] Antigravity App update detected: ${latest}`.slice(0, 256);
+
+            const bodyLines = [
+              'Automated weekly monitor detected updates under `## Antigravity App` in `https://antigravity.google/docs/changelog.md`.',
+              '',
+              `- **Latest heading**: \`${latest}\``,
+              `- **New release entries (${addedEntries.length})**: ${addedEntries.map((e) => `\`${e}\``).join(', ') || 'None'}`,
+              `- **New host CSS variables (${addedHostVars.length})**: ${addedHostVars.map((v) => `\`${v}\``).join(', ') || 'None'}`,
+              '- **SLA**: Review new Agent surfaces / `--color-*` host variables within 7 days and update `.upstream-baseline.json`.',
+            ];
+            const body = bodyLines.join('\n');
+
+            const allIssues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'all',
+              labels: 'upstream-sync',
+              per_page: 100,
+            });
+
+            if (allIssues.some((i) => i.title === title)) {
+              return;
+            }
+
+            const openTracker = allIssues.find((i) => i.state === 'open');
+            if (openTracker) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: openTracker.number,
+                title,
+                body,
+              });
+              return;
+            }
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              labels: ['upstream-sync'],
+              body,
+            });

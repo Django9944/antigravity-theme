@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en" data-antigravity-theme="antigravity-dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Antigravity Theme — 2.0 Agent Desktop Preview Workbench</title>
+  <link rel="stylesheet" href="../dist/antigravity-dark/variables.css" />
+  <link rel="stylesheet" href="../dist/antigravity-light/variables.css" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="backdrop-orbital">
+  <header class="preview-toolbar" aria-label="Theme preview controls">
+    <div class="toolbar-group">
+      <span class="toolbar-badge">ADR-006 Matte Glass</span>
+      <div class="segmented" role="group" aria-label="Theme variant">
+        <button
+          type="button"
+          class="seg-btn is-active"
+          data-theme-btn="antigravity-dark"
+          aria-pressed="true"
+        >
+          Antigravity Dark
+        </button>
+        <button
+          type="button"
+          class="seg-btn"
+          data-theme-btn="antigravity-light"
+          aria-pressed="false"
+        >
+          Antigravity Light
+        </button>
+      </div>
+    </div>
+
+    <div class="toolbar-group">
+      <label class="toolbar-label" for="backdrop-select">Wallpaper Stress:</label>
+      <select id="backdrop-select" class="toolbar-select">
+        <option value="backdrop-orbital" selected>Orbital Horizon (Dark)</option>
+        <option value="backdrop-daylight">Daylight Sky (Light)</option>
+        <option value="backdrop-white">Stress: Pure White (#FFFFFF)</option>
+        <option value="backdrop-black">Stress: Pure Black (#000000)</option>
+      </select>
+
+      <label class="toolbar-toggle">
+        <input type="checkbox" id="reduced-transparency-toggle" />
+        <span>Reduced Transparency</span>
+      </label>
+    </div>
+  </header>
+
+  <main class="desktop-stage">
+    <div class="app-window" role="region" aria-label="Antigravity 2.0 Agent Desktop Preview">
+      <!-- 1. Left-hand Frosted Sidebar (Elevation 0) -->
+      <aside class="pane-sidebar">
+        <div class="window-controls">
+          <span class="dot dot-red"></span>
+          <span class="dot dot-yellow"></span>
+          <span class="dot dot-green"></span>
+          <span class="app-brand">Antigravity 2.0</span>
+        </div>
+
+        <button type="button" class="btn-new-chat">+ New Conversation</button>
+
+        <div class="sidebar-section">
+          <div class="sidebar-heading">Conversations</div>
+          <ul class="nav-list">
+            <li class="nav-item is-selected">
+              <span class="status-dot dot-running"></span>
+              <span class="nav-title">Orbital Auth Refactor</span>
+            </li>
+            <li class="nav-item">
+              <span class="status-dot dot-done"></span>
+              <span class="nav-title">Design Token Audit</span>
+            </li>
+            <li class="nav-item">
+              <span class="status-dot dot-muted"></span>
+              <span class="nav-title">Release Notes Draft</span>
+            </li>
+          </ul>
+        </div>
+
+        <nav class="sidebar-footer" aria-label="Workspace navigation">
+          <div class="footer-item">Projects</div>
+          <div class="footer-item">
+            <span>Scheduled Tasks</span>
+            <span class="pill-count">2</span>
+          </div>
+          <div class="footer-item">Skills &amp; Customizations</div>
+          <div class="footer-item">Settings</div>
+        </nav>
+      </aside>
+
+      <!-- 2. Center Chat Canvas (Elevation 1) -->
+      <section class="pane-canvas">
+        <header class="canvas-header">
+          <div class="canvas-title">Orbital Auth Refactor</div>
+          <span class="model-pill">Gemini 4 Pro · Sandbox</span>
+        </header>
+
+        <div class="chat-scroll">
+          <article class="user-bubble">
+            Audit the session token refresh flow, run concurrent lock checks, and prepare the migration plan.
+          </article>
+
+          <details class="thinking-card" open>
+            <summary class="thinking-summary">
+              <span>Thinking &middot; 4.2s</span>
+              <span class="thinking-meta">3 tool calls inspected</span>
+            </summary>
+            <p class="thinking-body">
+              Checked <code>src/auth/session.ts</code> for refresh-token race conditions under parallel requests. Isolating lock acquisition per session ID avoids duplicate rotation bursts.
+            </p>
+          </details>
+
+          <article class="agent-prose">
+            <h3>Refresh Flow Audit</h3>
+            <p>
+              Identified a concurrency window during simultaneous <code>401</code> retries. Updated the lock guard and drafted a zero-downtime migration plan in the <a href="#panel-artifacts" data-activate-tab="artifacts">Artifacts</a> pane.
+            </p>
+            <ul>
+              <li>Deduplicated refresh promises by <code>sessionId</code></li>
+              <li>Enforced <code>15m</code> short-lived access token TTL</li>
+            </ul>
+          </article>
+
+          <div class="tool-stack">
+            <div class="tool-card">
+              <div class="tool-row">
+                <span class="tool-name">run_test_suite</span>
+                <span class="badge badge-running">Running</span>
+              </div>
+              <div class="tool-detail">auth-middleware.spec.ts &mdash; 12/14 specs passing</div>
+            </div>
+
+            <div class="tool-card">
+              <div class="tool-row">
+                <span class="tool-name">check_contrast_gates</span>
+                <span class="badge badge-done">Done</span>
+              </div>
+              <div class="tool-detail">APCA Lc >= 70 verified across #FFFFFF &amp; #000000 backdrops</div>
+            </div>
+
+            <div class="tool-card is-approval" id="approval-card">
+              <div class="tool-row">
+                <span class="tool-name">Tool Call &mdash; Needs Approval</span>
+                <span class="badge badge-approval" id="approval-status" aria-live="polite">Awaiting Approval</span>
+              </div>
+              <code class="tool-cmd">auth-migrate --env staging --dry-run</code>
+              <div class="tool-actions">
+                <button type="button" class="btn-approve" id="btn-approve">Approve</button>
+                <button type="button" class="btn-reject" id="btn-reject">Reject</button>
+              </div>
+            </div>
+
+            <div class="tool-card is-error">
+              <div class="tool-row">
+                <span class="tool-name">legacy_token_check</span>
+                <span class="badge badge-error-solid">Error</span>
+              </div>
+              <div class="tool-detail">Deprecated HMAC fallback blocked by strict sandbox policy</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="composer-wrap">
+          <div class="composer-popover" id="composer-popover" hidden>
+            <div class="popover-title">Quick Commands &amp; Context</div>
+            <div class="popover-row is-focused"><code>/plan</code><span>Refine architecture step-by-step</span></div>
+            <div class="popover-row"><code>@src/auth/session.ts</code><span>Attach workspace file</span></div>
+            <div class="popover-row"><code>@terminal:build</code><span>Attach latest terminal output</span></div>
+          </div>
+          <div class="composer-bar">
+            <input
+              type="text"
+              class="composer-input"
+              value="Message Antigravity... (toggle / or @)"
+              aria-label="Message Antigravity"
+              readonly
+            />
+            <button
+              type="button"
+              class="hint-chip"
+              id="toggle-popover-btn"
+              aria-expanded="false"
+              aria-controls="composer-popover"
+            >/ &middot; @</button>
+            <button type="button" class="btn-send" aria-label="Send">&#10148;</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Right-hand Auxiliary Pane (Elevation 0 + Inner Elevation 2 Cards) -->
+      <aside class="pane-aux">
+        <div class="aux-tabs" role="tablist" aria-label="Auxiliary Pane">
+          <button
+            type="button"
+            class="aux-tab is-active"
+            id="tab-artifacts"
+            role="tab"
+            data-tab="artifacts"
+            aria-selected="true"
+            aria-controls="panel-artifacts"
+            tabindex="0"
+          >Artifacts</button>
+          <button
+            type="button"
+            class="aux-tab"
+            id="tab-subagents"
+            role="tab"
+            data-tab="subagents"
+            aria-selected="false"
+            aria-controls="panel-subagents"
+            tabindex="-1"
+          >Subagents</button>
+          <button
+            type="button"
+            class="aux-tab"
+            id="tab-tasks"
+            role="tab"
+            data-tab="tasks"
+            aria-selected="false"
+            aria-controls="panel-tasks"
+            tabindex="-1"
+          >Tasks</button>
+          <button
+            type="button"
+            class="aux-tab"
+            id="tab-diff"
+            role="tab"
+            data-tab="diff"
+            aria-selected="false"
+            aria-controls="panel-diff"
+            tabindex="-1"
+          >Files Changed</button>
+          <button
+            type="button"
+            class="aux-tab"
+            id="tab-terminals"
+            role="tab"
+            data-tab="terminals"
+            aria-selected="false"
+            aria-controls="panel-terminals"
+            tabindex="-1"
+          >Terminals</button>
+        </div>
+
+        <div class="aux-body">
+          <!-- Tab 1: Artifacts -->
+          <section
+            class="tab-panel is-active"
+            id="panel-artifacts"
+            role="tabpanel"
+            aria-labelledby="tab-artifacts"
+            data-panel="artifacts"
+          >
+            <h4 class="aux-title">Migration &amp; Glass Spec</h4>
+
+            <div class="alert alert-note"><strong>NOTE</strong> Dual-write stays active for 24h for instant rollback.</div>
+            <div class="alert alert-tip"><strong>TIP</strong> Use OKLCH lightness anchors to unify Dark &amp; Light hues.</div>
+            <div class="alert alert-important"><strong>IMPORTANT</strong> Glass alpha 0.84&ndash;0.96 preserves editorial clarity.</div>
+            <div class="alert alert-warning"><strong>WARNING</strong> Rotate staging keys before midnight UTC cutoff.</div>
+            <div class="alert alert-caution"><strong>CAUTION</strong> Never bypass signature or sandbox permissions.</div>
+
+            <div class="mermaid-card">
+              <div class="card-kicker">Mermaid Flow</div>
+              <div class="flow-diagram">
+                <span class="flow-node">Client Request</span>
+                <span class="flow-arrow">&rarr;</span>
+                <span class="flow-node">Verify Session</span>
+                <span class="flow-arrow">&rarr;</span>
+                <span class="flow-node">Rotate Token</span>
+              </div>
+            </div>
+
+            <div class="katex-card">
+              <div class="card-kicker">APCA Contrast Formula</div>
+              <div class="katex-expr">L<sub>c</sub> = (Y<sub>bg</sub><sup>0.56</sup> &minus; Y<sub>txt</sub><sup>0.57</sup>) &times; 1.14</div>
+            </div>
+
+            <pre class="code-fence"><code><span class="tok-kw">export const</span> <span class="tok-fn">verifySession</span> = <span class="tok-kw">async</span> (<span class="tok-param">id</span>: <span class="tok-type">string</span>) =&gt; {
+  <span class="tok-comment">// High-opacity matte glass spec</span>
+  <span class="tok-ctrl">return</span> <span class="tok-fn">withLock</span>(id, () =&gt; <span class="tok-str">"EdDSA"</span>);
+};</code></pre>
+          </section>
+
+          <!-- Tab 2: Subagents -->
+          <section
+            class="tab-panel"
+            id="panel-subagents"
+            role="tabpanel"
+            aria-labelledby="tab-subagents"
+            data-panel="subagents"
+            hidden
+          >
+            <div class="subagent-card">
+              <div class="tool-row"><strong>Token Lock Worker</strong><span class="badge-sub is-working">Working</span></div>
+              <p>Patching <code>src/auth/session.ts</code></p>
+            </div>
+            <div class="subagent-card">
+              <div class="tool-row"><strong>Regression Runner</strong><span class="badge-sub is-waiting">Waiting</span></div>
+              <p>Queued on lock verification</p>
+            </div>
+            <div class="subagent-card">
+              <div class="tool-row"><strong>Contrast Auditor</strong><span class="badge-sub is-done">Done</span></div>
+              <p>Verified 30 host CSS variables</p>
+            </div>
+            <div class="subagent-card">
+              <div class="tool-row"><strong>Legacy Probe</strong><span class="badge-sub is-killed">Stopped</span></div>
+              <p>Terminated cleanly after audit</p>
+            </div>
+          </section>
+
+          <!-- Tab 3: Background Tasks -->
+          <section
+            class="tab-panel"
+            id="panel-tasks"
+            role="tabpanel"
+            aria-labelledby="tab-tasks"
+            data-panel="tasks"
+            hidden
+          >
+            <div class="subagent-card">
+              <div class="tool-row"><strong>upstream-sync.yml</strong><span class="badge-sub is-working">Cron &middot; Weekly</span></div>
+              <p>Monitors antigravity.google/docs/changelog.md</p>
+            </div>
+            <div class="subagent-card">
+              <div class="tool-row"><strong>shiki-snapshot-verify</strong><span class="badge-sub is-done">Completed</span></div>
+              <p>14 Tier-1 fixtures passed in 1.4s</p>
+            </div>
+          </section>
+
+          <!-- Tab 4: Files Changed -->
+          <section
+            class="tab-panel"
+            id="panel-diff"
+            role="tabpanel"
+            aria-labelledby="tab-diff"
+            data-panel="diff"
+            hidden
+          >
+            <div class="diff-file">src/auth/session.ts <span class="diff-stat"><ins>+2</ins> <del>-1</del></span></div>
+            <div class="diff-view">
+              <div class="diff-hunk">@@ -18,4 +18,5 @@ export async function refresh()</div>
+              <div class="diff-line">  const session = await load(id);</div>
+              <div class="diff-line is-del">- <span class="tok-ctrl">return</span> <span class="diff-word-del"><span class="tok-fn">refreshToken</span></span>(session);</div>
+              <div class="diff-line is-add">+ <span class="tok-ctrl">return</span> <span class="diff-word-add"><span class="tok-fn">withSessionLock</span></span>(id, () =&gt; <span class="tok-fn">refreshToken</span>(session));</div>
+              <div class="diff-line">  }</div>
+            </div>
+          </section>
+
+          <!-- Tab 5: Terminals -->
+          <section
+            class="tab-panel"
+            id="panel-terminals"
+            role="tabpanel"
+            aria-labelledby="tab-terminals"
+            data-panel="terminals"
+            hidden
+          >
+            <div class="terminal-box">
+              <div class="term-line"><span class="ansi-green">$</span> pnpm test</div>
+              <div class="term-line"><span class="ansi-cyan">INFO</span> APCA &amp; WCAG matrix: <span class="ansi-green">PASS</span></div>
+              <div class="term-line"><span class="ansi-yellow">WARN</span> 0 fallbacks triggered</div>
+              <div class="term-line"><span class="ansi-blue">HOST</span> 30/30 --color-* vars verified</div>
+              <div class="ansi-swatches" aria-label="ANSI 16-color palette">
+                <span class="sw sw-black">blk</span><span class="sw sw-red">red</span>
+                <span class="sw sw-green">grn</span><span class="sw sw-yellow">yel</span>
+                <span class="sw sw-blue">blu</span><span class="sw sw-magenta">mag</span>
+                <span class="sw sw-cyan">cyn</span><span class="sw sw-white">wht</span>
+                <span class="sw sw-b-black">bBlk</span><span class="sw sw-b-red">bRed</span>
+                <span class="sw sw-b-green">bGrn</span><span class="sw sw-b-yellow">bYel</span>
+                <span class="sw sw-b-blue">bBlu</span><span class="sw sw-b-magenta">bMag</span>
+                <span class="sw sw-b-cyan">bCyn</span><span class="sw sw-b-white">bWht</span>
+              </div>
+            </div>
+          </section>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>

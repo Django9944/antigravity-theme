@@ -1,0 +1,13 @@
+# Antigravity CI Gate Configuration
+name: Theme CI
+defaults: &node_defaults
+  node-version: 22
+  frozen-lockfile: true
+
+jobs:
+  verify:
+    <<: *node_defaults
+    enabled: true
+    steps:
+      - run: pnpm typecheck
+      - run: pnpm test

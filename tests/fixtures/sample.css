@@ -1,0 +1,13 @@
+:root {
+  --agy-glass-blur-md: 24px;
+}
+
+.agy-pane-shell[data-active='true'] {
+  background: var(--agy-glass-bg-shell);
+  backdrop-filter: blur(var(--agy-glass-blur-md));
+  border-top: 1px solid var(--agy-glass-rim-top);
+}
+
+.agy-pane-shell:focus-visible {
+  outline: 2px solid var(--color-ring-primary);
+}

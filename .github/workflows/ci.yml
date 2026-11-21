@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck, Build, Contrast & Snapshot Gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build deterministic Theme Pack
+        run: pnpm build
+
+      - name: Assert dist/ matches committed artifacts (tracked and untracked)
+        run: |
+          if [ -n "$(git status --porcelain dist/)" ]; then
+            echo "dist/ is out of sync with src/. Run pnpm build and commit dist/."
+            git status --short dist/
+            git diff dist/
+            exit 1
+          fi
+
+      - name: Run Schema, Contrast, Shiki & Script Tests
+        run: pnpm test
+
+      - name: Smoke check upstream monitor & release packager
+        run: |
+          pnpm check:upstream -- --offline
+          pnpm pack:release
+          rm -rf release
+
+      - name: Upload preview workbench & compiled dist artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: antigravity-theme-preview-bundle
+          path: |
+            dist/
+            preview/
+          retention-days: 14

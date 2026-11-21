@@ -1,0 +1,50 @@
+name: Visual or Contrast Bug
+description: Report a readability, contrast, or frosted glass UI issue in Antigravity 2.0 Agent Desktop App.
+title: "[Visual Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Note: **Antigravity Theme** exclusively targets the **Antigravity 2.0 Agent Desktop App** (code editors such as Antigravity IDE / VS Code are out of scope).
+  - type: dropdown
+    id: variant
+    attributes:
+      label: Theme Variant
+      options:
+        - Antigravity Dark (Orbital Slate Matte Glass)
+        - Antigravity Light (Orbital Cloud Matte Glass)
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Affected Antigravity 2.0 Surface
+      options:
+        - Left-hand Sidebar
+        - Chat Canvas / Thinking Block
+        - Tool Call / Needs Approval Card
+        - Auxiliary Pane — Subagents / Background Tasks
+        - Auxiliary Pane — Artifacts (Markdown / Alerts / Mermaid / KaTeX)
+        - Auxiliary Pane — Files Changed Diff
+        - Auxiliary Pane — Terminals (ANSI 16-Color)
+        - Auxiliary Pane — Browser Pane
+        - Embedded HTML / MCP Apps (--color-* Host CSS Variables)
+        - Frosted Glass / Reduced Transparency Fallback
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Antigravity 2.0 version, OS (macOS/Windows/Linux), and display scaling.
+      placeholder: "e.g., Antigravity 2.0.x, macOS Sequoia 15, Retina 2x"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description & Screenshot
+      description: Describe the contrast or layout issue and attach a screenshot if possible.
+    validations:
+      required: true

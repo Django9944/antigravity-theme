@@ -1,0 +1,948 @@
+{
+  "$extensions": {
+    "com.antigravity-theme": {
+      "description": "Orbital Slate Matte Glass — cool slate-blue dark theme with Weightless Cobalt accents and high-opacity frosted surfaces for Antigravity 2.0.",
+      "displayName": "Antigravity Dark",
+      "id": "antigravity-dark",
+      "mode": "dark",
+      "targetSoftware": "Antigravity 2.0 Agent Desktop App",
+      "version": "0.1.0"
+    }
+  },
+  "agent": {
+    "approvalBg": {
+      "$description": "Needs Approval banner background",
+      "$type": "color",
+      "$value": "#9265001f"
+    },
+    "approvalBorder": {
+      "$description": "Needs Approval banner border",
+      "$type": "color",
+      "$value": "#ecb75f70"
+    },
+    "approvalFg": {
+      "$description": "Needs Approval accent text",
+      "$type": "color",
+      "$value": "#ecb75f"
+    },
+    "approveBtnBg": {
+      "$description": "Primary Approve button fill",
+      "$type": "color",
+      "$value": "#1164a9"
+    },
+    "approveBtnFg": {
+      "$description": "Primary Approve button label",
+      "$type": "color",
+      "$value": "#fafbfd"
+    },
+    "doneAccent": {
+      "$description": "Completed tool state accent",
+      "$type": "color",
+      "$value": "#77d296"
+    },
+    "errorAccent": {
+      "$description": "Failed tool state accent",
+      "$type": "color",
+      "$value": "#ffa09c"
+    },
+    "runningAccent": {
+      "$description": "Running tool state accent",
+      "$type": "color",
+      "$value": "#5cd0dc"
+    },
+    "subagentDone": {
+      "$description": "Subagent done badge color",
+      "$type": "color",
+      "$value": "#77d296"
+    },
+    "subagentKilled": {
+      "$description": "Subagent stopped/killed badge color",
+      "$type": "color",
+      "$value": "#9da4ac"
+    },
+    "subagentWaiting": {
+      "$description": "Subagent waiting badge color",
+      "$type": "color",
+      "$value": "#bdb3ff"
+    },
+    "subagentWorking": {
+      "$description": "Subagent working badge color",
+      "$type": "color",
+      "$value": "#5cd0dc"
+    },
+    "thinkingBg": {
+      "$description": "Collapsible Thinking trace backdrop",
+      "$type": "color",
+      "$value": "#0c1117b8"
+    },
+    "thinkingBorder": {
+      "$description": "Thinking trace left accent rule",
+      "$type": "color",
+      "$value": "#767c85"
+    },
+    "thinkingFg": {
+      "$description": "Thinking trace body foreground",
+      "$type": "color",
+      "$value": "#9da4ac"
+    },
+    "toolCardBg": {
+      "$description": "Tool execution card background",
+      "$type": "color",
+      "$value": "#1d2229"
+    },
+    "toolCardBorder": {
+      "$description": "Tool execution card border",
+      "$type": "color",
+      "$value": "#61676f"
+    },
+    "userBubbleBg": {
+      "$description": "User prompt card surface",
+      "$type": "color",
+      "$value": "#1d2229"
+    },
+    "userBubbleBorder": {
+      "$description": "User prompt card border",
+      "$type": "color",
+      "$value": "#61676f"
+    }
+  },
+  "artifact": {
+    "alerts": {
+      "caution": {
+        "accentBar": {
+          "$description": "CAUTION alert 3px left bar",
+          "$type": "color",
+          "$value": "#ffa09c"
+        },
+        "bg": {
+          "$description": "CAUTION alert background wash",
+          "$type": "color",
+          "$value": "#8d363821"
+        },
+        "border": {
+          "$description": "CAUTION alert outline",
+          "$type": "color",
+          "$value": "#ffa09c4d"
+        },
+        "fg": {
+          "$description": "CAUTION alert heading color",
+          "$type": "color",
+          "$value": "#ffa09c"
+        }
+      },
+      "important": {
+        "accentBar": {
+          "$description": "IMPORTANT alert 3px left bar",
+          "$type": "color",
+          "$value": "#bdb3ff"
+        },
+        "bg": {
+          "$description": "IMPORTANT alert background wash",
+          "$type": "color",
+          "$value": "#6355a221"
+        },
+        "border": {
+          "$description": "IMPORTANT alert outline",
+          "$type": "color",
+          "$value": "#bdb3ff4d"
+        },
+        "fg": {
+          "$description": "IMPORTANT alert heading color",
+          "$type": "color",
+          "$value": "#bdb3ff"
+        }
+      },
+      "note": {
+        "accentBar": {
+          "$description": "NOTE alert 3px left bar",
+          "$type": "color",
+          "$value": "#86c1ff"
+        },
+        "bg": {
+          "$description": "NOTE alert background wash",
+          "$type": "color",
+          "$value": "#2266a421"
+        },
+        "border": {
+          "$description": "NOTE alert outline",
+          "$type": "color",
+          "$value": "#86c1ff4d"
+        },
+        "fg": {
+          "$description": "NOTE alert heading color",
+          "$type": "color",
+          "$value": "#86c1ff"
+        }
+      },
+      "tip": {
+        "accentBar": {
+          "$description": "TIP alert 3px left bar",
+          "$type": "color",
+          "$value": "#77d296"
+        },
+        "bg": {
+          "$description": "TIP alert background wash",
+          "$type": "color",
+          "$value": "#056f3c21"
+        },
+        "border": {
+          "$description": "TIP alert outline",
+          "$type": "color",
+          "$value": "#77d2964d"
+        },
+        "fg": {
+          "$description": "TIP alert heading color",
+          "$type": "color",
+          "$value": "#77d296"
+        }
+      },
+      "warning": {
+        "accentBar": {
+          "$description": "WARNING alert 3px left bar",
+          "$type": "color",
+          "$value": "#ecb75f"
+        },
+        "bg": {
+          "$description": "WARNING alert background wash",
+          "$type": "color",
+          "$value": "#92650021"
+        },
+        "border": {
+          "$description": "WARNING alert outline",
+          "$type": "color",
+          "$value": "#ecb75f4d"
+        },
+        "fg": {
+          "$description": "WARNING alert heading color",
+          "$type": "color",
+          "$value": "#ecb75f"
+        }
+      }
+    },
+    "blockquoteBg": {
+      "$description": "Markdown blockquote surface",
+      "$type": "color",
+      "$value": "#22283080"
+    },
+    "blockquoteBorder": {
+      "$description": "Markdown blockquote rule",
+      "$type": "color",
+      "$value": "#86c1ff"
+    },
+    "carouselControlBg": {
+      "$description": "Carousel navigation button fill",
+      "$type": "color",
+      "$value": "#222830"
+    },
+    "carouselControlFg": {
+      "$description": "Carousel navigation icon color",
+      "$type": "color",
+      "$value": "#dee4e9"
+    },
+    "codeBlockBg": {
+      "$description": "Fenced code block backdrop",
+      "$type": "color",
+      "$value": "#0c1117"
+    },
+    "codeBlockBorder": {
+      "$description": "Fenced code block border",
+      "$type": "color",
+      "$value": "#61676f"
+    },
+    "inlineCodeBg": {
+      "$description": "Inline code pill background",
+      "$type": "color",
+      "$value": "#2930388c"
+    },
+    "inlineCodeFg": {
+      "$description": "Inline code pill foreground",
+      "$type": "color",
+      "$value": "#bdb3ff"
+    },
+    "katexFg": {
+      "$description": "KaTeX math expression color",
+      "$type": "color",
+      "$value": "#dee4e9"
+    },
+    "mermaid": {
+      "edgeColor": {
+        "$description": "Mermaid connector arrow color",
+        "$type": "color",
+        "$value": "#9da4ac"
+      },
+      "labelBg": {
+        "$description": "Mermaid edge label backdrop",
+        "$type": "color",
+        "$value": "#161b22"
+      },
+      "nodeBg": {
+        "$description": "Mermaid primary node background",
+        "$type": "color",
+        "$value": "#1d2229"
+      },
+      "nodeBorder": {
+        "$description": "Mermaid primary node border",
+        "$type": "color",
+        "$value": "#86c1ff"
+      },
+      "nodeText": {
+        "$description": "Mermaid node label foreground",
+        "$type": "color",
+        "$value": "#dee4e9"
+      },
+      "secondaryBg": {
+        "$description": "Mermaid secondary node fill",
+        "$type": "color",
+        "$value": "#222830"
+      },
+      "tertiaryBg": {
+        "$description": "Mermaid tertiary/cluster fill",
+        "$type": "color",
+        "$value": "#10151c"
+      }
+    },
+    "tableBorder": {
+      "$description": "Markdown table grid border",
+      "$type": "color",
+      "$value": "#61676f"
+    },
+    "tableHeaderBg": {
+      "$description": "Markdown table header fill",
+      "$type": "color",
+      "$value": "#222830"
+    },
+    "tableStripeBg": {
+      "$description": "Markdown table alternating row fill",
+      "$type": "color",
+      "$value": "#1d22298c"
+    }
+  },
+  "border": {
+    "default": {
+      "$description": "Standard input and control border",
+      "$type": "color",
+      "$value": "#767c85"
+    },
+    "focusRing": {
+      "$description": "Keyboard focus ring accent",
+      "$type": "color",
+      "$value": "#86c1ff"
+    },
+    "inverse": {
+      "$description": "Inverse border",
+      "$type": "color",
+      "$value": "#10151c"
+    },
+    "strong": {
+      "$description": "Emphasized border",
+      "$type": "color",
+      "$value": "#9da4ac"
+    },
+    "subtle": {
+      "$description": "Hairline pane and card separator",
+      "$type": "color",
+      "$value": "#61676f"
+    }
+  },
+  "code": {
+    "attribute": {
+      "$description": "Embedded code-fence token color for attribute",
+      "$type": "color",
+      "$value": "#ecb75f"
+    },
+    "comment": {
+      "$description": "Embedded code-fence token color for comment",
+      "$type": "color",
+      "$value": "#9da4ac"
+    },
+    "constant": {
+      "$description": "Embedded code-fence token color for constant",
+      "$type": "color",
+      "$value": "#ecb75f"
+    },
+    "controlFlow": {
+      "$description": "Embedded code-fence token color for controlFlow",
+      "$type": "color",
+      "$value": "#ed9edb"
+    },
+    "decorator": {
+      "$description": "Embedded code-fence token color for decorator",
+      "$type": "color",
+      "$value": "#fbaeea"
+    },
+    "diffDeleted": {
+      "$description": "Embedded code-fence token color for diffDeleted",
+      "$type": "color",
+      "$value": "#ffa09c"
+    },
+    "diffInserted": {
+      "$description": "Embedded code-fence token color for diffInserted",
+      "$type": "color",
+      "$value": "#77d296"
+    },
+    "function": {
+      "$description": "Embedded code-fence token color for function",
+      "$type": "color",
+      "$value": "#86c1ff"
+    },
+    "heading": {
+      "$description": "Embedded code-fence token color for heading",
+      "$type": "color",
+      "$value": "#a4d2ff"
+    },
+    "keyword": {
+      "$description": "Embedded code-fence token color for keyword",
+      "$type": "color",
+      "$value": "#bdb3ff"
+    },
+    "link": {
+      "$description": "Embedded code-fence token color for link",
+      "$type": "color",
+      "$value": "#5cd0dc"
+    },
+    "number": {
+      "$description": "Embedded code-fence token color for number",
+      "$type": "color",
+      "$value": "#fba26e"
+    },
+    "operator": {
+      "$description": "Embedded code-fence token color for operator",
+      "$type": "color",
+      "$value": "#6fe1ee"
+    },
+    "parameter": {
+      "$description": "Embedded code-fence token color for parameter",
+      "$type": "color",
+      "$value": "#fba26e"
+    },
+    "plain": {
+      "$description": "Embedded code-fence token color for plain",
+      "$type": "color",
+      "$value": "#dee4e9"
+    },
+    "property": {
+      "$description": "Embedded code-fence token color for property",
+      "$type": "color",
+      "$value": "#a4d2ff"
+    },
+    "punctuation": {
+      "$description": "Embedded code-fence token color for punctuation",
+      "$type": "color",
+      "$value": "#c8ced5"
+    },
+    "regex": {
+      "$description": "Embedded code-fence token color for regex",
+      "$type": "color",
+      "$value": "#5cd0dc"
+    },
+    "string": {
+      "$description": "Embedded code-fence token color for string",
+      "$type": "color",
+      "$value": "#77d296"
+    },
+    "tag": {
+      "$description": "Embedded code-fence token color for tag",
+      "$type": "color",
+      "$value": "#ffa09c"
+    },
+    "type": {
+      "$description": "Embedded code-fence token color for type",
+      "$type": "color",
+      "$value": "#5cd0dc"
+    },
+    "variable": {
+      "$description": "Embedded code-fence token color for variable",
+      "$type": "color",
+      "$value": "#dee4e9"
+    }
+  },
+  "diff": {
+    "addedBg": {
+      "$description": "Added line translucent background wash",
+      "$type": "color",
+      "$value": "#056f3c24"
+    },
+    "addedFg": {
+      "$description": "Added sign/counter foreground",
+      "$type": "color",
+      "$value": "#77d296"
+    },
+    "addedGutter": {
+      "$description": "Added line gutter bar",
+      "$type": "color",
+      "$value": "#77d296"
+    },
+    "addedWordBg": {
+      "$description": "Added character/word emphasis fill",
+      "$type": "color",
+      "$value": "#056f3c42"
+    },
+    "hunkHeaderBg": {
+      "$description": "Unified diff hunk header fill",
+      "$type": "color",
+      "$value": "#2266a424"
+    },
+    "hunkHeaderFg": {
+      "$description": "Unified diff hunk header text",
+      "$type": "color",
+      "$value": "#86c1ff"
+    },
+    "modifiedBadge": {
+      "$description": "Modified file badge",
+      "$type": "color",
+      "$value": "#ecb75f"
+    },
+    "removedBg": {
+      "$description": "Removed line translucent background wash",
+      "$type": "color",
+      "$value": "#8d363824"
+    },
+    "removedFg": {
+      "$description": "Removed sign/counter foreground",
+      "$type": "color",
+      "$value": "#ffa09c"
+    },
+    "removedGutter": {
+      "$description": "Removed line gutter bar",
+      "$type": "color",
+      "$value": "#ffa09c"
+    },
+    "removedWordBg": {
+      "$description": "Removed character/word emphasis fill",
+      "$type": "color",
+      "$value": "#8d363842"
+    }
+  },
+  "fg": {
+    "accent": {
+      "$description": "Primary Weightless Cobalt accent foreground",
+      "$type": "color",
+      "$value": "#86c1ff"
+    },
+    "disabled": {
+      "$description": "Disabled control foreground",
+      "$type": "color",
+      "$value": "#9da4aca6"
+    },
+    "inverse": {
+      "$description": "Foreground rendered on inverse surfaces",
+      "$type": "color",
+      "$value": "#10151c"
+    },
+    "link": {
+      "$description": "Interactive hyperlink foreground",
+      "$type": "color",
+      "$value": "#a4d2ff"
+    },
+    "muted": {
+      "$description": "L3 muted metadata and timestamps",
+      "$type": "color",
+      "$value": "#9da4ac"
+    },
+    "primary": {
+      "$description": "L1 primary prose and chat message foreground",
+      "$type": "color",
+      "$value": "#dee4e9"
+    },
+    "secondary": {
+      "$description": "Secondary labels and headings",
+      "$type": "color",
+      "$value": "#c8ced5"
+    }
+  },
+  "glass": {
+    "blurLg": {
+      "$description": "Large backdrop blur radius",
+      "$type": "dimension",
+      "$value": "32px"
+    },
+    "blurMd": {
+      "$description": "Medium backdrop blur radius",
+      "$type": "dimension",
+      "$value": "24px"
+    },
+    "blurShell": {
+      "$description": "Shell backdrop blur radius",
+      "$type": "dimension",
+      "$value": "28px"
+    },
+    "blurSm": {
+      "$description": "Small backdrop blur radius",
+      "$type": "dimension",
+      "$value": "16px"
+    },
+    "canvasBg": {
+      "$description": "High-opacity matte glass canvas fill",
+      "$type": "color",
+      "$value": "#161b22f0"
+    },
+    "cardBg": {
+      "$description": "Matte frosted card surface fill",
+      "$type": "color",
+      "$value": "#1d2229d1"
+    },
+    "opaqueFallbackCanvas": {
+      "$description": "Reduced-transparency opaque fallback for canvas",
+      "$type": "color",
+      "$value": "#161b22"
+    },
+    "opaqueFallbackCard": {
+      "$description": "Reduced-transparency opaque fallback for cards",
+      "$type": "color",
+      "$value": "#1d2229"
+    },
+    "opaqueFallbackPopover": {
+      "$description": "Reduced-transparency opaque fallback for popovers",
+      "$type": "color",
+      "$value": "#222830"
+    },
+    "opaqueFallbackShell": {
+      "$description": "Reduced-transparency opaque fallback for shell",
+      "$type": "color",
+      "$value": "#10151c"
+    },
+    "popoverBg": {
+      "$description": "Floating popover frosted fill",
+      "$type": "color",
+      "$value": "#222830e8"
+    },
+    "rimBorder": {
+      "$description": "Outer frosted glass border",
+      "$type": "color",
+      "$value": "#fbfcfd18"
+    },
+    "rimTop": {
+      "$description": "1px top directional specular rim highlight",
+      "$type": "color",
+      "$value": "#fbfcfd16"
+    },
+    "saturateCanvas": {
+      "$description": "Backdrop saturation percentage for canvas",
+      "$type": "number",
+      "$value": 115
+    },
+    "saturatePopover": {
+      "$description": "Backdrop saturation percentage for popovers",
+      "$type": "number",
+      "$value": 145
+    },
+    "saturateShell": {
+      "$description": "Backdrop saturation percentage for shell",
+      "$type": "number",
+      "$value": 130
+    },
+    "shadowCard": {
+      "$description": "Diffused elevation 2 card shadow",
+      "$type": "shadow",
+      "$value": {
+        "blur": "18px",
+        "color": "#02030747",
+        "offsetX": "0px",
+        "offsetY": "4px",
+        "spread": "0px"
+      }
+    },
+    "shadowPopover": {
+      "$description": "Diffused elevation 3 popover shadow",
+      "$type": "shadow",
+      "$value": {
+        "blur": "42px",
+        "color": "#01020475",
+        "offsetX": "0px",
+        "offsetY": "16px",
+        "spread": "0px"
+      }
+    },
+    "shellBg": {
+      "$description": "High-opacity matte glass shell fill",
+      "$type": "color",
+      "$value": "#10151cdb"
+    }
+  },
+  "status": {
+    "danger": {
+      "bg": {
+        "$description": "Translucent danger surface tint",
+        "$type": "color",
+        "$value": "#8d363824"
+      },
+      "border": {
+        "$description": "Semantic danger border",
+        "$type": "color",
+        "$value": "#ffa09c5c"
+      },
+      "onSolid": {
+        "$description": "Foreground label over solid danger",
+        "$type": "color",
+        "$value": "#fafbfd"
+      },
+      "ring": {
+        "$description": "Semantic danger focus ring",
+        "$type": "color",
+        "$value": "#ffa09ce0"
+      },
+      "solid": {
+        "$description": "Solid danger badge or button background",
+        "$type": "color",
+        "$value": "#9f3c3e"
+      },
+      "text": {
+        "$description": "Accessible danger text foreground",
+        "$type": "color",
+        "$value": "#ffa09c"
+      }
+    },
+    "info": {
+      "bg": {
+        "$description": "Translucent info surface tint",
+        "$type": "color",
+        "$value": "#2266a424"
+      },
+      "border": {
+        "$description": "Semantic info border",
+        "$type": "color",
+        "$value": "#86c1ff5c"
+      },
+      "onSolid": {
+        "$description": "Foreground label over solid info",
+        "$type": "color",
+        "$value": "#fafbfd"
+      },
+      "ring": {
+        "$description": "Semantic info focus ring",
+        "$type": "color",
+        "$value": "#86c1ffe0"
+      },
+      "solid": {
+        "$description": "Solid info badge or button background",
+        "$type": "color",
+        "$value": "#1666aa"
+      },
+      "text": {
+        "$description": "Accessible info text foreground",
+        "$type": "color",
+        "$value": "#86c1ff"
+      }
+    },
+    "success": {
+      "bg": {
+        "$description": "Translucent success surface tint",
+        "$type": "color",
+        "$value": "#056f3c24"
+      },
+      "border": {
+        "$description": "Semantic success border",
+        "$type": "color",
+        "$value": "#77d2965c"
+      },
+      "onSolid": {
+        "$description": "Foreground label over solid success",
+        "$type": "color",
+        "$value": "#fafbfd"
+      },
+      "ring": {
+        "$description": "Semantic success focus ring",
+        "$type": "color",
+        "$value": "#77d296e0"
+      },
+      "solid": {
+        "$description": "Solid success badge or button background",
+        "$type": "color",
+        "$value": "#00753f"
+      },
+      "text": {
+        "$description": "Accessible success text foreground",
+        "$type": "color",
+        "$value": "#77d296"
+      }
+    },
+    "warning": {
+      "bg": {
+        "$description": "Translucent warning surface tint",
+        "$type": "color",
+        "$value": "#92650024"
+      },
+      "border": {
+        "$description": "Semantic warning border",
+        "$type": "color",
+        "$value": "#ecb75f5c"
+      },
+      "onSolid": {
+        "$description": "Foreground label over solid warning",
+        "$type": "color",
+        "$value": "#fafbfd"
+      },
+      "ring": {
+        "$description": "Semantic warning focus ring",
+        "$type": "color",
+        "$value": "#ecb75fe0"
+      },
+      "solid": {
+        "$description": "Solid warning badge or button background",
+        "$type": "color",
+        "$value": "#875d00"
+      },
+      "text": {
+        "$description": "Accessible warning text foreground",
+        "$type": "color",
+        "$value": "#ecb75f"
+      }
+    }
+  },
+  "surface": {
+    "auxPane": {
+      "$description": "Auxiliary pane backdrop",
+      "$type": "color",
+      "$value": "#10151c"
+    },
+    "canvas": {
+      "$description": "Elevation 1 primary chat and artifact canvas",
+      "$type": "color",
+      "$value": "#161b22"
+    },
+    "card": {
+      "$description": "Elevation 2 content card surface",
+      "$type": "color",
+      "$value": "#1d2229"
+    },
+    "disabled": {
+      "$description": "Disabled control background",
+      "$type": "color",
+      "$value": "#1d2229"
+    },
+    "elevated": {
+      "$description": "Elevation 3 popover and modal surface",
+      "$type": "color",
+      "$value": "#222830"
+    },
+    "hover": {
+      "$description": "Interactive row hover wash",
+      "$type": "color",
+      "$value": "#31374073"
+    },
+    "input": {
+      "$description": "Composer and code block recessed input surface",
+      "$type": "color",
+      "$value": "#0c1117"
+    },
+    "inverse": {
+      "$description": "High-contrast inverted surface",
+      "$type": "color",
+      "$value": "#dee4e9"
+    },
+    "selected": {
+      "$description": "Active conversation or tab highlight",
+      "$type": "color",
+      "$value": "#2266a433"
+    },
+    "shell": {
+      "$description": "Elevation 0 recessed sidebar and aux pane shell",
+      "$type": "color",
+      "$value": "#10151c"
+    }
+  },
+  "terminal": {
+    "ansi": {
+      "black": {
+        "$description": "Terminal ANSI black",
+        "$type": "color",
+        "$value": "#1d2229"
+      },
+      "blue": {
+        "$description": "Terminal ANSI blue",
+        "$type": "color",
+        "$value": "#86c1ff"
+      },
+      "brightBlack": {
+        "$description": "Terminal ANSI brightBlack",
+        "$type": "color",
+        "$value": "#9da4ac"
+      },
+      "brightBlue": {
+        "$description": "Terminal ANSI brightBlue",
+        "$type": "color",
+        "$value": "#a4d2ff"
+      },
+      "brightCyan": {
+        "$description": "Terminal ANSI brightCyan",
+        "$type": "color",
+        "$value": "#6fe1ee"
+      },
+      "brightGreen": {
+        "$description": "Terminal ANSI brightGreen",
+        "$type": "color",
+        "$value": "#89e2a7"
+      },
+      "brightMagenta": {
+        "$description": "Terminal ANSI brightMagenta",
+        "$type": "color",
+        "$value": "#fbaeea"
+      },
+      "brightRed": {
+        "$description": "Terminal ANSI brightRed",
+        "$type": "color",
+        "$value": "#ffb8b5"
+      },
+      "brightWhite": {
+        "$description": "Terminal ANSI brightWhite",
+        "$type": "color",
+        "$value": "#dee4e9"
+      },
+      "brightYellow": {
+        "$description": "Terminal ANSI brightYellow",
+        "$type": "color",
+        "$value": "#fbc773"
+      },
+      "cyan": {
+        "$description": "Terminal ANSI cyan",
+        "$type": "color",
+        "$value": "#5cd0dc"
+      },
+      "green": {
+        "$description": "Terminal ANSI green",
+        "$type": "color",
+        "$value": "#77d296"
+      },
+      "magenta": {
+        "$description": "Terminal ANSI magenta",
+        "$type": "color",
+        "$value": "#ed9edb"
+      },
+      "red": {
+        "$description": "Terminal ANSI red",
+        "$type": "color",
+        "$value": "#ffa09c"
+      },
+      "white": {
+        "$description": "Terminal ANSI white",
+        "$type": "color",
+        "$value": "#c8ced5"
+      },
+      "yellow": {
+        "$description": "Terminal ANSI yellow",
+        "$type": "color",
+        "$value": "#ecb75f"
+      }
+    },
+    "background": {
+      "$description": "Integrated terminal backdrop",
+      "$type": "color",
+      "$value": "#0c1117"
+    },
+    "cursor": {
+      "$description": "Integrated terminal cursor",
+      "$type": "color",
+      "$value": "#86c1ff"
+    },
+    "foreground": {
+      "$description": "Integrated terminal default text",
+      "$type": "color",
+      "$value": "#dee4e9"
+    },
+    "selectionBackground": {
+      "$description": "Integrated terminal text selection highlight",
+      "$type": "color",
+      "$value": "#2266a447"
+    }
+  }
+}

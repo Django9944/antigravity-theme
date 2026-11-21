@@ -1,0 +1,33 @@
+{
+  "license": "MIT",
+  "material": "high-opacity-matte-glass",
+  "name": "@django9944/antigravity-theme",
+  "targetSoftware": "Antigravity 2.0 Agent Desktop App",
+  "variants": [
+    {
+      "description": "Orbital Slate Matte Glass — cool slate-blue dark theme with Weightless Cobalt accents and high-opacity frosted surfaces for Antigravity 2.0.",
+      "displayName": "Antigravity Dark",
+      "files": {
+        "codeTheme": "./antigravity-dark/code-theme.json",
+        "cssVariables": "./antigravity-dark/variables.css",
+        "mermaid": "./antigravity-dark/mermaid.json",
+        "theme": "./antigravity-dark/theme.json"
+      },
+      "id": "antigravity-dark",
+      "mode": "dark"
+    },
+    {
+      "description": "Orbital Cloud Matte Glass — airy cloud-porcelain light theme with Weightless Cobalt accents and editorial reading comfort for Antigravity 2.0.",
+      "displayName": "Antigravity Light",
+      "files": {
+        "codeTheme": "./antigravity-light/code-theme.json",
+        "cssVariables": "./antigravity-light/variables.css",
+        "mermaid": "./antigravity-light/mermaid.json",
+        "theme": "./antigravity-light/theme.json"
+      },
+      "id": "antigravity-light",
+      "mode": "light"
+    }
+  ],
+  "version": "0.1.0"
+}

@@ -1,0 +1,22 @@
+name: Variant or Surface RFC
+description: Propose a new theme variant (e.g., High Contrast / Soft Dim) or Antigravity 2.0 surface enhancement.
+title: "[RFC]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        New variants must reuse Layer 2 SemanticIR by adding a palette in `src/palettes/`, registering it in `src/variants.ts`, updating `package.json#exports` and `preview/`, and passing all APCA & WCAG 2.1 automated gates.
+  - type: input
+    id: summary
+    attributes:
+      label: Proposal Summary
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Visual Rationale & Accessibility Targets
+      description: Explain the use case, target OKLCH palette direction, and APCA contrast targets.
+    validations:
+      required: true

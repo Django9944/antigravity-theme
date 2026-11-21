@@ -1,0 +1,11 @@
+{
+  "name": "@antigravity-theme/themes",
+  "version": "0.1.0",
+  "private": false,
+  "glass": {
+    "shellAlpha": 0.86,
+    "canvasAlpha": 0.94,
+    "fallback": null
+  },
+  "variants": ["antigravity-dark", "antigravity-light"]
+}

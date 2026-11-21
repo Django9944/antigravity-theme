@@ -1,0 +1,10 @@
+# Orbital Matte Glass Configuration
+[theme]
+id = "antigravity-dark"
+mode = "dark"
+apca_floor = 70
+
+[glass]
+shell_alpha = 0.86
+canvas_alpha = 0.94
+reduced_transparency_fallback = true
