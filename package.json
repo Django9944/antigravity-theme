@@ -51,7 +51,8 @@
     "pack:release": "tsx scripts/pack-release.ts",
     "check:upstream": "tsx scripts/check-upstream-app.ts",
     "preview": "tsx scripts/serve-preview.ts",
-    "ci:version": "changeset version && pnpm build",
+    "sync:readme": "tsx scripts/sync-release-readme.ts",
+    "ci:version": "changeset version && pnpm build && pnpm sync:readme",
     "ci:publish": "pnpm pack:release && changeset publish"
   },
   "devDependencies": {

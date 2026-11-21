@@ -13,12 +13,18 @@ import { basename, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  applyUpstreamBaselineUpdate,
   diffUpstreamState,
   extractAntigravityAppEntries,
   extractHostCssVariables,
   type UpstreamBaseline,
 } from '../scripts/check-upstream-app.js';
 import { packRelease } from '../scripts/pack-release.js';
+import {
+  generateReleaseNotes,
+  parseChangelogReleases,
+  syncReadmeReleaseHistory,
+} from '../scripts/sync-release-readme.js';
 import { blendOver, oklch } from '../src/core/color.js';
 import { apcaContrast, wcagContrast, worstCaseGlassContrast } from '../src/core/contrast.js';
 
@@ -56,7 +62,7 @@ describe('Color & Contrast Error Guards', () => {
   });
 });
 
-describe('Upstream Antigravity App Parser & Diff', () => {
+describe('Upstream Antigravity App Parser, Diff & Auto-Baseline Update', () => {
   const baseline: UpstreamBaseline = {
     sourceUrl: 'https://antigravity.google/docs/changelog.md',
     lastSeenHeading: '2026-11-15 — v2.1.0',
@@ -84,23 +90,56 @@ describe('Upstream Antigravity App Parser & Diff', () => {
     expect(report.addedEntries).toEqual(['2026-11-21 — v2.2.0']);
   });
 
-  it('detects newly introduced --color-* host CSS variables', () => {
+  it('detects newly introduced --color-* host CSS variables and updates baseline deterministically', () => {
     const md = [
       '## Antigravity App',
-      '### 2026-11-15 — v2.1.0',
+      '### 2026-11-22 — v2.3.0',
       'Added `--color-ring-accent` and `--color-background-primary`.',
     ].join('\n');
 
+    const entries = extractAntigravityAppEntries(md);
     const hostVars = extractHostCssVariables(md);
-    const report = diffUpstreamState(
-      baseline,
-      extractAntigravityAppEntries(md),
-      hostVars,
-      'online',
-    );
+    const report = diffUpstreamState(baseline, entries, hostVars, 'online');
     expect(report.hasChanges).toBe(true);
-    expect(report.addedEntries).toEqual([]);
+    expect(report.addedEntries).toEqual(['2026-11-22 — v2.3.0']);
     expect(report.addedHostVariables).toEqual(['--color-ring-accent']);
+
+    const updated = applyUpstreamBaselineUpdate(baseline, report);
+    expect(updated.lastSeenHeading).toBe('2026-11-22 — v2.3.0');
+    expect(updated.knownHostCssVariables).toEqual([
+      '--color-background-primary',
+      '--color-text-primary',
+      '--color-ring-accent',
+    ]);
+  });
+});
+
+describe('Release Notes & README Iteration Sync', () => {
+  it('parses CHANGELOG.md releases, synchronizes README.md / README.zh-CN.md, and generates release notes with project description', () => {
+    const dir = makeTempDir('agy-readme-sync-');
+    for (const file of ['package.json', 'CHANGELOG.md', 'README.md', 'README.zh-CN.md']) {
+      cpSync(resolve(ROOT_DIR, file), resolve(dir, file));
+    }
+
+    const releases = parseChangelogReleases(readFileSync(resolve(dir, 'CHANGELOG.md'), 'utf8'));
+    expect(releases.length).toBeGreaterThanOrEqual(1);
+    expect(releases[0]?.version).toBe('0.1.0');
+    expect(releases[0]?.bullets.length).toBeGreaterThan(0);
+
+    const syncRes = syncReadmeReleaseHistory(dir);
+    expect(syncRes.version).toBe('0.1.0');
+    expect(syncRes.releaseCount).toBe(releases.length);
+
+    const enReadme = readFileSync(resolve(dir, 'README.md'), 'utf8');
+    const zhReadme = readFileSync(resolve(dir, 'README.zh-CN.md'), 'utf8');
+    expect(enReadme).toContain('### [v0.1.0](https://github.com/Django9944/antigravity-theme/releases/tag/v0.1.0) (Latest Release)');
+    expect(zhReadme).toContain('### [v0.1.0](https://github.com/Django9944/antigravity-theme/releases/tag/v0.1.0) （当前最新版本 / Latest）');
+
+    const notes = generateReleaseNotes(dir, '0.1.0');
+    expect(notes).toContain('## Project Overview');
+    expect(notes).toContain('Matte glass Dark & Light theme pack for the Antigravity 2.0 Agent Desktop App');
+    expect(notes).toContain("## What's Changed in `v0.1.0` (Iteration Notes)");
+    expect(notes).toContain('antigravity-theme-v0.1.0.zip');
   });
 });
 

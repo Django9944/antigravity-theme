@@ -8,4 +8,4 @@
 - [ ] Ran `pnpm typecheck`, `pnpm build`, and `pnpm test` cleanly
 - [ ] Added a Changeset (`pnpm changeset`) if user-facing output changed
 - [ ] Attached Before/After screenshots from `pnpm preview` (`preview/`) for visual changes
-- [ ] Updated both `docs/en/` and `docs/zh-CN/` if specs/architecture/processes changed (or tagged `docs-sync`)
+- [ ] Synchronized bilingual descriptions in `README.md` and `README.zh-CN.md` if user-facing documentation changed

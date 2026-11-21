@@ -217,13 +217,15 @@ jobs:
           pnpm pack:release
           VERSION=$(node -p "require('./package.json').version")
           TAG="v${VERSION}"
+          pnpm sync:readme -- --version "$VERSION" --write-notes /tmp/RELEASE_NOTES.md
           if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "Antigravity Theme ${TAG}" --notes-file /tmp/RELEASE_NOTES.md
             gh release upload "$TAG" release/* --clobber
           else
             gh release create "$TAG" release/* \
               --target "${GITHUB_SHA}" \
               --title "Antigravity Theme ${TAG}" \
-              --generate-notes
+              --notes-file /tmp/RELEASE_NOTES.md
           fi
 
       - name: Publish to npm Registry (when NPM_TOKEN or NPM_PUBLISH_ENABLED is configured)

@@ -1,4 +1,4 @@
-import { readFileSync, realpathSync } from 'node:fs';
+import { readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -120,6 +120,28 @@ export function diffUpstreamState(
   };
 }
 
+/**
+ * Produces an updated UpstreamBaseline merging the newly observed release heading and `--color-*` host variables.
+ */
+export function applyUpstreamBaselineUpdate(
+  baseline: UpstreamBaseline,
+  report: UpstreamCheckReport,
+): UpstreamBaseline {
+  if (!report.hasChanges) {
+    return baseline;
+  }
+  const mergedHostVars = [
+    ...new Set([...baseline.knownHostCssVariables, ...report.addedHostVariables]),
+  ];
+  const next: UpstreamBaseline = {
+    sourceUrl: baseline.sourceUrl,
+    ...(baseline.hostCssSpecUrl ? { hostCssSpecUrl: baseline.hostCssSpecUrl } : {}),
+    lastSeenHeading: report.latestHeading ?? baseline.lastSeenHeading,
+    knownHostCssVariables: mergedHostVars,
+  };
+  return next;
+}
+
 async function fetchTextGuarded(url: string): Promise<string> {
   const response = await fetch(url, {
     signal: AbortSignal.timeout(15_000),
@@ -141,9 +163,9 @@ async function fetchTextGuarded(url: string): Promise<string> {
 
 async function runCli(): Promise<void> {
   const offline = process.argv.includes('--offline');
-  const baseline = JSON.parse(
-    readFileSync(resolve(ROOT_DIR, '.upstream-baseline.json'), 'utf8'),
-  ) as UpstreamBaseline;
+  const applyUpdate = process.argv.includes('--apply');
+  const baselinePath = resolve(ROOT_DIR, '.upstream-baseline.json');
+  const baseline = JSON.parse(readFileSync(baselinePath, 'utf8')) as UpstreamBaseline;
 
   if (offline) {
     const sampleMd = [
@@ -154,6 +176,10 @@ async function runCli(): Promise<void> {
     const entries = extractAntigravityAppEntries(sampleMd);
     const hostVars = extractHostCssVariables(sampleMd);
     const report = diffUpstreamState(baseline, entries, hostVars, 'offline');
+    if (applyUpdate && report.hasChanges) {
+      const updated = applyUpstreamBaselineUpdate(baseline, report);
+      writeFileSync(baselinePath, `${JSON.stringify(updated, null, 2)}\n`, 'utf8');
+    }
     console.log(JSON.stringify(report, null, 2));
     return;
   }
@@ -174,6 +200,10 @@ async function runCli(): Promise<void> {
   const hostVars = extractHostCssVariables(hostVarSources.join('\n'));
 
   const report = diffUpstreamState(baseline, entries, hostVars, 'online');
+  if (applyUpdate && report.hasChanges) {
+    const updated = applyUpstreamBaselineUpdate(baseline, report);
+    writeFileSync(baselinePath, `${JSON.stringify(updated, null, 2)}\n`, 'utf8');
+  }
   console.log(JSON.stringify(report, null, 2));
 }
 

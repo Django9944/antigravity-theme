@@ -57,14 +57,14 @@
 - **感知色彩与 Design Token 编译体系**：以 TypeScript + `OKLCH` 作为单一事实源（SSOT），确定性编译输出 W3C DTCG Theme JSON、标准 CSS 变量表（`--color-background-*`、`--color-text-*`、`--color-border-*`、`--color-ring-*`、`--agy-*`）、Shiki 代码块高亮主题与 Mermaid 图表色板。
 - **可验证的无障碍对比度**：集成 `APCA`（`Lc` 阈值）与 `WCAG 2.1`（AA/AAA）自动化单测门禁，覆盖实色表面、半透明 Diff 叠层、状态徽章与智能体终端 16 色 ANSI 输出。
 - **官方合规、零侵入交付边界**：严格对齐 Antigravity 2.0 `Settings > Appearance` 外观配置与官方主题导入规范，**零二进制修补、零签名篡改、零沙箱绕过**。
-- **全自动化测试与上游巡检流水线**：直接基于 `dist/` 的 APCA/WCAG 对比度门禁、DTCG/CSS Schema 校验、Shiki 代码块快照、`pnpm preview` 交互仿真工作台、每周巡检 Antigravity App 更新日志（`antigravity.google/docs/changelog.md`）与 Changesets 自动发版。
+- **上游自动监测与自动发版同步流水线**：每周自动巡检 Antigravity App 更新日志（`antigravity.google/docs/changelog.md`），检测到新版本或新增 `--color-*` 宿主变量时自动更新 `.upstream-baseline.json` 并开启同步 PR；发版时自动将项目描述与历次迭代内容同步至 GitHub Release 及 `README.md`。
 
 ## 项目状态
 
-- **当前版本**：`v0.1.0`（Phase 1–2 已落地 — OKLCH 编译器、高不透明度哑光毛玻璃 Theme Pack、三栏交互仿真预览台、自动化门禁与 CI/CD）
-- **下一里程碑**：`v1.0.0` — 对照真实 Antigravity 2.0 桌面端完成 [05 实机视觉对照验收清单](./docs/zh-CN/05-qa-testing-plan.md#5-layer-4antigravity-20-实机视觉对照验收清单发版前强制执行) 并接入 Playwright 像素回归 CI
+- **当前版本**：`v0.1.0`（OKLCH 编译器、高不透明度哑光毛玻璃 Theme Pack、三栏交互仿真预览台、自动化门禁与 CI/CD）
+- **下一里程碑**：`v1.0.0` — 对照真实 Antigravity 2.0 桌面端完成实机视觉验收并接入 Playwright 像素回归 CI
 - **发布渠道**：[GitHub Releases](https://github.com/Django9944/antigravity-theme/releases)（Theme Pack ZIP + `SHA256SUMS.txt`）与 npm（`@django9944/antigravity-theme`）
-- **开源协议**：[MIT License](./LICENSE)（[合规说明](./docs/zh-CN/07-governance-roadmap.md#2-开源协议与合规要求mit)）
+- **开源协议**：[MIT License](./LICENSE)
 
 ## 快速开始与交互预览
 
@@ -74,24 +74,26 @@
 ```bash
 pnpm install
 pnpm typecheck
-pnpm build     # 编译确定性主题产物至 dist/
-pnpm test      # 运行 DTCG/CSS Schema、APCA/WCAG 对比度与 Shiki 快照门禁
-pnpm preview   # 在 http://127.0.0.1:4173/preview/ 启动三栏交互仿真预览台
+pnpm build        # 编译确定性主题产物至 dist/
+pnpm test         # 运行 DTCG/CSS Schema、APCA/WCAG 对比度与 Shiki 快照门禁
+pnpm sync:readme  # 将 CHANGELOG.md 历次迭代描述同步更新至 README.md 与 README.zh-CN.md
+pnpm preview      # 在 http://127.0.0.1:4173/preview/ 启动三栏交互仿真预览台
 ```
 
-## 文档导航
+## 版本迭代记录（Release History & Iteration Log）
 
-全套从 0 到 1 的中英双语平行文档存放于 [`docs/`](./docs/README.md) 目录：
+> 每次版本迭代发布（`pnpm sync:readme` / `pnpm ci:version`）时自动从 [`CHANGELOG.md`](./CHANGELOG.md) 同步生成。
 
-| 编号 | 文档主题 | 简体中文 | English |
-| :---: | :--- | :--- | :--- |
-| 01 | **项目立项书** — 背景动机、Agent 定位、竞品对比、KPI 与风险评估 | [zh-CN/01-project-charter.md](./docs/zh-CN/01-project-charter.md) | [en/01-project-charter.md](./docs/en/01-project-charter.md) |
-| 02 | **需求分析与产品规格（PRD）** — 用户画像、Agent 界面场景、FR/NFR 与代码块覆盖 | [zh-CN/02-prd-requirements.md](./docs/zh-CN/02-prd-requirements.md) | [en/02-prd-requirements.md](./docs/en/02-prd-requirements.md) |
-| 03 | **视觉设计原则与色板评审体系** — OKLCH/APCA 基线、三层 Token 与候选色板 | [zh-CN/03-visual-design-system.md](./docs/zh-CN/03-visual-design-system.md) | [en/03-visual-design-system.md](./docs/en/03-visual-design-system.md) |
-| 04 | **技术架构与工程方案** — OKLCH 编译器、Theme Pack Schema、CSS 变量桥接与 ADR | [zh-CN/04-technical-architecture.md](./docs/zh-CN/04-technical-architecture.md) | [en/04-technical-architecture.md](./docs/en/04-technical-architecture.md) |
-| 05 | **质量保障与自动化测试方案** — 对比度矩阵、UI 仿真回归测试与 App 验收清单 | [zh-CN/05-qa-testing-plan.md](./docs/zh-CN/05-qa-testing-plan.md) | [en/05-qa-testing-plan.md](./docs/en/05-qa-testing-plan.md) |
-| 06 | **发布、运维与上游同步手册** — CI/CD、GitHub/npm 发布与 Antigravity App 变更巡检 | [zh-CN/06-release-maintenance-runbook.md](./docs/zh-CN/06-release-maintenance-runbook.md) | [en/06-release-maintenance-runbook.md](./docs/en/06-release-maintenance-runbook.md) |
-| 07 | **开源治理、社区运营与路线图** — MIT 协议、贡献指南、分诊 SOP 与 v2 规划 | [zh-CN/07-governance-roadmap.md](./docs/zh-CN/07-governance-roadmap.md) | [en/07-governance-roadmap.md](./docs/en/07-governance-roadmap.md) |
+<!-- RELEASE_HISTORY:START -->
+
+### [v0.1.0](https://github.com/Django9944/antigravity-theme/releases/tag/v0.1.0) （当前最新版本 / Latest）
+
+- Initial OKLCH Design Token compiler and deterministic multi-format adapters (`theme.json`, `variables.css`, `code-theme.json`, `mermaid.json`).
+- Option A (`ADR-006`) High-Opacity Matte Frosted Glass palettes: **Antigravity Dark (Orbital Slate Matte Glass)** and **Antigravity Light (Orbital Cloud Matte Glass)**.
+- Interactive 3-pane Antigravity 2.0 Agent Desktop preview workbench (`preview/`).
+- Automated schema, host CSS coverage, worst-case glass contrast (`APCA` + `WCAG 2.1`), L5 ring/border, DOM-stacked Diff, and Shiki Tier-1 code-fence regression test suite.
+
+<!-- RELEASE_HISTORY:END -->
 
 ## 开源协议
 

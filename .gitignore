@@ -3,6 +3,7 @@ node_modules/
 .dist-staging/
 _site/
 coverage/
+docs/
 release/
 test-results/
 playwright-report/

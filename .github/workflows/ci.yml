@@ -55,9 +55,15 @@ jobs:
       - name: Run Schema, Contrast, Shiki & Script Tests
         run: pnpm test
 
-      - name: Smoke check upstream monitor & release packager
+      - name: Smoke check upstream monitor, README release sync & release packager
         run: |
           pnpm check:upstream -- --offline
+          pnpm sync:readme
+          if [ -n "$(git status --porcelain README.md README.zh-CN.md)" ]; then
+            echo "README.md / README.zh-CN.md release history is out of sync with CHANGELOG.md. Run pnpm sync:readme."
+            git diff README.md README.zh-CN.md
+            exit 1
+          fi
           pnpm pack:release
           rm -rf release
 
