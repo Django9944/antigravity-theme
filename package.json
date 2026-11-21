@@ -1,7 +1,7 @@
 {
   "name": "@django9944/antigravity-theme",
   "version": "0.1.0",
-  "description": "High-opacity matte frosted glass OKLCH Design Token theme pack built exclusively for the Antigravity 2.0 Agent Desktop App.",
+  "description": "Matte glass Dark & Light theme pack for the Antigravity 2.0 Agent Desktop App — engineered with OKLCH design tokens and APCA/WCAG contrast gates.",
   "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@10.34.9",
@@ -27,7 +27,8 @@
     "design-tokens",
     "oklch",
     "glassmorphism",
-    "css-variables"
+    "css-variables",
+    "apca"
   ],
   "exports": {
     "./package.json": "./package.json",
