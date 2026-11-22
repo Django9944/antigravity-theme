@@ -96,11 +96,41 @@ function extractReleaseSummary(bodyText, maxLines = 8) {
 }
 
 function decideUpdateMode({ oldHookVersion, newHookVersion, asarState }) {
-    const hookChanged = String(oldHookVersion || 'v1') !== String(newHookVersion || 'v1');
-    if (!hookChanged && asarState === 'PATCHED_V1') {
+    const oldVer = String(oldHookVersion || 'v1');
+    const newVer = String(newHookVersion || 'v1');
+    const hookChanged = oldVer !== newVer;
+    const expectedState = `PATCHED_${newVer.toUpperCase()}`;
+    if (!hookChanged && asarState === expectedState) {
         return 'hot';
     }
     return 'full';
+}
+
+function assertChecksumPresent(rel) {
+    if (!rel || !rel.checksumUrl) {
+        const tag = rel && rel.tag ? rel.tag : '<unknown>';
+        throw new Error(`远端 Release ${tag} 缺少 SHA256SUMS.txt 校验文件，已拒绝更新`);
+    }
+}
+
+function atomicCopyFile(srcPath, dstPath, { executableOnUnix = false } = {}) {
+    const dir = path.dirname(dstPath);
+    const base = path.basename(dstPath);
+    const tmpPath = path.join(dir, `.${base}.tmp.${process.pid}.${Date.now()}`);
+    try {
+        fs.copyFileSync(srcPath, tmpPath);
+        if (executableOnUnix && process.platform !== 'win32') {
+            try {
+                fs.chmodSync(tmpPath, 0o755);
+            } catch {}
+        }
+        fs.renameSync(tmpPath, dstPath);
+    } catch (err) {
+        try {
+            if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+        } catch {}
+        throw err;
+    }
 }
 
 function httpGetBuffer(url, maxRedirects = 5, timeoutMs = 15000) {
@@ -193,12 +223,8 @@ function copyDirContents(srcDir, dstDir) {
         if (entry.isDirectory()) {
             copyDirContents(srcPath, dstPath);
         } else if (entry.isFile()) {
-            fs.copyFileSync(srcPath, dstPath);
-            if (process.platform !== 'win32' && (entry.name.endsWith('.sh') || entry.name.endsWith('.command'))) {
-                try {
-                    fs.chmodSync(dstPath, 0o755);
-                } catch {}
-            }
+            const isUnixExec = entry.name.endsWith('.sh') || entry.name.endsWith('.command');
+            atomicCopyFile(srcPath, dstPath, { executableOnUnix: isUnixExec });
         }
     }
 }
@@ -268,23 +294,20 @@ async function runCli() {
         if (!rel.assetUrl || !rel.assetName) {
             throw new Error(`远端 Release ${rel.tag} 未找到可下载的 ZIP 资产`);
         }
+        assertChecksumPresent(rel);
 
         fs.mkdirSync(workDir, { recursive: true });
         const zipPath = path.join(workDir, rel.assetName);
         const zipBuf = await httpGetBuffer(rel.assetUrl, 5, 30000);
         fs.writeFileSync(zipPath, zipBuf);
 
-        let verified = false;
-        let zipSha = sha256File(zipPath);
-        if (rel.checksumUrl) {
-            const sumsText = (await httpGetBuffer(rel.checksumUrl)).toString('utf8');
-            const v = verifyFileSha256(zipPath, sumsText, rel.assetName);
-            if (!v.ok) {
-                throw new Error(`下载包完整性校验失败: ${v.reason}`);
-            }
-            verified = true;
-            zipSha = v.actual;
+        const sumsText = (await httpGetBuffer(rel.checksumUrl)).toString('utf8');
+        const v = verifyFileSha256(zipPath, sumsText, rel.assetName);
+        if (!v.ok) {
+            throw new Error(`下载包完整性校验失败: ${v.reason}`);
         }
+        const verified = true;
+        const zipSha = v.actual;
 
         const rawStagingDir = path.join(workDir, 'staging');
         extractZip(zipPath, rawStagingDir);
@@ -332,7 +355,7 @@ async function runCli() {
             for (const f of payloads) {
                 const src = resolvePayloadSource(repoDir, newManifest, f);
                 if (src) {
-                    fs.copyFileSync(src, path.join(dir, f));
+                    atomicCopyFile(src, path.join(dir, f));
                 }
             }
         }
@@ -355,6 +378,8 @@ if (require.main === module) {
         parseSha256Sums,
         verifyFileSha256,
         decideUpdateMode,
+        assertChecksumPresent,
+        atomicCopyFile,
         extractReleaseSummary,
         resolvePayloadSource,
         resolveStagingRoot

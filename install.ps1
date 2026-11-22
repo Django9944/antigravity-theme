@@ -71,7 +71,8 @@ $Manifest = Get-Content -LiteralPath $ManifestPath -Raw -Encoding UTF8 | Convert
 
 $CurrentVersion = if ($Manifest.version)     { [string]$Manifest.version }     else { 'v0.2.0' }
 $Repo           = if ($Manifest.repo)        { [string]$Manifest.repo }        else { 'Django9944/antigravity-theme' }
-$HookVersion    = if ($Manifest.hookVersion) { [string]$Manifest.hookVersion } else { 'v1' }
+$HookVersion        = if ($Manifest.hookVersion) { [string]$Manifest.hookVersion } else { 'v2' }
+$ExpectedPatchState = "PATCHED_$($HookVersion.ToUpperInvariant())"
 $PayloadDir     = if ($Manifest.payloadDir)  { ([string]$Manifest.payloadDir) -replace '/', '\' } else { 'dist\runtime' }
 $Payloads       = if ($Manifest.payloads)    { @($Manifest.payloads) }         else { @('current.css', 'current.js') }
 $ReleasesUrl    = "https://github.com/$Repo/releases/latest"
@@ -418,7 +419,7 @@ if ($EnableAutoHeal) {
 if ($AutoHeal) {
     $NonInteractive = $true
     $ahCheck = Invoke-AsarEngine -Runtime $Runtime -Action 'inspect' -TargetAsar $AsarPath
-    if ($ahCheck.ExitCode -eq 0 -and $ahCheck.Stdout -eq 'PATCHED_V1') {
+    if ($ahCheck.ExitCode -eq 0 -and $ahCheck.Stdout -eq $ExpectedPatchState) {
         exit 0
     }
     if ($ahCheck.ExitCode -eq 2) {
@@ -461,14 +462,15 @@ if ($Update) {
             Die "下载或 SHA256 校验失败：$($dl.Stderr)"
         }
         $dlObj = $dl.Stdout | ConvertFrom-Json
-        if ($dlObj.checksumVerified) {
-            Ok "ZIP 完整性校验通过 (SHA256SUMS.txt)"
+        if (-not $dlObj.checksumVerified) {
+            Die "下载包未通过 SHA256SUMS.txt 完整性校验，已终止更新。"
         }
+        Ok "ZIP 完整性校验通过 (SHA256SUMS.txt)"
 
         $curStateRes = Invoke-AsarEngine -Runtime $Runtime -Action 'inspect' -TargetAsar $AsarPath
         $curState = if ($curStateRes.ExitCode -eq 0) { $curStateRes.Stdout } else { 'UNKNOWN' }
 
-        if ((-not $dlObj.hookChanged) -and ($curState -eq 'PATCHED_V1')) {
+        if ((-not $dlObj.hookChanged) -and ($curState -eq $ExpectedPatchState)) {
             Info "Hook 无需变动，执行零中断热更新..."
             $applyArgs = @($UpdaterScript, 'apply', [string]$dlObj.stagingDir, $ScriptDir) + $ThemeDirs
             $ap = Invoke-ProcessCaptured -FilePath $Runtime.Binary -Arguments $applyArgs -Environment $Runtime.Env

@@ -431,7 +431,7 @@ describe('Distributable Theme Pack Schema & Purity (Layer 1)', () => {
     expect(rootManifest.repo).toBe('Django9944/antigravity-theme');
     expect(rootManifest.payloadDir).toBe('dist/runtime');
     expect(rootManifest.payloads).toEqual(['current.css', 'current.js']);
-    expect(rootManifest.hookVersion).toBe('v1');
+    expect(rootManifest.hookVersion).toBe('v2');
     expect(rootManifest.anchors.length).toBeGreaterThanOrEqual(2);
   });
 
@@ -445,6 +445,7 @@ describe('Distributable Theme Pack Schema & Purity (Layer 1)', () => {
 
     const runtimeJs = readFileSync(resolve(DIST_DIR, 'runtime/current.js'), 'utf8');
     expect(() => new vm.Script(runtimeJs, { filename: 'dist/runtime/current.js' })).not.toThrow();
+    expect(Buffer.byteLength(runtimeJs, 'utf8')).toBeLessThan(280 * 1024);
     expect(runtimeJs).toContain(`const THEME_PACK_VERSION = "v${PKG_JSON.version}"`);
     expect(runtimeJs).toMatch(/return\s+['"]orbital['"];/);
     expect(runtimeJs).toContain('"id":"stock"');
@@ -455,14 +456,27 @@ describe('Distributable Theme Pack Schema & Purity (Layer 1)', () => {
 
   it('uses neutral black shadows on floating popups, tooltips, and menus without bright accent halos', () => {
     const runtimeJs = readFileSync(resolve(DIST_DIR, 'runtime/current.js'), 'utf8');
+    const keysMatch = runtimeJs.match(/const TOKEN_KEYS = (\[[\s\S]*?\]);/);
     const match = runtimeJs.match(/const THEMES = (\[[\s\S]*?\]);/);
+    const tokenKeysRaw = keysMatch?.[1];
     const themesRaw = match?.[1];
+    expect(tokenKeysRaw).toBeDefined();
     expect(themesRaw).toBeDefined();
+    const tokenKeys = JSON.parse(tokenKeysRaw!) as string[];
     const themes = JSON.parse(themesRaw!) as Array<{
       id: string;
+      t?: string[];
+      td?: string[];
       tokens?: Record<string, string>;
       tokensDark?: Record<string, string>;
     }>;
+
+    const toTokenMap = (vals?: string[], legacy?: Record<string, string>): Record<string, string> => {
+      if (legacy) return legacy;
+      expect(vals).toBeDefined();
+      expect(vals!.length).toBe(tokenKeys.length);
+      return Object.fromEntries(tokenKeys.map((k, idx) => [k, vals![idx] ?? '']));
+    };
 
     const requiredShadowVars = ['--ag-shadow-popover', '--ag-shadow-tooltip', '--ag-shadow-floating'] as const;
     const requiredPopoverBridgeVars = ['--popover', '--color-popover', '--menu', '--color-menu'] as const;
@@ -470,24 +484,25 @@ describe('Distributable Theme Pack Schema & Purity (Layer 1)', () => {
 
     for (const theme of themes) {
       if (theme.id === 'stock') continue;
-      for (const tokenSet of [theme.tokens, theme.tokensDark]) {
-        expect(tokenSet).toBeDefined();
-        expect(tokenSet!['--ag-popover-border']).toBeTruthy();
-        expect(tokenSet!['--ag-surface-popover']).toMatch(/^rgba\(/);
-        expect(tokenSet!['--ag-surface-popover-opaque']).toMatch(/^#[0-9a-f]{6}$/);
-        expect(tokenSet!['--ag-popover-backdrop']).toMatch(/^blur\(/);
+      const lightMap = toTokenMap(theme.t, theme.tokens);
+      const darkMap = toTokenMap(theme.td, theme.tokensDark);
+      for (const tokenSet of [lightMap, darkMap]) {
+        expect(tokenSet['--ag-popover-border']).toBeTruthy();
+        expect(tokenSet['--ag-surface-popover']).toMatch(/^rgba\(/);
+        expect(tokenSet['--ag-surface-popover-opaque']).toMatch(/^#[0-9a-f]{6}$/);
+        expect(tokenSet['--ag-popover-backdrop']).toMatch(/^blur\(/);
         for (const bridgeKey of requiredPopoverBridgeVars) {
-          expect(tokenSet![bridgeKey], `${theme.id} missing ${bridgeKey}`).toContain('rgba(');
+          expect(tokenSet[bridgeKey], `${theme.id} missing ${bridgeKey}`).toContain('rgba(');
         }
         for (const shadowKey of requiredShadowVars) {
-          const val = tokenSet![shadowKey];
+          const val = tokenSet[shadowKey];
           expect(val, `${theme.id} missing ${shadowKey}`).toBeTruthy();
           expect(val).toContain('rgba(0, 0, 0,');
           expect(val).not.toContain('--ag-accent-rgb');
           expect(val).not.toContain('rgba(255, 255, 255');
         }
       }
-      darkOpaquePopovers.push(theme.tokensDark!['--ag-surface-popover-opaque']!);
+      darkOpaquePopovers.push(darkMap['--ag-surface-popover-opaque']!);
     }
     expect(new Set(darkOpaquePopovers).size).toBe(7);
 

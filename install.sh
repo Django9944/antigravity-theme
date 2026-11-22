@@ -38,6 +38,8 @@ read_manifest_field() {
 
 CURRENT_VERSION="$(read_manifest_field "version" "v0.2.0")"
 REPO="$(read_manifest_field "repo" "Django9944/antigravity-theme")"
+HOOK_VERSION="$(read_manifest_field "hookVersion" "v2")"
+EXPECTED_PATCH_STATE="PATCHED_$(printf '%s' "$HOOK_VERSION" | tr '[:lower:]' '[:upper:]')"
 PAYLOAD_DIR="$(read_manifest_field "payloadDir" "dist/runtime")"
 RELEASES_URL="https://github.com/${REPO}/releases/latest"
 PAYLOADS=("current.css" "current.js")
@@ -104,6 +106,7 @@ EOF
 }
 
 # ---------- 参数解析 ----------
+ORIG_ARGS=("$@")
 while [ $# -gt 0 ]; do
     case "$1" in
         --install)
@@ -432,10 +435,12 @@ with open(manifest_path, "r", encoding="utf-8") as mf:
 
 ANCHORS = MANIFEST.get("anchors", [])
 FALLBACK_RE = MANIFEST.get("anchorFallbackRegex")
-HOOK_VERSION = MANIFEST.get("hookVersion", "v1")
+HOOK_VERSION = MANIFEST.get("hookVersion", "v2")
 HOOK_START = MANIFEST.get("hookStartMarker", f"/* === Antigravity Custom Theme Hook {HOOK_VERSION} === */")
 HOOK_END = MANIFEST.get("hookEndMarker", "/* === End Antigravity Custom Theme Hook === */")
 LEGACY_MARKER = MANIFEST.get("legacyMarker", "custom-theme injection hook")
+CURRENT_PATCH_STATUS = f"PATCHED_{str(HOOK_VERSION).upper()}"
+OUTDATED_HOOK_RE = re.compile(r"/\* === Antigravity Custom Theme Hook v\d+ === \*/")
 
 def find_anchor(text):
     for a in ANCHORS:
@@ -459,26 +464,58 @@ try {{
         path_.join(process.env.HOME || '', 'Library', 'Application Support', 'Antigravity', 'custom-theme'),
         path_.join(process.env.APPDATA || '', 'Antigravity', 'custom-theme')
     ].filter(Boolean);
+    const _ctFileCache = Object.create(null);
     const _ctRead = (name) => {{
         for (const _d of _ctCandidates) {{
             try {{
                 const _f = path_.join(_d, name);
-                if (fs_.existsSync(_f)) return fs_.readFileSync(_f, 'utf8');
+                const _st = fs_.statSync(_f);
+                const _prev = _ctFileCache[name];
+                if (_prev && _prev.path === _f && _prev.mtimeMs === _st.mtimeMs && _prev.size === _st.size) {{
+                    return _prev.content;
+                }}
+                const _content = fs_.readFileSync(_f, 'utf8');
+                _ctFileCache[name] = {{ path: _f, mtimeMs: _st.mtimeMs, size: _st.size, content: _content }};
+                return _content;
             }} catch (e) {{}}
         }}
+        delete _ctFileCache[name];
         return null;
     }};
+    let _ctNavSeq = 1;
+    let _ctInjectedNav = 0;
+    let _ctCssKey = null;
     const _ctInject = () => {{
         try {{
             if (win.isDestroyed?.() || win.webContents?.isDestroyed?.()) return;
+            if (_ctInjectedNav === _ctNavSeq) return;
+            _ctInjectedNav = _ctNavSeq;
+            const _nav = _ctNavSeq;
             const _css = _ctRead('current.css');
-            if (_css && _css.trim()) win.webContents.insertCSS(_css).catch(() => {{}});
+            if (_css && _css.trim()) {{
+                const _oldKey = _ctCssKey;
+                _ctCssKey = null;
+                if (_oldKey && typeof win.webContents.removeInsertedCSS === 'function') {{
+                    win.webContents.removeInsertedCSS(_oldKey).catch(() => {{}});
+                }}
+                win.webContents.insertCSS(_css).then((k) => {{
+                    if (_ctNavSeq === _nav) _ctCssKey = k;
+                }}).catch(() => {{}});
+            }}
             const _js = _ctRead('current.js');
             if (_js && _js.trim()) win.webContents.executeJavaScript(_js, true).catch(() => {{}});
         }} catch (e) {{}}
     }};
+    win.webContents.on('did-start-navigation', (ev, _u, inPlace, isMain) => {{
+        const _isMain = (ev && typeof ev === 'object' && 'isMainFrame' in ev) ? ev.isMainFrame : isMain;
+        const _isInPlace = (ev && typeof ev === 'object' && 'isInPlace' in ev) ? ev.isInPlace : inPlace;
+        if (_isMain !== false && !_isInPlace) {{
+            _ctNavSeq++;
+            _ctInjectedNav = 0;
+            _ctCssKey = null;
+        }}
+    }});
     win.webContents.on('dom-ready', _ctInject);
-    win.webContents.on('did-finish-load', _ctInject);
 }} catch (e) {{}}
 {HOOK_END}"""
 
@@ -550,6 +587,26 @@ def verify_integrity(buf, data_start, node):
             return False
     return True
 
+def verify_all_bounds(buf, data_start, root):
+    def walk(node):
+        if not isinstance(node, dict):
+            return True
+        files = node.get("files")
+        if not isinstance(files, dict):
+            return True
+        for v in files.values():
+            if not isinstance(v, dict):
+                continue
+            if "files" in v:
+                if not walk(v):
+                    return False
+            elif "offset" in v and "size" in v:
+                v_off, v_sz = int(v["offset"]), int(v["size"])
+                if v_off < 0 or v_sz < 0 or data_start + v_off + v_sz > len(buf):
+                    return False
+        return True
+    return walk(root)
+
 def rebuild_asar(buf, data_start, tree, u_node, old_off, old_sz, new_str):
     new_bytes = new_str.encode("utf-8")
     delta = len(new_bytes) - old_sz
@@ -579,18 +636,21 @@ def rebuild_asar(buf, data_start, tree, u_node, old_off, old_sz, new_str):
     return hdr + buf[data_start:data_start+old_off] + new_bytes + buf[data_start+old_off+old_sz:]
 
 buf, data_start, tree, u_path, u_node, off, sz, content = parse_asar(target_asar)
-has_v1 = HOOK_START in content and HOOK_END in content
+has_current = HOOK_START in content and HOOK_END in content
+has_outdated = (not has_current) and bool(OUTDATED_HOOK_RE.search(content))
 has_legacy = LEGACY_MARKER in content
 matched_anchor = find_anchor(content)
 has_anchor = matched_anchor is not None
 
 if action == "inspect":
     if not has_anchor:
+        print("ANCHOR_MISSING", file=sys.stderr)
         sys.exit(2)
-    print("PATCHED_V1" if has_v1 else ("PATCHED_LEGACY" if has_legacy else "CLEAN"))
+    print(CURRENT_PATCH_STATUS if has_current else ("PATCHED_LEGACY" if (has_outdated or has_legacy) else "CLEAN"))
 elif action == "doctor":
     integ_ok = verify_integrity(buf, data_start, u_node)
-    status = "ANCHOR_MISSING" if not has_anchor else ("PATCHED_V1" if has_v1 else ("PATCHED_LEGACY" if has_legacy else "CLEAN"))
+    bounds_ok = verify_all_bounds(buf, data_start, tree)
+    status = "ANCHOR_MISSING" if not has_anchor else (CURRENT_PATCH_STATUS if has_current else ("PATCHED_LEGACY" if (has_outdated or has_legacy) else "CLEAN"))
     print("--- Antigravity Theme Doctor (Python fallback) ---")
     print(f"Theme Version  : {MANIFEST.get('version')} ({MANIFEST.get('repo')})")
     print(f"Platform       : {platform.system()}/{platform.machine()} (Python {platform.python_version()})")
@@ -599,25 +659,35 @@ elif action == "doctor":
     print(f"Patch Status   : {status}")
     print(f"Matched Anchor : {matched_anchor or '<NONE>'}")
     print(f"Integrity OK   : {integ_ok}")
+    print(f"Bounds OK      : {bounds_ok}")
     print("--------------------------------------------------")
-    sys.exit(0 if (has_anchor and integ_ok) else 2)
+    sys.exit(0 if (has_anchor and integ_ok and bounds_ok) else 2)
 elif action == "verify-patched":
-    if has_v1 and has_anchor and "_ctCandidates" in content and verify_integrity(buf, data_start, u_node):
+    if has_current and has_anchor and "_ctCandidates" in content and "require('path')" in content and "app.getPath('userData')" in content and verify_integrity(buf, data_start, u_node) and verify_all_bounds(buf, data_start, tree):
         print("VERIFY_OK")
         sys.exit(0)
     sys.exit(1)
 elif action == "verify-clean":
-    if not has_v1 and not has_legacy and has_anchor and verify_integrity(buf, data_start, u_node):
+    if not has_current and not has_outdated and not has_legacy and has_anchor and verify_integrity(buf, data_start, u_node) and verify_all_bounds(buf, data_start, tree):
         print("CLEAN_OK")
         sys.exit(0)
     sys.exit(1)
 elif action == "strip":
+    if not output_asar:
+        raise RuntimeError("strip 需要提供输出文件路径")
     clean_u = strip_hooks(content)
+    if HOOK_START in clean_u or OUTDATED_HOOK_RE.search(clean_u) or LEGACY_MARKER in clean_u:
+        raise RuntimeError("剥离旧版钩子失败，内容仍有残留标记")
     out = rebuild_asar(buf, data_start, tree, u_node, off, sz, clean_u)
     with open(output_asar, "wb") as f:
         f.write(out)
+    c_buf, c_ds, c_tree, _, c_node, _, _, _ = parse_asar(output_asar)
+    if not verify_integrity(c_buf, c_ds, c_node) or not verify_all_bounds(c_buf, c_ds, c_tree):
+        raise RuntimeError("剥离后的 ASAR 完整性校验未通过")
     print("STRIP_OK")
 elif action == "inject":
+    if not output_asar:
+        raise RuntimeError("inject 需要提供输出文件路径")
     clean_u = strip_hooks(content)
     anchor_to_use = find_anchor(clean_u)
     if not anchor_to_use:
@@ -626,6 +696,9 @@ elif action == "inject":
     out = rebuild_asar(buf, data_start, tree, u_node, off, sz, new_u)
     with open(output_asar, "wb") as f:
         f.write(out)
+    c_buf, c_ds, c_tree, _, c_node, _, _, c_content = parse_asar(output_asar)
+    if HOOK_START not in c_content or not verify_integrity(c_buf, c_ds, c_node) or not verify_all_bounds(c_buf, c_ds, c_tree):
+        raise RuntimeError("注入后的临时 ASAR 完整性校验未通过")
     print(f"INJECT_OK:{len(out) - len(buf)}")
 PY_EOF
     fi
@@ -678,7 +751,7 @@ fi
 # ---------- 静默自愈模式 (--auto-heal，宿主更新覆盖 app.asar 后自动恢复) ----------
 if [ "$MODE" = "auto-heal" ]; then
     ASAR_STATE="$(run_asar_engine inspect "$ASAR_PATH" 2>/dev/null || echo "ANCHOR_MISSING")"
-    if [ "$ASAR_STATE" = "PATCHED_V1" ]; then
+    if [ "$ASAR_STATE" = "$EXPECTED_PATCH_STATE" ]; then
         exit 0
     fi
     if [ "$ASAR_STATE" = "ANCHOR_MISSING" ]; then
@@ -719,10 +792,13 @@ if [ "$MODE" = "update" ]; then
     STAGING_DIR="$(printf '%s' "$DL_JSON" | env "${NODE_ENV_ARGS[@]}" "$NODE_BIN" -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8')); console.log(d.stagingDir);")"
     HOOK_CHANGED="$(printf '%s' "$DL_JSON" | env "${NODE_ENV_ARGS[@]}" "$NODE_BIN" -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8')); console.log(d.hookChanged ? '1' : '0');")"
     CHECKSUM_OK="$(printf '%s' "$DL_JSON" | env "${NODE_ENV_ARGS[@]}" "$NODE_BIN" -e "const d=JSON.parse(require('fs').readFileSync(0,'utf8')); console.log(d.checksumVerified ? '1' : '0');")"
-    [ "$CHECKSUM_OK" = "1" ] && ok "ZIP 完整性校验通过 (SHA256SUMS.txt)"
+    if [ "$CHECKSUM_OK" != "1" ]; then
+        die "下载包未通过 SHA256SUMS.txt 完整性校验，已终止更新。"
+    fi
+    ok "ZIP 完整性校验通过 (SHA256SUMS.txt)"
 
     ASAR_STATE="$(run_asar_engine inspect "$ASAR_PATH" 2>/dev/null || echo "UNKNOWN")"
-    if [ "$HOOK_CHANGED" = "0" ] && [ "$ASAR_STATE" = "PATCHED_V1" ]; then
+    if [ "$HOOK_CHANGED" = "0" ] && [ "$ASAR_STATE" = "$EXPECTED_PATCH_STATE" ]; then
         info "Hook 无需变动，执行零中断热更新..."
         env "${NODE_ENV_ARGS[@]}" "$NODE_BIN" "$UPDATER_SCRIPT" apply "$STAGING_DIR" "$SCRIPT_DIR" "$APP_THEME_DIR" "$USER_THEME_DIR" >/dev/null
         fix_user_ownership "$USER_DATA_DIR"
@@ -748,7 +824,7 @@ if [ ! -w "$RES_DIR" ] || [ ! -w "$ASAR_PATH" ]; then
             die "目标目录没有写权限 (${RES_DIR})，请使用 sudo 运行或修改目录权限。"
         fi
         warn "目标应用目录 (${RES_DIR}) 需要管理员权限写入，正在请求 sudo 授权..."
-        exec sudo -E bash "$0" "$@"
+        exec sudo -E bash "$0" ${ORIG_ARGS[@]+"${ORIG_ARGS[@]}"}
     else
         die "无法写入目标文件: ${ASAR_PATH} (请检查 SIP 或文件系统只读状态)"
     fi

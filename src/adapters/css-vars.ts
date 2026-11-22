@@ -17,11 +17,15 @@ export interface CssVariableGroups {
   readonly reducedTransparencyVars: ReadonlyArray<readonly [string, string]>;
 }
 
+const cssVarGroupsCache = new WeakMap<SemanticIR, CssVariableGroups>();
+
 /**
  * Extracts deterministic CSS custom property groups from a SemanticIR.
  * Shared across static variables.css and compiled desktop runtime-bundle outputs.
  */
 export function collectCssVariableGroups(ir: SemanticIR): CssVariableGroups {
+  const cached = cssVarGroupsCache.get(ir);
+  if (cached) return cached;
 
   const hostVars: ReadonlyArray<readonly [string, string]> = [
     ['--color-background-danger', ir.status.danger.bg],
@@ -211,12 +215,14 @@ export function collectCssVariableGroups(ir: SemanticIR): CssVariableGroups {
     ['--agy-glass-saturate-shell', '100%'],
   ];
 
-  return {
+  const result: CssVariableGroups = {
     hostVars,
     glassVars,
     agentVars,
     reducedTransparencyVars,
   };
+  cssVarGroupsCache.set(ir, result);
+  return result;
 }
 
 /**

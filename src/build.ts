@@ -136,8 +136,8 @@ export function buildAllThemes(): void {
       repo: 'Django9944/antigravity-theme',
       hostUpdaterUrl: 'https://antigravity-hub-auto-updater-974169037036.us-central1.run.app/manifest',
       verifiedHostVersion: existingVerifiedHostVersion,
-      hookVersion: 'v1',
-      hookStartMarker: '/* === Antigravity Custom Theme Hook v1 === */',
+      hookVersion: 'v2',
+      hookStartMarker: '/* === Antigravity Custom Theme Hook v2 === */',
       hookEndMarker: '/* === End Antigravity Custom Theme Hook === */',
       legacyMarker: 'custom-theme injection hook',
       anchors: [

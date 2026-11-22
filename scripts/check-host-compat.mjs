@@ -80,9 +80,17 @@ if (asJson) {
     console.log(`Matched Anchor : ${report.matchedAnchor || '<NONE - NEEDS ADAPTATION>'}`);
     console.log(`Integrity OK   : ${report.integrityOk}`);
     console.log(`Bounds OK      : ${report.boundsOk}`);
+    const fuseFlag = report.fuses ? report.fuses.asarIntegrityValidationEnabled : null;
+    const fuseLabel = fuseFlag === true ? 'Enabled (BLOCKED)' : fuseFlag === false ? 'Disabled (safe)' : 'Unavailable';
+    const plistMatch = report.fuses ? report.fuses.plistHeaderMatch : null;
+    const plistLabel = plistMatch === true ? 'Match' : plistMatch === false ? 'Mismatch' : 'N/A';
+    console.log(`ASAR Fuse Gate : ${fuseLabel}`);
+    console.log(`Info.plist Hash: ${plistLabel}`);
     console.log(`ASAR SHA256    : ${report.asarSha256}... (${report.asarSize} bytes)`);
     console.log('============================================');
-    if (report.status === 'ANCHOR_MISSING') {
+    if (fuseFlag === true) {
+        console.error('[!] 警告：宿主已启用 EnableEmbeddedAsarIntegrityValidation Fuse，修改 app.asar 将阻止应用启动！');
+    } else if (report.status === 'ANCHOR_MISSING') {
         console.error('[!] 警告：宿主 Antigravity 注入锚点已变更，请更新 manifest.json 中的 anchors 配置！');
     } else if (report.status === 'CLEAN') {
         console.log('[*] 宿主兼容且当前处于原厂状态（如刚升级完 Antigravity，重新运行安装脚本即可恢复主题）。');

@@ -23,10 +23,13 @@ const ANCHORS = Array.isArray(MANIFEST.anchors) ? MANIFEST.anchors : [];
 const ANCHOR_FALLBACK_RE = MANIFEST.anchorFallbackRegex
     ? new RegExp(MANIFEST.anchorFallbackRegex)
     : null;
-const HOOK_VERSION = MANIFEST.hookVersion || 'v1';
+const HOOK_VERSION = MANIFEST.hookVersion || 'v2';
 const HOOK_START = MANIFEST.hookStartMarker || `/* === Antigravity Custom Theme Hook ${HOOK_VERSION} === */`;
 const HOOK_END = MANIFEST.hookEndMarker || '/* === End Antigravity Custom Theme Hook === */';
 const LEGACY_MARKER = MANIFEST.legacyMarker || 'custom-theme injection hook';
+const CURRENT_PATCH_STATUS = `PATCHED_${String(HOOK_VERSION).toUpperCase()}`;
+const OUTDATED_HOOK_RE = /\/\* === Antigravity Custom Theme Hook v\d+ === \*\//;
+const FUSE_SENTINEL_BUF = Buffer.from('dL7pKGdnNz796PbbjQWNKmHXBZaB9tsX', 'ascii');
 
 const HOOK_BLOCK = `
 ${HOOK_START}
@@ -40,26 +43,58 @@ try {
         path_.join(process.env.HOME || '', 'Library', 'Application Support', 'Antigravity', 'custom-theme'),
         path_.join(process.env.APPDATA || '', 'Antigravity', 'custom-theme')
     ].filter(Boolean);
+    const _ctFileCache = Object.create(null);
     const _ctRead = (name) => {
         for (const _d of _ctCandidates) {
             try {
                 const _f = path_.join(_d, name);
-                if (fs_.existsSync(_f)) return fs_.readFileSync(_f, 'utf8');
+                const _st = fs_.statSync(_f);
+                const _prev = _ctFileCache[name];
+                if (_prev && _prev.path === _f && _prev.mtimeMs === _st.mtimeMs && _prev.size === _st.size) {
+                    return _prev.content;
+                }
+                const _content = fs_.readFileSync(_f, 'utf8');
+                _ctFileCache[name] = { path: _f, mtimeMs: _st.mtimeMs, size: _st.size, content: _content };
+                return _content;
             } catch (e) {}
         }
+        delete _ctFileCache[name];
         return null;
     };
+    let _ctNavSeq = 1;
+    let _ctInjectedNav = 0;
+    let _ctCssKey = null;
     const _ctInject = () => {
         try {
             if (win.isDestroyed?.() || win.webContents?.isDestroyed?.()) return;
+            if (_ctInjectedNav === _ctNavSeq) return;
+            _ctInjectedNav = _ctNavSeq;
+            const _nav = _ctNavSeq;
             const _css = _ctRead('current.css');
-            if (_css && _css.trim()) win.webContents.insertCSS(_css).catch(() => {});
+            if (_css && _css.trim()) {
+                const _oldKey = _ctCssKey;
+                _ctCssKey = null;
+                if (_oldKey && typeof win.webContents.removeInsertedCSS === 'function') {
+                    win.webContents.removeInsertedCSS(_oldKey).catch(() => {});
+                }
+                win.webContents.insertCSS(_css).then((k) => {
+                    if (_ctNavSeq === _nav) _ctCssKey = k;
+                }).catch(() => {});
+            }
             const _js = _ctRead('current.js');
             if (_js && _js.trim()) win.webContents.executeJavaScript(_js, true).catch(() => {});
         } catch (e) {}
     };
+    win.webContents.on('did-start-navigation', (ev, _u, inPlace, isMain) => {
+        const _isMain = (ev && typeof ev === 'object' && 'isMainFrame' in ev) ? ev.isMainFrame : isMain;
+        const _isInPlace = (ev && typeof ev === 'object' && 'isInPlace' in ev) ? ev.isInPlace : inPlace;
+        if (_isMain !== false && !_isInPlace) {
+            _ctNavSeq++;
+            _ctInjectedNav = 0;
+            _ctCssKey = null;
+        }
+    });
     win.webContents.on('dom-ready', _ctInject);
-    win.webContents.on('did-finish-load', _ctInject);
 } catch (e) {}
 ${HOOK_END}`;
 
@@ -269,6 +304,120 @@ function rebuildAsarWithNewUtils(parsed, newUtilsStr) {
     ]);
 }
 
+function readFuseWireFromBinary(binPath) {
+    const chunkSize = 4 * 1024 * 1024;
+    const overlap = 128;
+    const chunk = Buffer.allocUnsafe(chunkSize);
+    const fd = fs.openSync(binPath, 'r');
+    try {
+        const stat = fs.fstatSync(fd);
+        let pos = 0;
+        while (pos < stat.size) {
+            const bytesRead = fs.readSync(fd, chunk, 0, chunkSize, pos);
+            if (bytesRead <= 0) break;
+            const hit = chunk.subarray(0, bytesRead).indexOf(FUSE_SENTINEL_BUF);
+            if (hit !== -1) {
+                const tail = Buffer.alloc(128);
+                const tailRead = fs.readSync(fd, tail, 0, tail.length, pos + hit);
+                if (tailRead >= 34 && tail.subarray(0, 32).equals(FUSE_SENTINEL_BUF)) {
+                    const fuseVersion = tail[32];
+                    const fuseCount = tail[33];
+                    const readFuseFlag = (idx) => {
+                        if (idx >= fuseCount || 34 + idx >= tailRead) return null;
+                        const byteVal = tail[34 + idx];
+                        if (byteVal === 0x31) return true;
+                        if (byteVal === 0x30) return false;
+                        return null;
+                    };
+                    return {
+                        fuseVersion,
+                        fuseCount,
+                        asarIntegrityValidationEnabled: readFuseFlag(4),
+                        onlyLoadAppFromAsarEnabled: readFuseFlag(5)
+                    };
+                }
+            }
+            if (pos + bytesRead >= stat.size) break;
+            pos += Math.max(1, bytesRead - overlap);
+        }
+    } finally {
+        fs.closeSync(fd);
+    }
+    return null;
+}
+
+function inspectHostFuses(targetAsar, parsed) {
+    const absAsar = path.resolve(targetAsar);
+    const resDir = path.dirname(absAsar);
+    const parentDir = path.dirname(resDir);
+    const isMacBundle =
+        path.basename(resDir) === 'Resources' && path.basename(parentDir) === 'Contents';
+    const candidateBins = isMacBundle
+        ? [
+              path.join(parentDir, 'Frameworks', 'Electron Framework.framework', 'Versions', 'A', 'Electron Framework'),
+              path.join(parentDir, 'Frameworks', 'Electron Framework.framework', 'Electron Framework')
+          ]
+        : [
+              path.join(parentDir, 'Antigravity.exe'),
+              path.join(parentDir, 'antigravity'),
+              path.join(parentDir, 'Electron')
+          ];
+
+    let binaryPath = null;
+    let wire = null;
+    for (const cand of candidateBins) {
+        try {
+            if (fs.existsSync(cand) && fs.statSync(cand).isFile()) {
+                binaryPath = cand;
+                wire = readFuseWireFromBinary(cand);
+                if (wire) break;
+            }
+        } catch {}
+    }
+
+    const actualHeaderSha256 = crypto
+        .createHash('sha256')
+        .update(parsed.buf.subarray(16, 16 + parsed.jsonLen))
+        .digest('hex');
+
+    let plistExpectedHeaderSha256 = null;
+    let plistHeaderMatch = null;
+    if (isMacBundle) {
+        const plistPath = path.join(parentDir, 'Info.plist');
+        try {
+            if (fs.existsSync(plistPath)) {
+                const plistText = fs.readFileSync(plistPath, 'utf8');
+                const integrityIdx = plistText.indexOf('<key>ElectronAsarIntegrity</key>');
+                if (integrityIdx !== -1) {
+                    const asarBase = path.basename(absAsar).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const sub = plistText.slice(integrityIdx);
+                    const re = new RegExp(
+                        `<key>Resources/${asarBase}</key>\\s*<dict>(?:(?!</dict>)[\\s\\S])*?<key>hash</key>\\s*<string>([a-fA-F0-9]{64})</string>`,
+                        'i'
+                    );
+                    const m = sub.match(re);
+                    if (m) {
+                        plistExpectedHeaderSha256 = m[1].toLowerCase();
+                        plistHeaderMatch = plistExpectedHeaderSha256 === actualHeaderSha256;
+                    }
+                }
+            }
+        } catch {}
+    }
+
+    return {
+        binaryFound: Boolean(binaryPath),
+        binaryPath,
+        fuseVersion: wire ? wire.fuseVersion : null,
+        fuseCount: wire ? wire.fuseCount : null,
+        asarIntegrityValidationEnabled: wire ? wire.asarIntegrityValidationEnabled : null,
+        onlyLoadAppFromAsarEnabled: wire ? wire.onlyLoadAppFromAsarEnabled : null,
+        actualHeaderSha256,
+        plistExpectedHeaderSha256,
+        plistHeaderMatch
+    };
+}
+
 function main() {
     const [action, targetAsar, outputAsar] = process.argv.slice(2);
 
@@ -298,7 +447,8 @@ function main() {
     }
 
     const parsed = parseAsar(targetAsar);
-    const hasV1Hook = parsed.content.includes(HOOK_START) && parsed.content.includes(HOOK_END);
+    const hasCurrentHook = parsed.content.includes(HOOK_START) && parsed.content.includes(HOOK_END);
+    const hasOutdatedHook = !hasCurrentHook && OUTDATED_HOOK_RE.test(parsed.content);
     const hasLegacyHook = parsed.content.includes(LEGACY_MARKER);
     const matchedAnchor = findAnchor(parsed.content);
     const hasAnchor = Boolean(matchedAnchor);
@@ -308,9 +458,9 @@ function main() {
             console.error('ANCHOR_MISSING');
             process.exit(2);
         }
-        if (hasV1Hook) {
-            console.log('PATCHED_V1');
-        } else if (hasLegacyHook) {
+        if (hasCurrentHook) {
+            console.log(CURRENT_PATCH_STATUS);
+        } else if (hasOutdatedHook || hasLegacyHook) {
             console.log('PATCHED_LEGACY');
         } else {
             console.log('CLEAN');
@@ -321,11 +471,12 @@ function main() {
     if (action === 'doctor') {
         const integrityOk = verifyNodeIntegrity(parsed.buf, parsed.dataStart, parsed.utilsNode);
         const boundsOk = verifyAllBounds(parsed.buf, parsed.dataStart, parsed.tree);
+        const fuses = inspectHostFuses(targetAsar, parsed);
         const status = !hasAnchor
             ? 'ANCHOR_MISSING'
-            : hasV1Hook
-                ? 'PATCHED_V1'
-                : hasLegacyHook
+            : hasCurrentHook
+                ? CURRENT_PATCH_STATUS
+                : (hasOutdatedHook || hasLegacyHook)
                     ? 'PATCHED_LEGACY'
                     : 'CLEAN';
         const report = {
@@ -341,14 +492,28 @@ function main() {
             utilsSize: parsed.size,
             status,
             matchedAnchor: matchedAnchor || null,
-            hasV1Hook,
+            hasCurrentHook,
+            hasOutdatedHook,
             hasLegacyHook,
             integrityOk,
-            boundsOk
+            boundsOk,
+            fuses
         };
         if (outputAsar === '--json') {
             console.log(JSON.stringify(report, null, 2));
         } else {
+            const fuseLabel =
+                fuses.asarIntegrityValidationEnabled === true
+                    ? 'Enabled (BLOCKED)'
+                    : fuses.asarIntegrityValidationEnabled === false
+                        ? 'Disabled (safe)'
+                        : 'Unavailable';
+            const plistLabel =
+                fuses.plistHeaderMatch === true
+                    ? 'Match'
+                    : fuses.plistHeaderMatch === false
+                        ? 'Mismatch'
+                        : 'N/A';
             console.log('--- Antigravity Theme Doctor ---');
             console.log(`Theme Version  : ${report.manifestVersion} (${report.repo})`);
             console.log(`Platform       : ${report.platform}/${report.arch} (Node ${report.nodeVersion})`);
@@ -358,9 +523,12 @@ function main() {
             console.log(`Matched Anchor : ${report.matchedAnchor || '<NONE>'}`);
             console.log(`Integrity OK   : ${report.integrityOk}`);
             console.log(`Bounds OK      : ${report.boundsOk}`);
+            console.log(`Fuse Integrity : ${fuseLabel}`);
+            console.log(`Plist Hash     : ${plistLabel}`);
             console.log('--------------------------------');
         }
-        process.exit(hasAnchor && integrityOk && boundsOk ? 0 : 2);
+        const fuseSafe = fuses.asarIntegrityValidationEnabled !== true;
+        process.exit(hasAnchor && integrityOk && boundsOk && fuseSafe ? 0 : 2);
     }
 
     if (action === 'verify-patched') {
@@ -370,12 +538,12 @@ function main() {
             parsed.content.includes('_ctCandidates') &&
             parsed.content.includes("require('path')") &&
             parsed.content.includes("app.getPath('userData')");
-        if (hasV1Hook && hasAnchor && hasCandidates && integrityOk && boundsOk) {
+        if (hasCurrentHook && hasAnchor && hasCandidates && integrityOk && boundsOk) {
             console.log('VERIFY_OK');
             process.exit(0);
         }
         console.error(
-            `VERIFY_FAILED: hook=${hasV1Hook} anchor=${hasAnchor} candidates=${hasCandidates} integrity=${integrityOk} bounds=${boundsOk}`
+            `VERIFY_FAILED: hook=${hasCurrentHook} anchor=${hasAnchor} candidates=${hasCandidates} integrity=${integrityOk} bounds=${boundsOk}`
         );
         process.exit(1);
     }
@@ -383,12 +551,12 @@ function main() {
     if (action === 'verify-clean') {
         const integrityOk = verifyNodeIntegrity(parsed.buf, parsed.dataStart, parsed.utilsNode);
         const boundsOk = verifyAllBounds(parsed.buf, parsed.dataStart, parsed.tree);
-        if (!hasV1Hook && !hasLegacyHook && hasAnchor && integrityOk && boundsOk) {
+        if (!hasCurrentHook && !hasOutdatedHook && !hasLegacyHook && hasAnchor && integrityOk && boundsOk) {
             console.log('CLEAN_OK');
             process.exit(0);
         }
         console.error(
-            `CLEAN_VERIFY_FAILED: v1=${hasV1Hook} legacy=${hasLegacyHook} anchor=${hasAnchor} integrity=${integrityOk} bounds=${boundsOk}`
+            `CLEAN_VERIFY_FAILED: current=${hasCurrentHook} outdated=${hasOutdatedHook} legacy=${hasLegacyHook} anchor=${hasAnchor} integrity=${integrityOk} bounds=${boundsOk}`
         );
         process.exit(1);
     }
@@ -396,7 +564,7 @@ function main() {
     if (action === 'strip') {
         if (!outputAsar) throw new Error('strip 需要提供输出文件路径');
         const cleanUtils = stripHooksFromText(parsed.content);
-        if (cleanUtils.includes(HOOK_START) || cleanUtils.includes(LEGACY_MARKER)) {
+        if (cleanUtils.includes(HOOK_START) || OUTDATED_HOOK_RE.test(cleanUtils) || cleanUtils.includes(LEGACY_MARKER)) {
             throw new Error('剥离旧版钩子失败，内容仍有残留标记');
         }
         const outBuf = rebuildAsarWithNewUtils(parsed, cleanUtils);
@@ -414,12 +582,18 @@ function main() {
 
     if (action === 'inject') {
         if (!outputAsar) throw new Error('inject 需要提供输出文件路径');
+        const fuses = inspectHostFuses(targetAsar, parsed);
+        if (fuses.asarIntegrityValidationEnabled === true) {
+            throw new Error(
+                '检测到宿主启用了 Electron EnableEmbeddedAsarIntegrityValidation Fuse，修改 app.asar 将导致应用无法启动，已安全拒绝注入。'
+            );
+        }
         const cleanUtils = stripHooksFromText(parsed.content);
         const anchorToUse = findAnchor(cleanUtils);
         if (!anchorToUse) {
             throw new Error('未找到注入锚点（loadHubWindowUrl / win.loadURL）');
         }
-        const newUtils = cleanUtils.replace(anchorToUse, anchorToUse + HOOK_BLOCK);
+        const newUtils = cleanUtils.replace(anchorToUse, () => anchorToUse + HOOK_BLOCK);
         const outBuf = rebuildAsarWithNewUtils(parsed, newUtils);
         fs.writeFileSync(outputAsar, outBuf);
         const check = parseAsar(outputAsar);

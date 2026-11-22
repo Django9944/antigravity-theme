@@ -9,7 +9,9 @@
     const THEME_PACK_VERSION = __THEME_PACK_VERSION__;
     const THEME_PACK_REPO = __THEME_PACK_REPO__;
     const UPDATE_CACHE_KEY = 'ag_custom_theme_update_cache_v1';
+    const UPDATE_DISABLE_KEY = 'ag_custom_theme_disable_update_check';
     const UPDATE_CHECK_TTL_MS = 24 * 60 * 60 * 1000;
+    const UPDATE_FAIL_TTL_MS = 60 * 60 * 1000;
     let latestUpdateInfo = null;
 
     function parseThemeSemver(tag) {
@@ -54,14 +56,27 @@
         }
     }
 
+    function persistFailedUpdateCheck() {
+        const info = {
+            checkedAt: Date.now(),
+            localVersion: THEME_PACK_VERSION,
+            failed: true,
+            hasUpdate: false
+        };
+        latestUpdateInfo = info;
+        try { localStorage.setItem(UPDATE_CACHE_KEY, JSON.stringify(info)); } catch (e) {}
+    }
+
     function checkThemeUpdateOnce() {
         if (window.__antigravityThemeUpdateChecked) return;
         window.__antigravityThemeUpdateChecked = true;
         try {
+            if (localStorage.getItem(UPDATE_DISABLE_KEY) === '1') return;
             const raw = localStorage.getItem(UPDATE_CACHE_KEY);
             if (raw) {
                 const cached = JSON.parse(raw);
-                if (cached && cached.checkedAt && (Date.now() - cached.checkedAt) < UPDATE_CHECK_TTL_MS && cached.localVersion === THEME_PACK_VERSION) {
+                const ttl = (cached && cached.failed) ? UPDATE_FAIL_TTL_MS : UPDATE_CHECK_TTL_MS;
+                if (cached && cached.checkedAt && (Date.now() - cached.checkedAt) < ttl && cached.localVersion === THEME_PACK_VERSION) {
                     latestUpdateInfo = cached;
                     renderUpdateBadgeUI();
                     return;
@@ -74,9 +89,12 @@
             headers: { Accept: 'application/vnd.github+json' },
             cache: 'no-store'
         })
-            .then((res) => (res.ok ? res.json() : null))
+            .then((res) => (res && res.ok ? res.json() : null))
             .then((data) => {
-                if (!data || !data.tag_name) return;
+                if (!data || !data.tag_name) {
+                    persistFailedUpdateCheck();
+                    return;
+                }
                 const tag = String(data.tag_name);
                 const url = (data.html_url && /^https:\/\/github\.com\//.test(String(data.html_url)))
                     ? String(data.html_url)
@@ -92,12 +110,20 @@
                 try { localStorage.setItem(UPDATE_CACHE_KEY, JSON.stringify(info)); } catch (e) {}
                 renderUpdateBadgeUI();
             })
-            .catch(() => {});
+            .catch(() => {
+                persistFailedUpdateCheck();
+            });
     }
 
     const BASE_CSS = __BASE_CSS__;
     const DARK_DELTA_CSS = __DARK_DELTA_CSS__;
+    const TOKEN_KEYS = __TOKEN_KEYS_JSON__;
+    const PRIMARY_TOKEN_IDX = TOKEN_KEYS.indexOf('--primary');
     const THEMES = __THEMES_JSON__;
+    const STYLE_VARS_ID = 'antigravity-theme-vars';
+    const STYLE_BASE_ID = 'antigravity-theme-base';
+    const STYLE_DARK_ID = 'antigravity-theme-dark';
+    const LEGACY_STYLE_ID = 'antigravity-active-theme';
 
     // 为 SVG icon 中的 id / url(#...) 注入作用域后缀，防止顶栏按钮与下拉菜单产生重复 SVG id
     function renderThemeIcon(iconSvg, scope) {
@@ -112,22 +138,34 @@
         return isDarkMode();
     }
 
-    function themeCssFor(theme) {
+    function themeVarsCssFor(theme, dark) {
         if (!theme || theme.id === 'stock') return '';
-        const dark = isEffectiveDark();
-        const cacheKey = dark ? '_cssDark' : '_cssLight';
-        if (theme[cacheKey]) return theme[cacheKey];
-        const tok = dark ? theme.tokensDark : theme.tokens;
-        if (!tok) return '';
-        const vars = Object.entries(tok).map(([k, v]) => `${k}:${v};`).join('');
-        const css = `:root{${vars}}\n` + BASE_CSS + (dark ? '\n' + DARK_DELTA_CSS : '');
+        const useDark = dark === undefined ? isEffectiveDark() : Boolean(dark);
+        const cacheKey = useDark ? '_varsDark' : '_varsLight';
+        if (theme[cacheKey] !== undefined) return theme[cacheKey];
+        const vals = useDark ? theme.td : theme.t;
+        let vars = '';
+        if (Array.isArray(vals)) {
+            for (let i = 0; i < TOKEN_KEYS.length; i++) {
+                const v = vals[i];
+                if (v) vars += TOKEN_KEYS[i] + ':' + v + ';';
+            }
+        } else {
+            const tok = useDark ? theme.tokensDark : theme.tokens;
+            if (!tok) return '';
+            for (const [k, v] of Object.entries(tok)) {
+                vars += `${k}:${v};`;
+            }
+        }
+        const css = vars ? `:root{${vars}}` : '';
         theme[cacheKey] = css;
         return css;
     }
 
-    function currentThemeKey(theme) {
+    function currentThemeKey(theme, dark) {
         if (!theme || theme.id === 'stock') return 'stock';
-        return `${theme.id}:${isEffectiveDark() ? 'dark' : 'light'}`;
+        const useDark = dark === undefined ? isEffectiveDark() : Boolean(dark);
+        return `${theme.id}:${useDark ? 'dark' : 'light'}`;
     }
 
     function themeNameFor(theme, isDark) {
@@ -211,7 +249,6 @@
     let modalChromePulseTimer = null;
     let modalChromePulseEnd = 0;
     let modalChromePulseSession = false;
-    let modalChromeSyncQueued = false;
     let modalChromeCloseIntentUntil = 0;
     let modalChromeCloseIntentTimer = null;
     let modalChromeDismissedNode = null;
@@ -381,26 +418,118 @@
         return fallback;
     }
 
+    function setAttrIfChanged(el, name, value) {
+        if (el.getAttribute(name) !== value) el.setAttribute(name, value);
+    }
+
+    function removeAttrIfPresent(el, name) {
+        if (el.hasAttribute(name)) el.removeAttribute(name);
+    }
+
+    function setPropIfChanged(el, prop, value) {
+        if (el.style.getPropertyValue(prop) !== value) el.style.setProperty(prop, value);
+    }
+
+    function removePropIfPresent(el, prop) {
+        if (el.style.getPropertyValue(prop)) el.style.removeProperty(prop);
+    }
+
     function ensureThemeAttributes(themeId) {
         try {
             const root = document.documentElement;
             if (!themeId || themeId === 'stock') {
-                root.style.removeProperty('--antigravity-active-theme-id');
-                root.removeAttribute('data-ag-custom-theme');
-                root.removeAttribute('data-ag-theme-id');
-                root.removeAttribute('data-ag-color-scheme');
-                root.removeAttribute('data-antigravity-theme');
+                removePropIfPresent(root, '--antigravity-active-theme-id');
+                removeAttrIfPresent(root, 'data-ag-custom-theme');
+                removeAttrIfPresent(root, 'data-ag-theme-id');
+                removeAttrIfPresent(root, 'data-ag-color-scheme');
+                removeAttrIfPresent(root, 'data-antigravity-theme');
             } else {
                 const theme = getTheme(themeId);
                 const darkNow = isEffectiveDark();
                 const variantId = darkNow ? (theme.variantIdDark || themeId) : (theme.variantIdLight || themeId);
-                root.style.setProperty('--antigravity-active-theme-id', themeId);
-                root.setAttribute('data-ag-custom-theme', 'true');
-                root.setAttribute('data-ag-theme-id', themeId);
-                root.setAttribute('data-ag-color-scheme', darkNow ? 'dark' : 'light');
-                root.setAttribute('data-antigravity-theme', variantId);
+                setPropIfChanged(root, '--antigravity-active-theme-id', themeId);
+                setAttrIfChanged(root, 'data-ag-custom-theme', 'true');
+                setAttrIfChanged(root, 'data-ag-theme-id', themeId);
+                setAttrIfChanged(root, 'data-ag-color-scheme', darkNow ? 'dark' : 'light');
+                setAttrIfChanged(root, 'data-antigravity-theme', variantId);
             }
         } catch (e) {}
+    }
+
+    function setStyleDisabled(el, disabled) {
+        if (!el) return;
+        const targetMedia = disabled ? 'not all' : 'all';
+        if (el.media !== targetMedia) el.media = targetMedia;
+        if (el.disabled !== disabled) el.disabled = disabled;
+    }
+
+    function ensureThemeStyleLayers() {
+        const container = document.head || document.documentElement;
+        if (!container) return null;
+        const legacyEl = document.getElementById(LEGACY_STYLE_ID);
+        if (legacyEl) legacyEl.remove();
+
+        let varsEl = document.getElementById(STYLE_VARS_ID);
+        let baseEl = document.getElementById(STYLE_BASE_ID);
+        let darkEl = document.getElementById(STYLE_DARK_ID);
+        let recreated = false;
+
+        if (!varsEl) {
+            varsEl = document.createElement('style');
+            varsEl.id = STYLE_VARS_ID;
+            container.appendChild(varsEl);
+            recreated = true;
+        }
+        if (!baseEl) {
+            baseEl = document.createElement('style');
+            baseEl.id = STYLE_BASE_ID;
+            baseEl.textContent = BASE_CSS;
+            container.appendChild(baseEl);
+            recreated = true;
+        } else if (!baseEl.textContent) {
+            baseEl.textContent = BASE_CSS;
+            recreated = true;
+        }
+        if (!darkEl) {
+            darkEl = document.createElement('style');
+            darkEl.id = STYLE_DARK_ID;
+            darkEl.textContent = DARK_DELTA_CSS;
+            container.appendChild(darkEl);
+            recreated = true;
+        } else if (!darkEl.textContent) {
+            darkEl.textContent = DARK_DELTA_CSS;
+            recreated = true;
+        }
+
+        if (varsEl.nextElementSibling !== baseEl) {
+            varsEl.after(baseEl);
+        }
+        if (baseEl.nextElementSibling !== darkEl) {
+            baseEl.after(darkEl);
+        }
+
+        return { varsEl, baseEl, darkEl, recreated };
+    }
+
+    function syncThemeStyleSheets(theme, dark) {
+        const layers = ensureThemeStyleLayers();
+        if (!layers) return false;
+        const { varsEl, baseEl, darkEl, recreated } = layers;
+        const isStock = !theme || theme.id === 'stock';
+        const useDark = dark === undefined ? isEffectiveDark() : Boolean(dark);
+        const desiredKey = currentThemeKey(theme, useDark);
+
+        if (recreated || varsEl.dataset.themeKey !== desiredKey) {
+            const nextVars = isStock ? '' : themeVarsCssFor(theme, useDark);
+            if (varsEl.textContent !== nextVars) {
+                varsEl.textContent = nextVars;
+            }
+            varsEl.dataset.themeKey = desiredKey;
+        }
+        setStyleDisabled(varsEl, isStock);
+        setStyleDisabled(baseEl, isStock);
+        setStyleDisabled(darkEl, isStock || !useDark);
+        return recreated;
     }
 
     function applyTheme(themeId, persistNative) {
@@ -411,15 +540,7 @@
         lastEffectiveDark = isEffectiveDark();
         lastIsDark = isDarkMode();
 
-        let styleEl = document.getElementById('antigravity-active-theme');
-        if (!styleEl) {
-            styleEl = document.createElement('style');
-            styleEl.id = 'antigravity-active-theme';
-            (document.head || document.documentElement).appendChild(styleEl);
-        }
-        styleEl.textContent = themeCssFor(theme);
-        styleEl.dataset.themeKey = currentThemeKey(theme);
-
+        syncThemeStyleSheets(theme, lastEffectiveDark);
         ensureThemeAttributes(theme.id);
 
         enforceTitleBarColor(true);
@@ -618,9 +739,6 @@
         const mermaidViewport = snapshot.mermaid;
         const settingsBackdrop = snapshot.settingsBackdrop;
         const settingsDialog = snapshot.settingsDialog;
-
-        let settingsWrap = settingsDialog ? visibleModal(SETTINGS_WRAP_SELECTOR) : null;
-        if (settingsWrap && !coversViewport(settingsWrap)) settingsWrap = null;
         if (!mediaModal && !mermaidViewport && !settingsBackdrop && !settingsDialog) return;
 
         const darkNow = isEffectiveDark();
@@ -635,6 +753,11 @@
             const backdrop = document.querySelector('div[class*="animate-backdropFadeIn"]:has(~ * [data-testid="mermaid-lightbox-viewport"])');
             if (backdrop) rawColor = getComputedStyle(backdrop).backgroundColor;
         } else {
+            let settingsWrap = null;
+            if (!settingsBackdrop && settingsDialog) {
+                settingsWrap = visibleModal(SETTINGS_WRAP_SELECTOR);
+                if (settingsWrap && !coversViewport(settingsWrap)) settingsWrap = null;
+            }
             let layer = settingsBackdrop || settingsWrap;
             let layerBg = layer ? parseCssColor(getComputedStyle(layer).backgroundColor) : null;
             if ((!layer || !layerBg || layerBg[3] < 0.05) && settingsDialog) {
@@ -804,16 +927,6 @@
 
     let auxPaneResizingUntil = 0;
 
-    function scheduleModalChromeSync() {
-        if (modalChromeSyncQueued) return;
-        if (performance.now() < auxPaneResizingUntil) return;
-        modalChromeSyncQueued = true;
-        queueMicrotask(() => {
-            modalChromeSyncQueued = false;
-            syncModalChrome();
-        });
-    }
-
     function syncModalChrome() {
         const modals = collectVisibleModals();
         if (performance.now() < modalChromeCloseIntentUntil) {
@@ -847,17 +960,7 @@
 
         if (effectiveChanged) {
             ensureThemeAttributes(activeId);
-            if (activeId !== 'stock') {
-                const theme = getTheme(activeId);
-                let styleEl = document.getElementById('antigravity-active-theme');
-                if (!styleEl) {
-                    styleEl = document.createElement('style');
-                    styleEl.id = 'antigravity-active-theme';
-                    (document.head || document.documentElement).appendChild(styleEl);
-                }
-                styleEl.textContent = themeCssFor(theme);
-                styleEl.dataset.themeKey = currentThemeKey(theme);
-            }
+            syncThemeStyleSheets(getTheme(activeId), currentEffectiveDark);
             enforceTitleBarColor(true);
             syncModalChrome();
         }
@@ -868,7 +971,7 @@
         try {
             const root = document.documentElement;
             if (!root.hasAttribute('data-ag-custom-theme')) {
-                root.removeAttribute('data-aux-pane-maximized');
+                removeAttrIfPresent(root, 'data-aux-pane-maximized');
                 return;
             }
             const btns = document.querySelectorAll('[data-testid="toggle-maximize-pane"]');
@@ -876,8 +979,8 @@
             for (const btn of btns) {
                 if (btn.getAttribute('aria-label') === 'Restore Pane') { maximized = true; break; }
             }
-            if (maximized) root.setAttribute('data-aux-pane-maximized', 'true');
-            else root.removeAttribute('data-aux-pane-maximized');
+            if (maximized) setAttrIfChanged(root, 'data-aux-pane-maximized', 'true');
+            else removeAttrIfPresent(root, 'data-aux-pane-maximized');
         } catch (e) {}
     }
 
@@ -903,8 +1006,14 @@
                 ? { base: '#18181b', accent: '#6b7280' }
                 : { base: '#f4f4f5', accent: '#6b7280' };
         }
-        const rawTokens = (isDark && t.tokensDark) ? t.tokensDark : (t.tokens || {});
-        const rawAccent = rawTokens['--primary'] || '';
+        let rawAccent = '';
+        const vals = (isDark && t.td) ? t.td : t.t;
+        if (Array.isArray(vals) && PRIMARY_TOKEN_IDX >= 0) {
+            rawAccent = vals[PRIMARY_TOKEN_IDX] || '';
+        } else {
+            const rawTokens = (isDark && t.tokensDark) ? t.tokensDark : (t.tokens || {});
+            rawAccent = rawTokens['--primary'] || '';
+        }
         const accent = String(rawAccent).replace(/\s*!important\s*$/i, '').trim() || (isDark ? '#86C1FF' : '#005697');
         const base = (isDark ? t.titlebarColorDark : t.titlebarColor) || (isDark ? '#10151c' : '#ecf1f5');
         return { base, accent };
@@ -986,26 +1095,58 @@
         }
     }
 
-    function findActiveToolbar() {
-        const toolbars = Array.from(document.querySelectorAll('[data-testid="pane-titlebar-toolbar"]'));
+    let lastToolbarNodes = [];
+
+    function sameElementList(a, b) {
+        if (a.length !== b.length) return false;
+        for (let i = 0; i < a.length; i++) {
+            if (a[i] !== b[i]) return false;
+        }
+        return true;
+    }
+
+    function findActiveToolbar(toolbarsInput) {
+        const toolbars = toolbarsInput || Array.from(document.querySelectorAll('[data-testid="pane-titlebar-toolbar"]'));
         if (!toolbars.length) return null;
-        const visible = toolbars.filter((el) => {
+        const measured = [];
+        for (const el of toolbars) {
             try {
-                if (el.closest('[aria-hidden="true"]')) return false;
+                if (el.closest('[aria-hidden="true"]')) continue;
                 const rect = el.getBoundingClientRect();
-                return rect.width > 0 && rect.height > 0;
-            } catch (e) { return false; }
-        });
-        const candidates = visible.length ? visible : toolbars;
-        candidates.sort((a, b) => {
-            try {
-                const ra = a.getBoundingClientRect();
-                const rb = b.getBoundingClientRect();
-                if (Math.abs(ra.top - rb.top) > 12) return ra.top - rb.top;
-                return rb.right - ra.right;
-            } catch (e) { return 0; }
-        });
-        return candidates[0] || null;
+                if (rect.width > 0 && rect.height > 0) {
+                    measured.push({ el, rect });
+                }
+            } catch (e) {}
+        }
+        if (measured.length === 1) return measured[0].el;
+        if (measured.length > 1) {
+            measured.sort((a, b) => {
+                if (Math.abs(a.rect.top - b.rect.top) > 12) return a.rect.top - b.rect.top;
+                return b.rect.right - a.rect.right;
+            });
+            return measured[0].el;
+        }
+        return toolbars[0] || null;
+    }
+
+    function ensureSelectorMounted(forceLayoutCheck = false) {
+        const toolbars = Array.from(document.querySelectorAll('[data-testid="pane-titlebar-toolbar"]'));
+        if (!toolbars.length) {
+            lastToolbarNodes = [];
+            return;
+        }
+        const listChanged = !sameElementList(toolbars, lastToolbarNodes);
+        if (!forceLayoutCheck && !listChanged) {
+            const existing = document.getElementById('antigravity-theme-selector');
+            if (existing && existing.isConnected) {
+                const parentTb = existing.closest('[data-testid="pane-titlebar-toolbar"]');
+                if (parentTb && !parentTb.closest('[aria-hidden="true"]')) {
+                    return;
+                }
+            }
+        }
+        lastToolbarNodes = toolbars;
+        mountThemeSelector(toolbars);
     }
 
     function resolveToolbarMountTarget(toolbar) {
@@ -1058,8 +1199,10 @@
         }
     }
 
-    function mountThemeSelector() {
-        const toolbar = findActiveToolbar();
+    function mountThemeSelector(toolbarsInput) {
+        const toolbars = toolbarsInput || Array.from(document.querySelectorAll('[data-testid="pane-titlebar-toolbar"]'));
+        lastToolbarNodes = toolbars;
+        const toolbar = findActiveToolbar(toolbars);
         const mountTarget = resolveToolbarMountTarget(toolbar);
         if (!toolbar || !mountTarget || !document.body) return;
 
@@ -1269,9 +1412,17 @@
                 }
             });
 
+            let resizeAnchorQueued = false;
             window.addEventListener('resize', () => {
                 const dd = document.getElementById('antigravity-theme-dropdown');
                 if (dd) setDropdownOpenState(dd, false);
+                if (!resizeAnchorQueued) {
+                    resizeAnchorQueued = true;
+                    scheduleFrame(() => {
+                        resizeAnchorQueued = false;
+                        ensureSelectorMounted(true);
+                    });
+                }
             });
         }
 
@@ -1281,6 +1432,15 @@
         renderUpdateBadgeUI();
         checkThemeUpdateOnce();
         enforceTitleBarColor(true);
+    }
+
+    const scheduleFrame = typeof requestAnimationFrame === 'function'
+        ? requestAnimationFrame
+        : (fn) => setTimeout(fn, 16);
+
+    function isInsideXterm(node) {
+        const el = node && (node.nodeType === 1 ? node : node.parentElement);
+        return Boolean(el && el.closest && el.closest('.xterm'));
     }
 
     installTitleBarOverlayGuard();
@@ -1298,61 +1458,101 @@
         else if (schemeQuery.addListener) schemeQuery.addListener(onSchemeChange);
     } catch (e) {}
 
-    mountThemeSelector();
+    ensureSelectorMounted(true);
     syncModalChrome();
     syncAuxPaneState();
 
-    const observer = new MutationObserver((records) => {
-        if (records && records.length && records.every((r) => {
-            const el = r.target && (r.target.nodeType === 1 ? r.target : r.target.parentElement);
-            return el && el.closest && el.closest('.xterm');
-        })) return;
-        mountThemeSelector();
-        scheduleModalChromeSync();
+    let bodySchemeObserved = false;
+    const schemeObs = new MutationObserver(() => {
         syncThemeState();
-        if (activeThemeId() !== 'stock') {
-            syncAuxPaneState();
-        }
     });
-    observer.observe(document.documentElement, {
-        childList: true,
-        subtree: true,
+    schemeObs.observe(document.documentElement, {
         attributes: true,
-        attributeFilter: ['class', 'aria-label']
+        attributeFilter: ['class']
     });
 
-    setInterval(() => {
+    function ensureBodySchemeObserved() {
+        if (!bodySchemeObserved && document.body) {
+            bodySchemeObserved = true;
+            schemeObs.observe(document.body, {
+                attributes: true,
+                attributeFilter: ['class']
+            });
+        }
+    }
+    ensureBodySchemeObserved();
+
+    const observedMaximizeBtns = new WeakSet();
+    const maximizeObs = new MutationObserver(() => {
+        if (activeThemeId() !== 'stock') syncAuxPaneState();
+    });
+    function attachMaximizeBtnObservers() {
+        const btns = document.querySelectorAll('[data-testid="toggle-maximize-pane"]');
+        for (const btn of btns) {
+            if (observedMaximizeBtns.has(btn)) continue;
+            observedMaximizeBtns.add(btn);
+            maximizeObs.observe(btn, {
+                attributes: true,
+                attributeFilter: ['aria-label']
+            });
+        }
+    }
+    attachMaximizeBtnObservers();
+
+    let structRafQueued = false;
+    const structObs = new MutationObserver((records) => {
+        if (structRafQueued) return;
+        let hasRelevantMutation = false;
+        for (const r of records) {
+            if (!r.addedNodes.length && !r.removedNodes.length) continue;
+            if (isInsideXterm(r.target)) continue;
+            hasRelevantMutation = true;
+            break;
+        }
+        if (!hasRelevantMutation) return;
+        structRafQueued = true;
+        scheduleFrame(() => {
+            structRafQueued = false;
+            ensureBodySchemeObserved();
+            ensureSelectorMounted(false);
+            if (performance.now() >= auxPaneResizingUntil) syncModalChrome();
+            if (activeThemeId() !== 'stock') syncAuxPaneState();
+            attachMaximizeBtnObservers();
+        });
+    });
+    structObs.observe(document.documentElement, {
+        childList: true,
+        subtree: true
+    });
+
+    const SELF_HEAL_INTERVAL_MS = 4000;
+    function selfHealTick() {
         try {
-            if (!document.body) return;
+            if (document.hidden || !document.body) return;
+            ensureBodySchemeObserved();
             installTitleBarOverlayGuard();
             const activeId = activeThemeId();
             const theme = getTheme(activeId);
-            const desiredKey = currentThemeKey(theme);
             ensureThemeAttributes(activeId);
             if (activeId !== 'stock') {
                 syncAuxPaneState();
             }
-            let styleEl = document.getElementById('antigravity-active-theme');
-            const missing = !styleEl;
-            if (missing) {
-                styleEl = document.createElement('style');
-                styleEl.id = 'antigravity-active-theme';
-                (document.head || document.documentElement).appendChild(styleEl);
-            }
-            if (styleEl.dataset.themeKey !== desiredKey) {
-                styleEl.textContent = activeId === 'stock' ? '' : themeCssFor(theme);
-                styleEl.dataset.themeKey = desiredKey;
-            }
-            if (missing) {
+            const recreated = syncThemeStyleSheets(theme, isEffectiveDark());
+            if (recreated) {
                 enforceTitleBarColor(true);
-                mountThemeSelector();
-                return;
             }
-            const currentSelector = document.getElementById('antigravity-theme-selector');
-            const target = resolveToolbarMountTarget(findActiveToolbar());
-            if (target && (!currentSelector || !target.contains(currentSelector))) {
-                mountThemeSelector();
-            }
+            ensureSelectorMounted(false);
+            attachMaximizeBtnObservers();
         } catch (e) {}
-    }, 1000);
+    }
+    const selfHealTimerId = setInterval(selfHealTick, SELF_HEAL_INTERVAL_MS);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) selfHealTick();
+    });
+    window.addEventListener('unload', () => {
+        clearInterval(selfHealTimerId);
+        schemeObs.disconnect();
+        structObs.disconnect();
+        maximizeObs.disconnect();
+    });
 })();

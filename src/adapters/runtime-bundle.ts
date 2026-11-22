@@ -48,7 +48,22 @@ function rgbToHex(rgb: readonly [number, number, number]): string {
   return `#${rgb.map((c) => Math.max(0, Math.min(255, c)).toString(16).padStart(2, '0')).join('')}`;
 }
 
-function buildRuntimeTokenMap(ir: SemanticIR): Record<string, string> {
+const PREFIXED_CSS_VAR_RE = /--(?:ag|agy)-[a-z0-9-]+/g;
+
+function collectReferencedPrefixedVars(sources: readonly string[]): Set<string> {
+  const used = new Set<string>();
+  for (const src of sources) {
+    for (const match of src.matchAll(PREFIXED_CSS_VAR_RE)) {
+      used.add(match[0]);
+    }
+  }
+  return used;
+}
+
+function buildRuntimeTokenMap(
+  ir: SemanticIR,
+  referencedPrefixedVars: ReadonlySet<string>,
+): Record<string, string> {
   const isDark = ir.meta.mode === 'dark' || ir.meta.mode === 'hc-dark';
   const { hostVars, glassVars, agentVars } = collectCssVariableGroups(ir);
   const borderHairline = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.35)';
@@ -178,8 +193,12 @@ function buildRuntimeTokenMap(ir: SemanticIR): Record<string, string> {
     ['--ag-mermaid-viewport-bg', ir.surface.canvas],
   ];
 
-  rawEntries.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
-  return Object.fromEntries(rawEntries);
+  const prunedEntries = rawEntries.filter(([name]) => {
+    if (!name.startsWith('--ag-') && !name.startsWith('--agy-')) return true;
+    return referencedPrefixedVars.has(name);
+  });
+  prunedEntries.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  return Object.fromEntries(prunedEntries);
 }
 
 export interface CompiledRuntimeBundle {
@@ -196,43 +215,6 @@ export function emitDesktopRuntimeBundle(
   version: string,
   repoSlug = 'Django9944/antigravity-theme',
 ): CompiledRuntimeBundle {
-  const byFamily = new Map<ThemeFamilyId, { light?: SemanticIR; dark?: SemanticIR }>();
-  for (const ir of irs) {
-    const slot = byFamily.get(ir.meta.family) ?? {};
-    if (ir.meta.mode === 'dark' || ir.meta.mode === 'hc-dark') slot.dark = ir;
-    else slot.light = ir;
-    byFamily.set(ir.meta.family, slot);
-  }
-
-  const runtimeThemes: Array<Record<string, unknown>> = [];
-  for (const family of FAMILY_ORDER) {
-    const pair = byFamily.get(family);
-    if (!pair?.light || !pair.dark) {
-      throw new Error(`Missing light/dark pair for runtime family "${family}"`);
-    }
-    runtimeThemes.push({
-      id: family,
-      variantIdLight: pair.light.meta.id,
-      variantIdDark: pair.dark.meta.id,
-      name: pair.light.meta.nameZh,
-      nameDark: pair.dark.meta.nameZh,
-      titlebarColor: pair.light.runtime.titlebarColor,
-      titlebarColorDark: pair.dark.runtime.titlebarColor,
-      symbolColor: pair.light.runtime.titlebarSymbolColor,
-      symbolColorDark: pair.dark.runtime.titlebarSymbolColor,
-      icon: pair.light.meta.iconSvg,
-      tokens: buildRuntimeTokenMap(pair.light),
-      tokensDark: buildRuntimeTokenMap(pair.dark),
-    });
-  }
-
-  runtimeThemes.push({
-    id: 'stock',
-    name: '官方原版',
-    nameDark: '官方原版',
-    icon: STOCK_ICON_SVG,
-  });
-
   const normalizeLf = (s: string): string => s.replace(/\r\n/g, '\n');
 
   const companionCss = normalizeLf(
@@ -245,14 +227,75 @@ export function emitDesktopRuntimeBundle(
     readFileSync(resolve(RUNTIME_SRC_DIR, 'styles/host-dark-overrides.css'), 'utf8'),
   );
   const templateJs = normalizeLf(readFileSync(resolve(RUNTIME_SRC_DIR, 'engine-template.js'), 'utf8'));
+  const referencedPrefixedVars = collectReferencedPrefixedVars([
+    companionCss,
+    hostSurfacesCss,
+    hostDarkCss,
+    templateJs,
+  ]);
+
+  const byFamily = new Map<ThemeFamilyId, { light?: SemanticIR; dark?: SemanticIR }>();
+  for (const ir of irs) {
+    const slot = byFamily.get(ir.meta.family) ?? {};
+    if (ir.meta.mode === 'dark' || ir.meta.mode === 'hc-dark') slot.dark = ir;
+    else slot.light = ir;
+    byFamily.set(ir.meta.family, slot);
+  }
+
+  const rawPairs: Array<{
+    family: ThemeFamilyId;
+    light: SemanticIR;
+    dark: SemanticIR;
+    tokens: Record<string, string>;
+    tokensDark: Record<string, string>;
+  }> = [];
+  const tokenKeySet = new Set<string>();
+
+  for (const family of FAMILY_ORDER) {
+    const pair = byFamily.get(family);
+    if (!pair?.light || !pair.dark) {
+      throw new Error(`Missing light/dark pair for runtime family "${family}"`);
+    }
+    const tokens = buildRuntimeTokenMap(pair.light, referencedPrefixedVars);
+    const tokensDark = buildRuntimeTokenMap(pair.dark, referencedPrefixedVars);
+    for (const k of Object.keys(tokens)) tokenKeySet.add(k);
+    for (const k of Object.keys(tokensDark)) tokenKeySet.add(k);
+    rawPairs.push({ family, light: pair.light, dark: pair.dark, tokens, tokensDark });
+  }
+
+  const tokenKeys = [...tokenKeySet].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+  const runtimeThemes: Array<Record<string, unknown>> = rawPairs.map(
+    ({ family, light, dark, tokens, tokensDark }) => ({
+      id: family,
+      variantIdLight: light.meta.id,
+      variantIdDark: dark.meta.id,
+      name: light.meta.nameZh,
+      nameDark: dark.meta.nameZh,
+      titlebarColor: light.runtime.titlebarColor,
+      titlebarColorDark: dark.runtime.titlebarColor,
+      symbolColor: light.runtime.titlebarSymbolColor,
+      symbolColorDark: dark.runtime.titlebarSymbolColor,
+      icon: light.meta.iconSvg,
+      t: tokenKeys.map((k) => tokens[k] ?? ''),
+      td: tokenKeys.map((k) => tokensDark[k] ?? ''),
+    }),
+  );
+
+  runtimeThemes.push({
+    id: 'stock',
+    name: '官方原版',
+    nameDark: '官方原版',
+    icon: STOCK_ICON_SVG,
+  });
 
   const versionTag = version.startsWith('v') ? version : `v${version}`;
   const currentJs = templateJs
-    .replace('__THEME_PACK_VERSION__', JSON.stringify(versionTag))
-    .replace('__THEME_PACK_REPO__', JSON.stringify(repoSlug))
-    .replace('__BASE_CSS__', JSON.stringify(hostSurfacesCss))
-    .replace('__DARK_DELTA_CSS__', JSON.stringify(hostDarkCss))
-    .replace('__THEMES_JSON__', JSON.stringify(runtimeThemes));
+    .replace('__THEME_PACK_VERSION__', () => JSON.stringify(versionTag))
+    .replace('__THEME_PACK_REPO__', () => JSON.stringify(repoSlug))
+    .replace('__BASE_CSS__', () => JSON.stringify(hostSurfacesCss))
+    .replace('__DARK_DELTA_CSS__', () => JSON.stringify(hostDarkCss))
+    .replace('__TOKEN_KEYS_JSON__', () => JSON.stringify(tokenKeys))
+    .replace('__THEMES_JSON__', () => JSON.stringify(runtimeThemes));
 
   return {
     currentCss: companionCss,

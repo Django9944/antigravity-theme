@@ -173,9 +173,28 @@ try {
         assert.equal(updater.verifyFileSha256(sampleZip, sumsText, 'missing.zip').ok, false);
 
         assert.equal(updater.decideUpdateMode({ oldHookVersion: 'v1', newHookVersion: 'v1', asarState: 'PATCHED_V1' }), 'hot');
+        assert.equal(updater.decideUpdateMode({ oldHookVersion: 'v2', newHookVersion: 'v2', asarState: 'PATCHED_V2' }), 'hot');
         assert.equal(updater.decideUpdateMode({ oldHookVersion: 'v1', newHookVersion: 'v2', asarState: 'PATCHED_V1' }), 'full');
-        assert.equal(updater.decideUpdateMode({ oldHookVersion: 'v1', newHookVersion: 'v1', asarState: 'CLEAN' }), 'full');
-        assert.equal(updater.decideUpdateMode({ oldHookVersion: 'v1', newHookVersion: 'v1', asarState: 'PATCHED_LEGACY' }), 'full');
+        assert.equal(updater.decideUpdateMode({ oldHookVersion: 'v2', newHookVersion: 'v2', asarState: 'CLEAN' }), 'full');
+        assert.equal(updater.decideUpdateMode({ oldHookVersion: 'v2', newHookVersion: 'v2', asarState: 'PATCHED_LEGACY' }), 'full');
+
+        assert.throws(
+            () => updater.assertChecksumPresent({ tag: 'v0.2.1', checksumUrl: null }),
+            /缺少 SHA256SUMS\.txt/,
+            'missing checksumUrl must fail closed'
+        );
+
+        const atomicDir = fs.mkdtempSync(path.join(tmpDir, 'atomic-'));
+        const srcExec = path.join(atomicDir, 'sample.sh');
+        const dstExec = path.join(atomicDir, 'target.sh');
+        fs.writeFileSync(srcExec, '#!/bin/sh\necho new\n', 'utf8');
+        fs.writeFileSync(dstExec, '#!/bin/sh\necho old\n', 'utf8');
+        updater.atomicCopyFile(srcExec, dstExec, { executableOnUnix: true });
+        assert.equal(fs.readFileSync(dstExec, 'utf8'), '#!/bin/sh\necho new\n');
+        assert.equal(fs.readdirSync(atomicDir).some((f) => f.includes('.tmp.')), false, 'atomicCopyFile must leave no temp files');
+        if (process.platform !== 'win32') {
+            assert.ok((fs.statSync(dstExec).mode & 0o111) !== 0, 'atomicCopyFile must preserve executable bit for .sh');
+        }
 
         const resolvedCss = updater.resolvePayloadSource(ROOT, { payloadDir: 'dist/runtime' }, 'current.css');
         assert.equal(resolvedCss, path.join(ROOT, 'dist', 'runtime', 'current.css'));
@@ -288,7 +307,7 @@ try {
 
             r = runPatcher(['inspect', patched1]);
             assert.equal(r.status, 0, r.stderr);
-            assert.equal(r.stdout.trim(), 'PATCHED_V1');
+            assert.equal(r.stdout.trim(), 'PATCHED_V2');
 
             r = runPatcher(['verify-patched', patched1]);
             assert.equal(r.status, 0, r.stderr);
@@ -301,7 +320,7 @@ try {
             r = runPatcher(['doctor', patched1, '--json']);
             assert.equal(r.status, 0, r.stderr);
             const doc = JSON.parse(r.stdout);
-            assert.equal(doc.status, 'PATCHED_V1');
+            assert.equal(doc.status, 'PATCHED_V2');
             assert.equal(doc.integrityOk, true);
             assert.equal(doc.boundsOk, true);
 
@@ -346,6 +365,172 @@ try {
         r = runPatcher(['strip', upgradedPath, strippedPath]);
         assert.equal(r.status, 0, r.stderr);
         assert.equal(sha256(fs.readFileSync(strippedPath)), sha256(stockBuf));
+    });
+
+    test('V1 hook upgrades cleanly to V2 without duplicate did-finish-load listener', () => {
+        const stockCode = 'function openHub(win, url) {\n    void loadHubWindowUrl(win, url, { skipBootstrapMint });\n    return win;\n}\n';
+        const v1Hook =
+            '\n/* === Antigravity Custom Theme Hook v1 === */\n' +
+            'console.log("v1");\n' +
+            '/* === End Antigravity Custom Theme Hook === */';
+        const v1Code = stockCode.replace(
+            'void loadHubWindowUrl(win, url, { skipBootstrapMint });',
+            'void loadHubWindowUrl(win, url, { skipBootstrapMint });' + v1Hook
+        );
+
+        const stockBuf = createSyntheticAsar(stockCode);
+        const v1Path = path.join(tmpDir, 'v1.asar');
+        const v2Path = path.join(tmpDir, 'v2.asar');
+        const strippedPath = path.join(tmpDir, 'v2-stripped.asar');
+        fs.writeFileSync(v1Path, createSyntheticAsar(v1Code));
+
+        let r = runPatcher(['inspect', v1Path]);
+        assert.equal(r.status, 0, r.stderr);
+        assert.equal(r.stdout.trim(), 'PATCHED_LEGACY');
+
+        r = runPatcher(['inject', v1Path, v2Path]);
+        assert.equal(r.status, 0, r.stderr);
+
+        r = runPatcher(['inspect', v2Path]);
+        assert.equal(r.status, 0, r.stderr);
+        assert.equal(r.stdout.trim(), 'PATCHED_V2');
+
+        const v2Text = fs.readFileSync(v2Path, 'utf8');
+        assert.ok(v2Text.includes("win.webContents.on('dom-ready'"), 'v2 hook must listen on dom-ready');
+        assert.ok(!v2Text.includes('did-finish-load'), 'v2 hook must not register duplicate did-finish-load');
+
+        // Exercise v2 HOOK_BLOCK runtime behavior: deduplicated dom-ready + mtime cache invalidation on Cmd+R
+        const hookMatch = v2Text.match(/(\/\* === Antigravity Custom Theme Hook v2 === \*\/[\s\S]*?\/\* === End Antigravity Custom Theme Hook === \*\/)/);
+        assert.ok(hookMatch, 'v2 hook block must be extractable');
+        const hookThemeDir = path.join(tmpDir, 'hook-res', 'custom-theme');
+        fs.mkdirSync(hookThemeDir, { recursive: true });
+        const cssFile = path.join(hookThemeDir, 'current.css');
+        const jsFile = path.join(hookThemeDir, 'current.js');
+        fs.writeFileSync(cssFile, '/* css v1 */', 'utf8');
+        fs.writeFileSync(jsFile, '/* js v1 */', 'utf8');
+
+        const listeners = Object.create(null);
+        const insertedCss = [];
+        const removedKeys = [];
+        const executedJs = [];
+        const fakeWin = {
+            isDestroyed: () => false,
+            webContents: {
+                isDestroyed: () => false,
+                on: (ev, fn) => { (listeners[ev] = listeners[ev] || []).push(fn); },
+                insertCSS: (css) => { insertedCss.push(css); return Promise.resolve(`key-${insertedCss.length}`); },
+                removeInsertedCSS: (k) => { removedKeys.push(k); return Promise.resolve(); },
+                executeJavaScript: (js) => { executedJs.push(js); return Promise.resolve(); }
+            }
+        };
+        const fakeElectron = { app: { getPath: () => path.join(tmpDir, 'hook-userdata') } };
+        const origResourcesPath = process.resourcesPath;
+        process.resourcesPath = path.join(tmpDir, 'hook-res');
+        try {
+            const runner = new Function('require', 'process', 'win', 'electron_1', hookMatch[1]);
+            runner(require, process, fakeWin, fakeElectron);
+        } finally {
+            process.resourcesPath = origResourcesPath;
+        }
+        assert.equal((listeners['dom-ready'] || []).length, 1);
+        assert.equal((listeners['did-finish-load'] || []).length, 0);
+
+        listeners['dom-ready'][0]();
+        listeners['dom-ready'][0]();
+        assert.equal(insertedCss.length, 1, 'duplicate dom-ready within same navigation must be ignored');
+        assert.equal(executedJs.length, 1);
+
+        // Simulate in-page navigation (must NOT re-inject)
+        listeners['did-start-navigation'][0]({ isMainFrame: true, isInPlace: true });
+        listeners['dom-ready'][0]();
+        assert.equal(insertedCss.length, 1);
+
+        // Simulate hot-updated file + Cmd+R main-frame navigation (must pick up updated CSS)
+        fs.writeFileSync(cssFile, '/* css v2-hot-updated */', 'utf8');
+        const futureTime = new Date(Date.now() + 5000);
+        fs.utimesSync(cssFile, futureTime, futureTime);
+        listeners['did-start-navigation'][0]({ isMainFrame: true, isInPlace: false });
+        listeners['dom-ready'][0]();
+        assert.equal(insertedCss.length, 2);
+        assert.equal(insertedCss[1], '/* css v2-hot-updated */');
+
+        r = runPatcher(['strip', v2Path, strippedPath]);
+        assert.equal(r.status, 0, r.stderr);
+        assert.equal(sha256(fs.readFileSync(strippedPath)), sha256(stockBuf));
+    });
+
+    test('F18: fallback anchor containing $& does not corrupt injected hook', () => {
+        const anchorLine = 'void loadHubWindowUrl(win, "$&");';
+        const stockCode = `function openHub(win) {\n    ${anchorLine}\n    return win;\n}\n`;
+        const stockPath = path.join(tmpDir, 'dollar-anchor.asar');
+        const patchedPath = path.join(tmpDir, 'dollar-patched.asar');
+        fs.writeFileSync(stockPath, createSyntheticAsar(stockCode));
+
+        const r = runPatcher(['inject', stockPath, patchedPath]);
+        assert.equal(r.status, 0, r.stderr);
+        const patchedRaw = fs.readFileSync(patchedPath, 'utf8');
+        assert.ok(patchedRaw.includes(`${anchorLine}\n/* === Antigravity Custom Theme Hook v2 === */`));
+        assert.equal(runPatcher(['verify-patched', patchedPath]).status, 0);
+    });
+
+    test('F13: fuse inspection gates inject and reports ElectronAsarIntegrity match/mismatch', () => {
+        const stockCode = 'function openHub(win, url) {\n    void loadHubWindowUrl(win, url, { skipBootstrapMint });\n    return win;\n}\n';
+        const stockBuf = createSyntheticAsar(stockCode);
+        const jsonLen = stockBuf.readUInt32LE(12);
+        const stockHeaderSha = sha256(stockBuf.subarray(16, 16 + jsonLen));
+
+        const buildFakeMacBundle = (name, integrityByte) => {
+            const appDir = path.join(tmpDir, name);
+            const resDir = path.join(appDir, 'Contents', 'Resources');
+            const fwDir = path.join(appDir, 'Contents', 'Frameworks', 'Electron Framework.framework', 'Versions', 'A');
+            fs.mkdirSync(resDir, { recursive: true });
+            fs.mkdirSync(fwDir, { recursive: true });
+            const asarPath = path.join(resDir, 'app.asar');
+            fs.writeFileSync(asarPath, stockBuf);
+            const sentinel = Buffer.from('dL7pKGdnNz796PbbjQWNKmHXBZaB9tsX', 'ascii');
+            const wire = Buffer.concat([
+                Buffer.from('padding-prefix-'),
+                sentinel,
+                Buffer.from([1, 9]),
+                Buffer.from(`1011${integrityByte}0011`, 'ascii'),
+                Buffer.from('-padding-suffix')
+            ]);
+            fs.writeFileSync(path.join(fwDir, 'Electron Framework'), wire);
+            fs.writeFileSync(
+                path.join(appDir, 'Contents', 'Info.plist'),
+                `<?xml version="1.0"?><plist><dict><key>ElectronAsarIntegrity</key><dict><key>Resources/app.asar</key><dict><key>algorithm</key><string>SHA256</string><key>hash</key><string>${stockHeaderSha}</string></dict></dict></dict></plist>`,
+                'utf8'
+            );
+            return asarPath;
+        };
+
+        const blockedAsar = buildFakeMacBundle('FuseBlocked.app', '1');
+        let r = runPatcher(['doctor', blockedAsar, '--json']);
+        assert.equal(r.status, 2, 'doctor must exit 2 when EnableEmbeddedAsarIntegrityValidation is enabled');
+        const blockedDoc = JSON.parse(r.stdout);
+        assert.equal(blockedDoc.fuses.binaryFound, true);
+        assert.equal(blockedDoc.fuses.asarIntegrityValidationEnabled, true);
+        assert.equal(blockedDoc.fuses.plistHeaderMatch, true);
+
+        const refusedOut = path.join(tmpDir, 'refused.asar');
+        r = runPatcher(['inject', blockedAsar, refusedOut]);
+        assert.notEqual(r.status, 0, 'inject must refuse when EnableEmbeddedAsarIntegrityValidation is enabled');
+        assert.ok(r.stderr.includes('EnableEmbeddedAsarIntegrityValidation'));
+
+        const safeAsar = buildFakeMacBundle('FuseSafe.app', '0');
+        r = runPatcher(['doctor', safeAsar, '--json']);
+        assert.equal(r.status, 0, r.stderr);
+        const safeDoc = JSON.parse(r.stdout);
+        assert.equal(safeDoc.fuses.asarIntegrityValidationEnabled, false);
+        assert.equal(safeDoc.fuses.plistHeaderMatch, true);
+
+        const patchedAsar = path.join(path.dirname(safeAsar), 'app.patched.asar');
+        r = runPatcher(['inject', safeAsar, patchedAsar]);
+        assert.equal(r.status, 0, r.stderr);
+        fs.copyFileSync(patchedAsar, safeAsar);
+        r = runPatcher(['doctor', safeAsar, '--json']);
+        assert.equal(r.status, 0, r.stderr);
+        assert.equal(JSON.parse(r.stdout).fuses.plistHeaderMatch, false);
     });
 
     test('Multi-block (>4MB) utils.js integrity calculation and round-trip', () => {
@@ -404,7 +589,7 @@ try {
 
             r = spawnSync(psExe, [...psBase, '-Doctor'], { encoding: 'utf8', env: winEnv });
             assert.equal(r.status, 0, `install.ps1 -Doctor failed:\n${r.stdout}\n${r.stderr}`);
-            assert.ok(r.stdout.includes('PATCHED_V1'));
+            assert.ok(r.stdout.includes('PATCHED_V2'));
 
             r = spawnSync(psExe, [...psBase, '-Uninstall'], { encoding: 'utf8', env: winEnv });
             assert.equal(r.status, 0, `install.ps1 -Uninstall failed:\n${r.stdout}\n${r.stderr}`);
@@ -454,7 +639,7 @@ try {
 
             r = spawnSync('bash', [...baseArgs, '--doctor'], { encoding: 'utf8', env });
             assert.equal(r.status, 0, `install.sh --doctor failed:\n${r.stdout}\n${r.stderr}`);
-            assert.ok(r.stdout.includes('PATCHED_V1'));
+            assert.ok(r.stdout.includes('PATCHED_V2'));
 
             r = spawnSync('bash', [...baseArgs, '--uninstall'], { encoding: 'utf8', env });
             assert.equal(r.status, 0, `install.sh --uninstall failed:\n${r.stdout}\n${r.stderr}`);
@@ -475,6 +660,35 @@ try {
             r = spawnSync('bash', [...baseArgs, '--auto-heal'], { encoding: 'utf8', env });
             assert.equal(r.status, 2);
             assert.equal(sha256(fs.readFileSync(fakeAsar)), sha256(badBuf));
+
+            // F12: install.sh must preserve ORIG_ARGS across sudo re-exec safely under set -u
+            const shText = fs.readFileSync(path.join(ROOT, 'install.sh'), 'utf8');
+            assert.ok(shText.includes('ORIG_ARGS=("$@")'), 'install.sh must capture ORIG_ARGS before shift loop');
+            assert.ok(shText.includes('${ORIG_ARGS[@]+"${ORIG_ARGS[@]}"}'), 'install.sh must guard empty ORIG_ARGS for macOS Bash 3.2');
+
+            // F19: Python fallback matches JS patcher lifecycle, bounds checks, and read-back verify
+            const pyMatch = shText.match(/<<'PY_EOF'\r?\n([\s\S]*?)\r?\nPY_EOF/);
+            assert.ok(pyMatch, 'install.sh must contain Python fallback block');
+            const pyScriptPath = path.join(tmpDir, 'fallback.py');
+            fs.writeFileSync(pyScriptPath, pyMatch[1], 'utf8');
+            const pyClean = path.join(tmpDir, 'py-clean.asar');
+            const pyPatched = path.join(tmpDir, 'py-patched.asar');
+            const pyStripped = path.join(tmpDir, 'py-stripped.asar');
+            fs.writeFileSync(pyClean, stockBuf);
+
+            let pyRes = spawnSync('python3', [pyScriptPath, MANIFEST_PATH, 'inspect', pyClean], { encoding: 'utf8' });
+            if (pyRes.status === 0) {
+                assert.equal(pyRes.stdout.trim(), 'CLEAN');
+                pyRes = spawnSync('python3', [pyScriptPath, MANIFEST_PATH, 'inject', pyClean, pyPatched], { encoding: 'utf8' });
+                assert.equal(pyRes.status, 0, pyRes.stderr);
+                assert.equal(spawnSync('python3', [pyScriptPath, MANIFEST_PATH, 'verify-patched', pyPatched], { encoding: 'utf8' }).status, 0);
+                const pyDoc = spawnSync('python3', [pyScriptPath, MANIFEST_PATH, 'doctor', pyPatched], { encoding: 'utf8' });
+                assert.equal(pyDoc.status, 0, pyDoc.stderr);
+                assert.ok(pyDoc.stdout.includes('Bounds OK      : True'));
+                pyRes = spawnSync('python3', [pyScriptPath, MANIFEST_PATH, 'strip', pyPatched, pyStripped], { encoding: 'utf8' });
+                assert.equal(pyRes.status, 0, pyRes.stderr);
+                assert.equal(sha256(fs.readFileSync(pyStripped)), sha256(stockBuf));
+            }
         });
     }
 } finally {
