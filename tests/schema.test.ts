@@ -525,7 +525,15 @@ describe('Distributable Theme Pack Schema & Purity (Layer 1)', () => {
         css,
         `${label} must not use accent RGB in --voice-*-shadow elevation tokens`,
       ).not.toMatch(/--voice-(?:pill|chip|panel|card)-shadow:\s*[^;]*var\(--ag-accent-rgb\)/);
+      expect(
+        css,
+        `${label} must not lock overview-panel-host or popup menus at opacity: 1 !important during exit transitions`,
+      ).not.toMatch(/\[data-testid\^="overview-panel-host-"[^\]{]*\{[^}]*opacity:\s*1\s*!important/);
     }
+    expect(baseCss).toContain(
+      '[data-testid^="overview-panel-host-"]:is([data-starting-style], [data-ending-style])',
+    );
+    expect(baseCss).toContain('will-change: transform, opacity;');
   });
 
   for (const variant of VARIANTS) {
