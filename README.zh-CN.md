@@ -14,7 +14,7 @@
 它将同一套 TypeScript `OKLCH` + `APCA`/`WCAG 2.1` 对比度门禁词元管线编译为两类开箱即用的产物：
 
 1. **标准 Design Token 与主题包（`dist/<variant>/`）** —— 覆盖 **7 大主题色系 × Dark/Light（共 14 款变体）** 的 W3C DTCG JSON、`--color-*` / `--agy-*` CSS 变量表、Shiki 代码高亮表与 Mermaid 配色。
-2. **零重签桌面端运行时（`dist/runtime/` + `core/`）** —— 语义化重构的 `current.css` 与 `current.js`（右上角悬浮主题胶囊切换器、支持无缝切换 **`Stock`（官方原版）**），由跨平台共享引擎 `core/asar-patcher.js`（`Hook v1`）无损注入，**绝不修改 `Info.plist` 与 `_CodeSignature`，完整保留 macOS TCC 系统权限**。
+2. **零重签桌面端运行时（`dist/runtime/` + `core/`）** —— 语义化编译生成的 `current.css` 与 `current.js`（右上角悬浮主题胶囊切换器、支持无缝切换 **`Stock`（官方原版）**），由跨平台共享引擎 `core/asar-patcher.js`（`Hook v1`）无损注入，**绝不修改 `Info.plist` 与 `_CodeSignature`，完整保留 macOS TCC 系统权限**。
 
 > [!NOTE]
 > **适用范围边界**：本项目仅面向 **Antigravity 2.0 Agent 桌面端应用**（左侧边栏 · 对话画布 · 右侧辅助面板），并非代码编辑器主题（不包含 Antigravity IDE、VS Code 及其他编辑器）。
@@ -47,7 +47,7 @@
 ./install.sh --doctor              # 只读诊断当前 Antigravity 的锚点兼容性与 SHA-256 完整性
 ./install.sh --enable-auto-heal    # 注册 LaunchAgent：宿主自动升级后静默恢复主题钩子
 ./install.sh --update              # 拉取最新 Release、校验 SHA256SUMS.txt，智能热更新或重注入
-./install.sh --uninstall           # 字节级还原原厂 app.asar，清理 LaunchAgent 及历史旧任务
+./install.sh --uninstall           # 字节级还原原厂 app.asar 并移除 LaunchAgent
 ```
 
 ### Windows (`%LOCALAPPDATA%\Programs\Antigravity`)
@@ -64,7 +64,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -Uninstall    
 ```
 
 > [!TIP]
-> **从旧版 `antigravity-custom-themes` 无缝迁移**：继续沿用 `Hook v1` 与 `custom-theme/` 双目录载荷；首次安装默认选中旗舰 **Orbital**（同时保留你原有的主题偏好记录），并会在安装 / 启用自愈 / 卸载时自动清理旧版 `com.django9944.antigravity-custom-themes.autoheal` 与 `AntigravityCustomThemes-AutoHeal` 后台任务。
+> **默认主题与偏好保存**：首次安装默认选中旗舰 **Orbital** 主题；通过右上角悬浮胶囊菜单切换的偏好会在后续更新中持续保留，也可随时一键无痕切换回 **Stock（官方原版）**。
 
 ## 核心亮点
 
@@ -111,8 +111,8 @@ pnpm preview          # 在 http://127.0.0.1:4173/preview/ 启动三栏交互仿
 ### [v0.2.0](https://github.com/Django9944/antigravity-theme/releases/tag/v0.2.0) （当前最新版本 / Latest）
 
 - **7 Theme Families × Dark / Light (14 OKLCH Variants) + Stock Reset**: Expanded flagship `Orbital` (`antigravity-dark`, `antigravity-light`) with six celestial OKLCH families (`prism`, `zenith`, `lagoon`, `solar`, `nova`, `nebula` × Dark/Light), all passing APCA & WCAG 2.1 contrast gates plus non-intrusive `stock` restore.
-- **Modular Semantic Desktop Runtime (`dist/runtime/current.{css,js}`)**: Replaced hand-numbered monolithic CSS/JS with a SemanticIR-compiled desktop runtime featuring Aurora multi-layer mesh glass, floating top-right ghost switcher, dual media capsules, xterm ANSI bridge, and modal chrome polish.
-- **Zero-Resign Cross-Platform ASAR Installer, Auto-Heal & Self-Updater**: Added `core/asar-patcher.js`, `core/updater.js`, macOS (`install.sh`, `*.command`, LaunchAgent auto-heal), and Windows (`install.ps1`, `*.bat`, Scheduled Task auto-heal) with SHA-256 verification and automatic migration from `antigravity-custom-themes`.
+- **Modular Semantic Desktop Runtime (`dist/runtime/current.{css,js}`)**: Added a SemanticIR-compiled desktop runtime featuring Aurora multi-layer mesh glass, floating top-right ghost switcher, dual media capsules, xterm ANSI bridge, and modal chrome polish.
+- **Zero-Resign Cross-Platform ASAR Installer, Auto-Heal & Self-Updater**: Added `core/asar-patcher.js`, `core/updater.js`, macOS (`install.sh`, `*.command`, LaunchAgent auto-heal), and Windows (`install.ps1`, `*.bat`, Scheduled Task auto-heal) with SHA-256 integrity verification and byte-exact stock restore.
 - **Upgraded 3-Pane Preview Workbench & 3-Archive Release Pipeline**: Added 7-family selector, Aurora mesh stage backdrop, and simulated ghost switcher to `preview/`; updated `pack-release.ts` to emit standard, `-macos.zip`, and `-windows.zip` with unified `SHA256SUMS.txt` plus daily `antigravity-watch.yml` CI monitoring.
 
 ### [v0.1.0](https://github.com/Django9944/antigravity-theme/releases/tag/v0.1.0)
