@@ -930,10 +930,19 @@
         }
 
         if (dropdown) {
-            if (isDarkTheme) {
-                dropdown.style.background = 'rgba(24, 24, 27, 0.96)';
+            if (activeId !== 'stock') {
+                const fallbackBg = isDarkTheme ? 'rgba(18, 24, 34, 0.78)' : 'rgba(248, 251, 255, 0.88)';
+                const fallbackBorder = isDarkTheme ? 'rgba(255, 255, 255, 0.10)' : 'rgba(15, 23, 42, 0.10)';
+                const fallbackShadow = isDarkTheme
+                    ? '0 14px 36px rgba(0, 0, 0, 0.62), 0 4px 12px rgba(0, 0, 0, 0.38)'
+                    : '0 12px 32px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.08)';
+                dropdown.style.background = `var(--ag-surface-popover, ${fallbackBg})`;
+                dropdown.style.borderColor = `var(--ag-popover-border, ${fallbackBorder})`;
+                dropdown.style.boxShadow = `var(--ag-shadow-popover, ${fallbackShadow})`;
+            } else if (isDarkTheme) {
+                dropdown.style.background = 'rgba(24, 24, 27, 0.94)';
                 dropdown.style.borderColor = 'rgba(255, 255, 255, 0.12)';
-                dropdown.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.2)';
+                dropdown.style.boxShadow = '0 14px 36px rgba(0, 0, 0, 0.62), 0 4px 12px rgba(0, 0, 0, 0.38)';
             } else {
                 dropdown.style.background = 'rgba(255, 255, 255, 0.96)';
                 dropdown.style.borderColor = 'rgba(0, 0, 0, 0.08)';

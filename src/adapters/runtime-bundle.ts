@@ -19,10 +19,48 @@ const FAMILY_ORDER: readonly ThemeFamilyId[] = [
   'nebula',
 ];
 
+function parseHex6(hex: string): readonly [number, number, number] {
+  const clean = hex.trim().replace(/^#/, '').slice(0, 6);
+  if (!/^[0-9a-fA-F]{6}$/.test(clean)) {
+    throw new Error(`Expected 6-digit hex color for popover mixing, got: ${hex}`);
+  }
+  return [
+    parseInt(clean.slice(0, 2), 16),
+    parseInt(clean.slice(2, 4), 16),
+    parseInt(clean.slice(4, 6), 16),
+  ];
+}
+
+function mixRgb(
+  a: readonly [number, number, number],
+  b: readonly [number, number, number],
+  ratioB: number,
+): readonly [number, number, number] {
+  const ratioA = 1 - ratioB;
+  return [
+    Math.round(a[0] * ratioA + b[0] * ratioB),
+    Math.round(a[1] * ratioA + b[1] * ratioB),
+    Math.round(a[2] * ratioA + b[2] * ratioB),
+  ];
+}
+
+function rgbToHex(rgb: readonly [number, number, number]): string {
+  return `#${rgb.map((c) => Math.max(0, Math.min(255, c)).toString(16).padStart(2, '0')).join('')}`;
+}
+
 function buildRuntimeTokenMap(ir: SemanticIR): Record<string, string> {
   const isDark = ir.meta.mode === 'dark' || ir.meta.mode === 'hc-dark';
   const { hostVars, glassVars, agentVars } = collectCssVariableGroups(ir);
   const borderHairline = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.35)';
+
+  const popoverRgb = isDark
+    ? mixRgb(parseHex6(ir.runtime.titlebarColor), parseHex6(ir.runtime.userBubbleSolid), 0.45)
+    : mixRgb(parseHex6(ir.surface.elevated), parseHex6(ir.runtime.titlebarColor), 0.10);
+  const popoverOpaqueHex = rgbToHex(popoverRgb);
+  const popoverGlassBg = isDark
+    ? `rgba(${popoverRgb.join(', ')}, 0.78)`
+    : `rgba(${popoverRgb.join(', ')}, 0.88)`;
+  const popoverBorder = isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(15, 23, 42, 0.10)';
 
   const rawEntries: Array<readonly [string, string]> = [
     ...hostVars,
@@ -47,6 +85,14 @@ function buildRuntimeTokenMap(ir: SemanticIR): Record<string, string> {
     ['--color-sidebar-muted', 'transparent !important'],
     ['--sidebar-secondary', 'transparent !important'],
     ['--color-sidebar-secondary', 'transparent !important'],
+    ['--popover', `${popoverGlassBg} !important`],
+    ['--color-popover', `${popoverGlassBg} !important`],
+    ['--popover-foreground', `${ir.fg.primary} !important`],
+    ['--color-popover-foreground', `${ir.fg.primary} !important`],
+    ['--menu', `${popoverGlassBg} !important`],
+    ['--color-menu', `${popoverGlassBg} !important`],
+    ['--menu-border', `${popoverBorder} !important`],
+    ['--color-menu-border', `${popoverBorder} !important`],
     ['--foreground', `${ir.fg.primary} !important`],
     ['--color-foreground', `${ir.fg.primary} !important`],
     ['--secondary-foreground', `${ir.fg.primary} !important`],
@@ -90,7 +136,28 @@ function buildRuntimeTokenMap(ir: SemanticIR): Record<string, string> {
     ['--ag-inline-code-bg', ir.artifact.inlineCodeBg],
     ['--ag-inline-code-fg', ir.artifact.inlineCodeFg],
     ['--ag-inline-code-border', ir.runtime.inlineCodeBorder],
-    ['--ag-surface-popover', ir.surface.elevated],
+    ['--ag-popover-backdrop', 'blur(24px) saturate(145%)'],
+    ['--ag-popover-border', popoverBorder],
+    [
+      '--ag-shadow-floating',
+      isDark
+        ? '0 6px 18px rgba(0, 0, 0, 0.52), 0 2px 6px rgba(0, 0, 0, 0.32)'
+        : '0 4px 14px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.06)',
+    ],
+    [
+      '--ag-shadow-popover',
+      isDark
+        ? '0 14px 36px rgba(0, 0, 0, 0.62), 0 4px 12px rgba(0, 0, 0, 0.38)'
+        : '0 12px 32px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.08)',
+    ],
+    [
+      '--ag-shadow-tooltip',
+      isDark
+        ? '0 8px 24px rgba(0, 0, 0, 0.56), 0 2px 8px rgba(0, 0, 0, 0.34)'
+        : '0 8px 20px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06)',
+    ],
+    ['--ag-surface-popover', popoverGlassBg],
+    ['--ag-surface-popover-opaque', popoverOpaqueHex],
     ['--ag-surface-user-bubble', ir.runtime.userBubbleSolid],
     ['--ag-terminal-panel-bg', ir.runtime.terminalPanelBg],
     ['--ag-terminal-cursor', ir.terminal.cursor],

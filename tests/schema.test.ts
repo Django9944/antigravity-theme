@@ -453,6 +453,66 @@ describe('Distributable Theme Pack Schema & Purity (Layer 1)', () => {
     }
   });
 
+  it('uses neutral black shadows on floating popups, tooltips, and menus without bright accent halos', () => {
+    const runtimeJs = readFileSync(resolve(DIST_DIR, 'runtime/current.js'), 'utf8');
+    const match = runtimeJs.match(/const THEMES = (\[[\s\S]*?\]);/);
+    const themesRaw = match?.[1];
+    expect(themesRaw).toBeDefined();
+    const themes = JSON.parse(themesRaw!) as Array<{
+      id: string;
+      tokens?: Record<string, string>;
+      tokensDark?: Record<string, string>;
+    }>;
+
+    const requiredShadowVars = ['--ag-shadow-popover', '--ag-shadow-tooltip', '--ag-shadow-floating'] as const;
+    const requiredPopoverBridgeVars = ['--popover', '--color-popover', '--menu', '--color-menu'] as const;
+    const darkOpaquePopovers: string[] = [];
+
+    for (const theme of themes) {
+      if (theme.id === 'stock') continue;
+      for (const tokenSet of [theme.tokens, theme.tokensDark]) {
+        expect(tokenSet).toBeDefined();
+        expect(tokenSet!['--ag-popover-border']).toBeTruthy();
+        expect(tokenSet!['--ag-surface-popover']).toMatch(/^rgba\(/);
+        expect(tokenSet!['--ag-surface-popover-opaque']).toMatch(/^#[0-9a-f]{6}$/);
+        expect(tokenSet!['--ag-popover-backdrop']).toMatch(/^blur\(/);
+        for (const bridgeKey of requiredPopoverBridgeVars) {
+          expect(tokenSet![bridgeKey], `${theme.id} missing ${bridgeKey}`).toContain('rgba(');
+        }
+        for (const shadowKey of requiredShadowVars) {
+          const val = tokenSet![shadowKey];
+          expect(val, `${theme.id} missing ${shadowKey}`).toBeTruthy();
+          expect(val).toContain('rgba(0, 0, 0,');
+          expect(val).not.toContain('--ag-accent-rgb');
+          expect(val).not.toContain('rgba(255, 255, 255');
+        }
+      }
+      darkOpaquePopovers.push(theme.tokensDark!['--ag-surface-popover-opaque']!);
+    }
+    expect(new Set(darkOpaquePopovers).size).toBe(7);
+
+    const baseCss = readFileSync(resolve(ROOT_DIR, 'src/runtime/styles/host-surfaces.css'), 'utf8');
+    const darkCss = readFileSync(resolve(ROOT_DIR, 'src/runtime/styles/host-dark-overrides.css'), 'utf8');
+    for (const [label, css] of [
+      ['host-surfaces.css', baseCss],
+      ['host-dark-overrides.css', darkCss],
+    ] as const) {
+      const clean = css.replace(/\/\*[\s\S]*?\*\//g, '');
+      expect((clean.match(/\{/g) || []).length, `${label} unbalanced braces`).toBe(
+        (clean.match(/\}/g) || []).length,
+      );
+      expect(css, `${label} must apply --ag-popover-backdrop`).toContain('var(--ag-popover-backdrop)');
+      expect(
+        css,
+        `${label} must not use accent RGB in large floating box-shadows`,
+      ).not.toMatch(/box-shadow:\s*0\s+(?:8|10|12|14)px\b[^;]*var\(--ag-accent-rgb\)/);
+      expect(
+        css,
+        `${label} must not use accent RGB in --voice-*-shadow elevation tokens`,
+      ).not.toMatch(/--voice-(?:pill|chip|panel|card)-shadow:\s*[^;]*var\(--ag-accent-rgb\)/);
+    }
+  });
+
   for (const variant of VARIANTS) {
     describe(`Variant: ${variant.displayName} (${variant.id})`, () => {
       const variantDir = resolve(DIST_DIR, variant.id);
