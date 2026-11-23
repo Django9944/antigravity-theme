@@ -1,0 +1,72 @@
+name: Links Checker
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 1 * *'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  link_checker:
+    name: Check Markdown links and maintain single rolling report issue
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      REPORT_FILE: links-report.md
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run lychee link checker
+        id: lychee
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          output: ${{ env.REPORT_FILE }}
+          format: markdown
+          fail: false
+          failIfEmpty: false
+          args: >-
+            --verbose
+            --accept 200,204,206
+            --timeout 20
+            --max-concurrency 3
+            --no-progress
+            README.md README.zh-CN.md VISION.md AGENTS.md CONTRIBUTING.md SECURITY.md CODE_OF_CONDUCT.md THIRD_PARTY_NOTICES.md CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Find existing automated link-check issue
+        id: last_issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          number=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --label report --label "automated issue" --search "sort:updated-desc" --limit 1 \
+            --json number --jq '.[0].number // empty')
+          if [ -n "$number" ]; then
+            echo "has_found=true" >> "$GITHUB_OUTPUT"
+            echo "issue_number=$number" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create or update rolling report issue
+        if: ${{ steps.lychee.outputs.exit_code != 0 }}
+        uses: peter-evans/create-issue-from-file@fca9117c27cdc29c6c4db3b86c48e4115a786710 # v6.0.0
+        with:
+          title: Link checker report
+          content-filepath: ${{ env.REPORT_FILE }}
+          issue-number: ${{ steps.last_issue.outputs.issue_number }}
+          labels: |
+            report
+            automated issue
+
+      - name: Close report issue when all links are fixed
+        if: ${{ steps.lychee.outputs.exit_code == 0 && steps.last_issue.outputs.has_found == 'true' }}
+        uses: peter-evans/close-issue@05dff7ca07116e5707cfb3a3cd4af7bb5e43524c # v3.0.2
+        with:
+          issue-number: ${{ steps.last_issue.outputs.issue_number }}

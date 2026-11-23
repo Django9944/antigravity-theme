@@ -1,5 +1,11 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Subjective Aesthetics & Discussions
+  - name: 💬 Questions, Aesthetics & Usage Help
     url: https://github.com/Django9944/antigravity-theme/discussions
-    about: Ask questions or discuss color preferences and community CSS overrides.
+    about: Ask setup questions, discuss color preferences, or share community CSS overrides in GitHub Discussions (Discord @angusyoung9944).
+  - name: 🎨 Interactive 3-Pane Preview Workbench
+    url: https://django9944.github.io/antigravity-theme/preview/
+    about: Preview all 7 OKLCH theme families (14 Dark/Light variants + Stock), Aurora backdrops, and worst-case contrast walls in your browser.
+  - name: 🔒 Security Vulnerability
+    url: https://github.com/Django9944/antigravity-theme/security/advisories/new
+    about: Report security issues in the ASAR patcher, self-updater, or scripts privately via GitHub Security Advisories or angusyoung9944@gmail.com.

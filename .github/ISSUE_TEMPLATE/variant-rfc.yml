@@ -1,22 +1,40 @@
 name: Variant or Surface RFC
-description: Propose a new theme variant (e.g., High Contrast / Soft Dim) or Antigravity 2.0 surface enhancement.
+description: Propose a new theme family/variant or Antigravity 2.0 desktop surface enhancement.
 title: "[RFC]: "
-labels: ["enhancement"]
+labels:
+  - enhancement
 body:
   - type: markdown
     attributes:
-      value: >
-        New variants must reuse Layer 2 SemanticIR by adding a palette in `src/palettes/`, registering it in `src/variants.ts`, updating `package.json#exports` and `preview/`, and passing all APCA & WCAG 2.1 automated gates.
+      value: |
+        Before proposing a core change, check `VISION.md` ("What We Will Not Merge") to confirm it aligns with the **Antigravity 2.0 Agent Desktop App** boundary.
+        New variants must reuse `SemanticIR` (`src/tokens/semantic.ts`) by adding a palette in `src/palettes/`, registering it in `src/variants.ts`, updating `package.json#exports` and `preview/`, and passing all `APCA` & `WCAG 2.1` automated gates (`tests/contrast.test.ts`).
+
   - type: input
     id: summary
     attributes:
       label: Proposal Summary
+      placeholder: "e.g., Add high-contrast mode or refine MCP App card borders"
     validations:
       required: true
+
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Target Layer
+      options:
+        - OKLCH Palettes & SemanticIR Tokens (src/palettes/ & src/tokens/)
+        - Desktop Runtime Styles & Floating Switcher (src/runtime/ & dist/runtime/)
+        - Zero-Resign ASAR Installer & Self-Updater (core/ & install.*)
+        - 3-Pane Interactive Preview Workbench (preview/)
+        - Documentation / CI Tooling
+    validations:
+      required: true
+
   - type: textarea
     id: details
     attributes:
-      label: Visual Rationale & Accessibility Targets
-      description: Explain the use case, target OKLCH palette direction, and APCA contrast targets.
+      label: Problem Statement, Visual Rationale & Accessibility Targets
+      description: Explain the concrete user workflow bottleneck, target OKLCH palette direction, and how APCA (L1 >= 75, L2 >= 60, L3 >= 45) & WCAG 2.1 contrast targets will be preserved.
     validations:
       required: true

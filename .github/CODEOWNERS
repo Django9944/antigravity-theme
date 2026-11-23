@@ -1,0 +1,30 @@
+# CODEOWNERS - Require explicit review for security, desktop ASAR patcher, CI, and dependency boundaries.
+# Enable "Require review from Code Owners" and "Dismiss stale pull request approvals" in Branch Protection.
+
+* @Django9944
+
+# Security policy, governance, and review rules
+/.github/CODEOWNERS @Django9944
+/SECURITY.md @Django9944
+/VISION.md @Django9944
+/AGENTS.md @Django9944
+/CODE_OF_CONDUCT.md @Django9944
+
+# Desktop ASAR patcher, self-updater, and cross-platform installer scripts
+/core/ @Django9944
+/manifest.json @Django9944
+/install.sh @Django9944
+/install.ps1 @Django9944
+/install.command @Django9944
+/install.bat @Django9944
+/uninstall.command @Django9944
+/uninstall.bat @Django9944
+
+# CI/CD workflows & release automation
+/.github/workflows/ @Django9944
+/.github/dependabot.yml @Django9944
+/scripts/ @Django9944
+
+# Dependency manifests & lockfiles
+/package.json @Django9944
+/pnpm-lock.yaml @Django9944
