@@ -16,6 +16,15 @@
 > [!NOTE]
 > **适用范围边界**：本项目仅面向 **Antigravity 2.0 Agent 桌面端应用**（左侧边栏 · 对话画布 · 右侧辅助面板），并非代码编辑器主题（不包含 Antigravity IDE、VS Code 及其他编辑器）。
 
+<div align="center">
+  <a href="https://django9944.github.io/antigravity-theme/preview/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="./preview/hero-dark.svg" />
+      <img src="./preview/hero-light.svg" alt="Antigravity Theme — 7 大 OKLCH 主题色系与三栏桌面端预览" width="100%" />
+    </picture>
+  </a>
+</div>
+
 ## 桌面端 30 秒快速上手（macOS & Windows）
 
 ### 三步一键启用
@@ -121,17 +130,17 @@ pnpm preview          # 在 http://127.0.0.1:4173/preview/ 启动三栏交互仿
 
 ### [v0.2.0](https://github.com/Django9944/antigravity-theme/releases/tag/v0.2.0) （当前最新版本 / Latest）
 
-- **7 Theme Families × Dark / Light (14 OKLCH Variants) + Stock Reset**: Expanded flagship `Orbital` (`antigravity-dark`, `antigravity-light`) with six celestial OKLCH families (`prism`, `zenith`, `lagoon`, `solar`, `nova`, `nebula` × Dark/Light), all passing APCA & WCAG 2.1 contrast gates plus non-intrusive `stock` restore.
-- **Modular Semantic Desktop Runtime (`dist/runtime/current.{css,js}`)**: Added a SemanticIR-compiled desktop runtime featuring Aurora multi-layer mesh glass, floating top-right ghost switcher, dual media capsules, xterm ANSI bridge, and modal chrome polish.
-- **Zero-Resign Cross-Platform ASAR Installer, Auto-Heal & Self-Updater**: Added `core/asar-patcher.js`, `core/updater.js`, macOS (`install.sh`, `*.command`, LaunchAgent auto-heal), and Windows (`install.ps1`, `*.bat`, Scheduled Task auto-heal) with SHA-256 integrity verification and byte-exact stock restore.
-- **Upgraded 3-Pane Preview Workbench & 3-Archive Release Pipeline**: Added 7-family selector, Aurora mesh stage backdrop, and simulated ghost switcher to `preview/`; updated `pack-release.ts` to emit standard, `-macos.zip`, and `-windows.zip` with unified `SHA256SUMS.txt` plus daily `antigravity-watch.yml` CI monitoring.
+- **7 大主题色系 × Dark / Light（14 款 OKLCH 变体）+ `Stock` 还原**：在旗舰 `Orbital`（`antigravity-dark`、`antigravity-light`）基础上新增 6 大天文极光色系（`prism`、`zenith`、`lagoon`、`solar`、`nova`、`nebula` × Dark/Light），全量通过 APCA 与 WCAG 2.1 对比度门禁并支持无痕切回 `stock`。
+- **模块化语义桌面运行时（`dist/runtime/current.{css,js}`）**：新增由 SemanticIR 编译的桌面运行时，提供极光多层网格玻璃、右上角悬浮主题胶囊切换器、双媒体胶囊、xterm ANSI 桥接及弹窗质感优化。
+- **跨平台零重签 ASAR 安装器、自动自愈与安全热更新**：新增 `core/asar-patcher.js`、`core/updater.js`、macOS（`install.sh`、`*.command`、LaunchAgent 自愈）及 Windows（`install.ps1`、`*.bat`、计划任务自愈），支持 SHA-256 校验与字节级原厂还原。
+- **升级版三栏预览工作台与三端发版流水线**：在 `preview/` 新增 7 色系选择器、极光网格背景舞台与仿真悬浮胶囊；`pack-release.ts` 同步输出标准包、`-macos.zip`、`-windows.zip` 与统一 `SHA256SUMS.txt`，并新增每日 `antigravity-watch.yml` CI 巡检。
 
 ### [v0.1.0](https://github.com/Django9944/antigravity-theme/releases/tag/v0.1.0)
 
-- Initial OKLCH Design Token compiler and deterministic multi-format adapters (`theme.json`, `variables.css`, `code-theme.json`, `mermaid.json`).
-- Option A (`ADR-006`) High-Opacity Matte Frosted Glass palettes: **Antigravity Dark (Orbital Slate Matte Glass)** and **Antigravity Light (Orbital Cloud Matte Glass)**.
-- Interactive 3-pane Antigravity 2.0 Agent Desktop preview workbench (`preview/`).
-- Automated schema, host CSS coverage, worst-case glass contrast (`APCA` + `WCAG 2.1`), L5 ring/border, DOM-stacked Diff, and Shiki Tier-1 code-fence regression test suite.
+- 初始 OKLCH Design Token 编译器与确定性多格式适配器（`theme.json`、`variables.css`、`code-theme.json`、`mermaid.json`）。
+- Option A（`ADR-006`）高不透明度磨砂玻璃调色板：**Antigravity Dark（星轨岩板）** 与 **Antigravity Light（星轨云瓷）**。
+- 交互式 Antigravity 2.0 Agent 桌面端三栏预览工作台（`preview/`）。
+- 自动化 Schema、宿主 CSS 覆盖率、极限玻璃对比度（`APCA` + `WCAG 2.1`）、L5 聚焦环/边框、DOM 堆叠 Diff 及 Shiki Tier-1 代码高亮回归测试套件。
 
 <!-- RELEASE_HISTORY:END -->
 

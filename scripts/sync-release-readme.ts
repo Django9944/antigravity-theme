@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -6,6 +6,21 @@ const DEFAULT_ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 export const RELEASE_HISTORY_START = '<!-- RELEASE_HISTORY:START -->';
 export const RELEASE_HISTORY_END = '<!-- RELEASE_HISTORY:END -->';
+
+const ZH_BULLET_TRANSLATIONS: Readonly<Record<string, readonly string[]>> = {
+  '0.2.0': [
+    '**7 大主题色系 × Dark / Light（14 款 OKLCH 变体）+ `Stock` 还原**：在旗舰 `Orbital`（`antigravity-dark`、`antigravity-light`）基础上新增 6 大天文极光色系（`prism`、`zenith`、`lagoon`、`solar`、`nova`、`nebula` × Dark/Light），全量通过 APCA 与 WCAG 2.1 对比度门禁并支持无痕切回 `stock`。',
+    '**模块化语义桌面运行时（`dist/runtime/current.{css,js}`）**：新增由 SemanticIR 编译的桌面运行时，提供极光多层网格玻璃、右上角悬浮主题胶囊切换器、双媒体胶囊、xterm ANSI 桥接及弹窗质感优化。',
+    '**跨平台零重签 ASAR 安装器、自动自愈与安全热更新**：新增 `core/asar-patcher.js`、`core/updater.js`、macOS（`install.sh`、`*.command`、LaunchAgent 自愈）及 Windows（`install.ps1`、`*.bat`、计划任务自愈），支持 SHA-256 校验与字节级原厂还原。',
+    '**升级版三栏预览工作台与三端发版流水线**：在 `preview/` 新增 7 色系选择器、极光网格背景舞台与仿真悬浮胶囊；`pack-release.ts` 同步输出标准包、`-macos.zip`、`-windows.zip` 与统一 `SHA256SUMS.txt`，并新增每日 `antigravity-watch.yml` CI 巡检。',
+  ],
+  '0.1.0': [
+    '初始 OKLCH Design Token 编译器与确定性多格式适配器（`theme.json`、`variables.css`、`code-theme.json`、`mermaid.json`）。',
+    'Option A（`ADR-006`）高不透明度磨砂玻璃调色板：**Antigravity Dark（星轨岩板）** 与 **Antigravity Light（星轨云瓷）**。',
+    '交互式 Antigravity 2.0 Agent 桌面端三栏预览工作台（`preview/`）。',
+    '自动化 Schema、宿主 CSS 覆盖率、极限玻璃对比度（`APCA` + `WCAG 2.1`）、L5 聚焦环/边框、DOM 堆叠 Diff 及 Shiki Tier-1 代码高亮回归测试套件。',
+  ],
+};
 
 export interface ChangelogReleaseEntry {
   readonly version: string;
@@ -77,9 +92,12 @@ export function renderReadmeReleaseHistory(
           : '(Latest Release)'
         : '';
     const heading = `### [${tag}](${repoUrl}/releases/tag/${tag}) ${badge}`.trim();
+    const localizedBullets =
+      locale === 'zh-CN' ? ZH_BULLET_TRANSLATIONS[rel.version] : undefined;
+    const activeBullets = localizedBullets ?? rel.bullets;
     const items =
-      rel.bullets.length > 0
-        ? rel.bullets.map((b) => `- ${b}`).join('\n')
+      activeBullets.length > 0
+        ? activeBullets.map((b) => `- ${b}`).join('\n')
         : rel.body || (locale === 'zh-CN' ? '- 常规维护与质量门禁更新。' : '- Maintenance update.');
     blocks.push(`${heading}\n\n${items}`);
   });
@@ -155,6 +173,16 @@ export function generateReleaseNotes(
     version: string;
     description: string;
   };
+  const manifestPath = resolve(rootDir, 'manifest.json');
+  let hookVersion = 'v2';
+  if (existsSync(manifestPath)) {
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
+      hookVersion?: unknown;
+    };
+    if (typeof manifest.hookVersion === 'string' && manifest.hookVersion.trim()) {
+      hookVersion = manifest.hookVersion.trim();
+    }
+  }
   const version = (targetVersion ?? pkg.version).replace(/^v/, '');
   const tag = `v${version}`;
 
@@ -173,7 +201,7 @@ export function generateReleaseNotes(
     ``,
     `**Antigravity Theme** (\`${pkg.name}\`) — ${pkg.description}`,
     ``,
-    `- **Target Application**: Antigravity 2.0 Agent Desktop App Only (\`macOS\` & \`Windows\` zero-resign ASAR Hook \`v1\`, plus W3C DTCG / CSS Variable packs)`,
+    `- **Target Application**: Antigravity 2.0 Agent Desktop App Only (\`macOS\` & \`Windows\` zero-resign ASAR Hook \`${hookVersion}\`, plus W3C DTCG / CSS Variable packs)`,
     `- **Theme Families (7 Families × Dark / Light = 14 OKLCH + APCA Variants + \`Stock\`)**:`,
     `  - **Orbital** (\`antigravity-dark\` / \`antigravity-light\`) — Flagship Orbital Slate & Cloud Matte Glass`,
     `  - **Prism**, **Zenith**, **Lagoon**, **Solar**, **Nova**, **Nebula** (\`antigravity-<family>-dark\` / \`antigravity-<family>-light\`) — Celestial Aurora OKLCH Matte Glass`,

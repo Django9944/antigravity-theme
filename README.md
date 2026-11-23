@@ -16,6 +16,15 @@
 > [!NOTE]
 > **Scope Boundary**: Purpose-built exclusively for the **Antigravity 2.0 Agent Desktop App** (Left-hand Sidebar · Chat Canvas · Auxiliary Pane). It is not a code editor theme (excludes Antigravity IDE, VS Code, and other code editors).
 
+<div align="center">
+  <a href="https://django9944.github.io/antigravity-theme/preview/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="./preview/hero-dark.svg" />
+      <img src="./preview/hero-light.svg" alt="Antigravity Theme — 7 OKLCH Theme Families &amp; 3-Pane Desktop Preview" width="100%" />
+    </picture>
+  </a>
+</div>
+
 ## Quick Start — Desktop App (macOS & Windows)
 
 ### 3-Step Desktop Onboarding

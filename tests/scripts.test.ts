@@ -117,7 +117,7 @@ describe('Upstream Antigravity App Parser, Diff & Auto-Baseline Update', () => {
 describe('Release Notes & README Iteration Sync', () => {
   it('parses CHANGELOG.md releases, synchronizes README.md / README.zh-CN.md, and generates release notes with project description', () => {
     const dir = makeTempDir('agy-readme-sync-');
-    for (const file of ['package.json', 'CHANGELOG.md', 'README.md', 'README.zh-CN.md']) {
+    for (const file of ['package.json', 'manifest.json', 'CHANGELOG.md', 'README.md', 'README.zh-CN.md']) {
       cpSync(resolve(ROOT_DIR, file), resolve(dir, file));
     }
 
@@ -135,10 +135,12 @@ describe('Release Notes & README Iteration Sync', () => {
     const zhReadme = readFileSync(resolve(dir, 'README.zh-CN.md'), 'utf8');
     expect(enReadme).toContain('### [v0.2.0](https://github.com/Django9944/antigravity-theme/releases/tag/v0.2.0) (Latest Release)');
     expect(zhReadme).toContain('### [v0.2.0](https://github.com/Django9944/antigravity-theme/releases/tag/v0.2.0) （当前最新版本 / Latest）');
+    expect(zhReadme).toContain('7 大主题色系 × Dark / Light');
 
     const notes = generateReleaseNotes(dir, '0.2.0');
     expect(notes).toContain('## Project Overview');
     expect(notes).toContain('OKLCH matte & aurora glass theme system');
+    expect(notes).toContain('zero-resign ASAR Hook `v2`');
     expect(notes).toContain("## What's Changed in `v0.2.0` (Iteration Notes)");
     expect(notes).toContain('antigravity-theme-v0.2.0.zip');
     expect(notes).toContain('antigravity-theme-v0.2.0-macos.zip');

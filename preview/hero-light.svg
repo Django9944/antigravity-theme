@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="640" viewBox="0 0 1200 640" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Antigravity Theme 3-Pane Desktop Preview (light)">
+  <defs>
+    <linearGradient id="stage-grad" x1="0" y1="0" x2="1200" y2="640" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#dfe7f3" />
+      <stop offset="100%" stop-color="#edf2fa" />
+    </linearGradient>
+    <radialGradient id="aurora-1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(220 110) rotate(32) scale(420 260)">
+      <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.32" />
+      <stop offset="100%" stop-color="#60a5fa" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="aurora-2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(980 120) rotate(-25) scale(380 240)">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.26" />
+      <stop offset="100%" stop-color="#a78bfa" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="aurora-3" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(600 540) scale(480 200)">
+      <stop offset="0%" stop-color="#2dd4bf" stop-opacity="0.20" />
+      <stop offset="100%" stop-color="#2dd4bf" stop-opacity="0" />
+    </radialGradient>
+    <filter id="win-shadow" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#000000" flood-opacity="0.18" />
+    </filter>
+    <filter id="capsule-shadow" x="-15%" y="-25%" width="130%" height="160%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.16" />
+    </filter>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Helvetica, Arial, sans-serif; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    </style>
+  </defs>
+
+  <!-- Stage Backdrop -->
+  <rect width="1200" height="640" rx="18" fill="url(#stage-grad)" />
+  <rect width="1200" height="640" rx="18" fill="url(#aurora-1)" />
+  <rect width="1200" height="640" rx="18" fill="url(#aurora-2)" />
+  <rect width="1200" height="640" rx="18" fill="url(#aurora-3)" />
+
+  <!-- Top Header Strip -->
+  <text x="44" y="34" font-size="13" font-weight="700" letter-spacing="0.4" fill="#192028">ANTIGRAVITY 2.0 AGENT DESKTOP</text>
+  <text x="275" y="34" font-size="12" fill="#5c636a">Zero-Resign Hook v2 · 7 Families × Dark / Light</text>
+  <rect x="1010" y="17" width="146" height="24" rx="12" fill="#eff3f7" stroke="#5c636a" stroke-width="1" />
+  <text x="1083" y="33" font-size="10.5" font-weight="600" text-anchor="middle" fill="#005697">LIGHT MATTE GLASS</text>
+
+  <!-- Desktop Window Frame -->
+  <g filter="url(#win-shadow)">
+    <rect x="44" y="52" width="1112" height="484" rx="14" fill="#ecf1f5" stroke="#5c636a" stroke-width="1.2" />
+  </g>
+
+  <!-- Titlebar -->
+  <rect x="44" y="52" width="1112" height="40" rx="14" fill="#ecf1f5" />
+  <rect x="44" y="78" width="1112" height="14" fill="#ecf1f5" />
+  <line x1="44" y1="92" x2="1156" y2="92" stroke="#97a0a7" stroke-width="1" />
+  <circle cx="68" cy="72" r="5.5" fill="#ef4444" />
+  <circle cx="86" cy="72" r="5.5" fill="#f59e0b" />
+  <circle cx="104" cy="72" r="5.5" fill="#22c55e" />
+  <text x="130" y="76" font-size="12" font-weight="600" fill="#383f47">Antigravity — Workspace Theme Verification</text>
+
+  <!-- Floating Top-Right Ghost Switcher Capsule -->
+  <g filter="url(#capsule-shadow)">
+    <rect x="920" y="59" width="222" height="26" rx="13" fill="#fafdff" stroke="#5c636a" stroke-width="1" />
+    <circle cx="935" cy="72" r="5" fill="#005697" />
+    <text x="946" y="76" font-size="11" font-weight="600" fill="#192028">Orbital</text>
+    <line x1="992" y1="64" x2="992" y2="80" stroke="#97a0a7" stroke-width="1" />
+    <text x="1002" y="76" font-size="10.5" fill="#383f47">Light</text>
+    <line x1="1038" y1="64" x2="1038" y2="80" stroke="#97a0a7" stroke-width="1" />
+    <rect x="1044" y="63" width="44" height="18" rx="9" fill="#69a0d821" />
+    <text x="1066" y="75.5" font-size="10" font-weight="600" text-anchor="middle" fill="#005697">Theme</text>
+    <text x="1114" y="75.5" font-size="10" text-anchor="middle" fill="#5c636a">Stock</text>
+  </g>
+
+  <!-- Pane 1: Left Sidebar -->
+  <rect x="45" y="93" width="218" height="442" fill="#ecf1f5" />
+  <line x1="263" y1="92" x2="263" y2="536" stroke="#97a0a7" stroke-width="1" />
+  <text x="64" y="118" font-size="10.5" font-weight="700" letter-spacing="0.6" fill="#5c636a">ACTIVE AGENTS</text>
+  <rect x="56" y="128" width="194" height="36" rx="8" fill="#69a0d824" stroke="#5c636a" stroke-width="0.9" />
+  <circle cx="72" cy="146" r="4" fill="#006330" />
+  <text x="84" y="143" font-size="12" font-weight="600" fill="#192028">OKLCH Token Compiler</text>
+  <text x="84" y="157" font-size="10" fill="#5c636a">14 variants · APCA verified</text>
+
+  <rect x="56" y="172" width="194" height="34" rx="8" fill="transparent" />
+  <circle cx="72" cy="189" r="4" fill="#005697" />
+  <text x="84" y="186" font-size="12" fill="#383f47">ASAR Patcher (Hook v2)</text>
+  <text x="84" y="200" font-size="10" fill="#5c636a">Zero-resign · TCC safe</text>
+
+  <rect x="56" y="212" width="194" height="34" rx="8" fill="transparent" />
+  <circle cx="72" cy="229" r="4" fill="#794900" />
+  <text x="84" y="226" font-size="12" fill="#383f47">Upstream Watch CI</text>
+  <text x="84" y="240" font-size="10" fill="#5c636a">Daily Electron ASAR check</text>
+
+  <text x="64" y="278" font-size="10.5" font-weight="700" letter-spacing="0.6" fill="#5c636a">QUICK COMMANDS</text>
+  <rect x="56" y="288" width="194" height="28" rx="6" fill="#eff3f7" stroke="#97a0a7" stroke-width="0.8" />
+  <text x="68" y="306" class="mono" font-size="10.5" fill="#383f47">./install.sh --install</text>
+  <rect x="56" y="322" width="194" height="28" rx="6" fill="#eff3f7" stroke="#97a0a7" stroke-width="0.8" />
+  <text x="68" y="340" class="mono" font-size="10.5" fill="#383f47">./install.sh --doctor</text>
+
+  <rect x="56" y="486" width="194" height="34" rx="8" fill="#69a0d821" stroke="#97a0a7" stroke-width="0.8" />
+  <text x="153" y="507" font-size="11" font-weight="600" text-anchor="middle" fill="#005697">Orbital Light · APCA L1 ≥ 75</text>
+
+  <!-- Pane 2: Center Chat Canvas -->
+  <rect x="264" y="93" width="516" height="442" fill="#f5f9fc" />
+  <line x1="780" y1="92" x2="780" y2="536" stroke="#97a0a7" stroke-width="1" />
+
+  <!-- User Bubble -->
+  <rect x="440" y="110" width="322" height="38" rx="10" fill="#fafdff" stroke="#5c636a" stroke-width="0.9" />
+  <text x="454" y="133" font-size="12" fill="#192028">Compile all 7 OKLCH theme families and verify APCA gates.</text>
+
+  <!-- Thinking Card -->
+  <rect x="282" y="162" width="480" height="58" rx="10" fill="#eff3f7" stroke="#97a0a7" stroke-width="1" />
+  <rect x="282" y="162" width="4" height="58" rx="2" fill="#005697" />
+  <text x="298" y="182" font-size="11.5" font-weight="600" fill="#005697">Thinking · Perceptual OKLCH &amp; Contrast Engine</text>
+  <text x="298" y="200" font-size="11" fill="#383f47">All 14 variants satisfy APCA L1 ≥ 75, L2 ≥ 60, L3 ≥ 45 over #FFF / #000.</text>
+
+  <!-- Shiki Code Fence Card -->
+  <rect x="282" y="232" width="480" height="146" rx="10" fill="#eff3f7" stroke="#5c636a" stroke-width="1" />
+  <rect x="282" y="232" width="480" height="28" rx="10" fill="#fafdff" />
+  <text x="296" y="250" class="mono" font-size="10.5" font-weight="600" fill="#383f47">src/core/contrast.ts</text>
+  <text x="748" y="250" font-size="10.5" font-weight="600" text-anchor="end" fill="#006330">✓ 158 Contrast Gates Passed</text>
+
+  <text x="298" y="280" class="mono" font-size="11.5"><tspan fill="#55419a">export function </tspan><tspan fill="#005697">verifyGlassContrast</tspan><tspan fill="#192028">(fg: </tspan><tspan fill="#005f67">Hex</tspan><tspan fill="#192028">, bg: </tspan><tspan fill="#005f67">HexAlpha</tspan><tspan fill="#192028">) {</tspan></text>
+  <text x="298" y="300" class="mono" font-size="11.5"><tspan fill="#55419a">  const </tspan><tspan fill="#192028">res = </tspan><tspan fill="#005697">worstCaseGlassContrast</tspan><tspan fill="#192028">(fg, bg);</tspan></text>
+  <text x="298" y="320" class="mono" font-size="11.5"><tspan fill="#55419a">  if </tspan><tspan fill="#192028">(res.minAbsApca &lt; </tspan><tspan fill="#903900">75</tspan><tspan fill="#192028">) </tspan><tspan fill="#55419a">throw new </tspan><tspan fill="#005f67">Error</tspan><tspan fill="#192028">(</tspan><tspan fill="#006330">"APCA L1 gate"</tspan><tspan fill="#192028">);</tspan></text>
+  <text x="298" y="340" class="mono" font-size="11.5"><tspan fill="#55419a">  return </tspan><tspan fill="#192028">res;</tspan></text>
+  <text x="298" y="360" class="mono" font-size="11.5"><tspan fill="#192028">}</tspan></text>
+
+  <!-- Approval Card -->
+  <rect x="282" y="392" width="480" height="72" rx="10" fill="#eff3f7" stroke="#5c636a" stroke-width="1" />
+  <text x="298" y="414" font-size="12" font-weight="600" fill="#192028">ASAR Injection Ready — Zero-Resign Verification</text>
+  <text x="298" y="432" font-size="11" fill="#383f47">_CodeSignature &amp; Info.plist remain byte-untouched; stock backup verified.</text>
+  <rect x="298" y="442" width="84" height="16" rx="4" fill="#71b78521" />
+  <text x="340" y="453.5" font-size="9.5" font-weight="600" text-anchor="middle" fill="#006330">TCC SAFE</text>
+  <rect x="652" y="422" width="94" height="28" rx="7" fill="#005697" />
+  <text x="699" y="440" font-size="11.5" font-weight="600" text-anchor="middle" fill="#f9fbfd">Apply Theme</text>
+
+  <!-- Chat Composer -->
+  <rect x="282" y="478" width="480" height="42" rx="10" fill="#fafdff" stroke="#5c636a" stroke-width="1" />
+  <text x="298" y="503" font-size="11.5" fill="#5c636a">Ask Antigravity to switch family, run --doctor, or build tokens...</text>
+
+  <!-- Pane 3: Auxiliary Pane -->
+  <rect x="781" y="93" width="374" height="442" fill="#ecf1f5" />
+  <text x="798" y="118" font-size="10.5" font-weight="700" letter-spacing="0.6" fill="#5c636a">AUXILIARY PANE · DIFF &amp; TERMINAL</text>
+
+  <!-- Diff Preview Card -->
+  <rect x="798" y="130" width="340" height="170" rx="10" fill="#eff3f7" stroke="#97a0a7" stroke-width="1" />
+  <text x="812" y="152" class="mono" font-size="11" font-weight="600" fill="#192028">dist/manifest.json</text>
+  <rect x="808" y="166" width="320" height="24" rx="4" fill="#e78a8421" />
+  <text x="816" y="182" class="mono" font-size="10.5" fill="#962b2d">- "hookVersion": "v1"</text>
+  <rect x="808" y="194" width="320" height="24" rx="4" fill="#71b78521" />
+  <text x="816" y="210" class="mono" font-size="10.5" fill="#006330">+ "hookVersion": "v2"</text>
+  <rect x="808" y="222" width="320" height="24" rx="4" fill="#71b78521" />
+  <text x="816" y="238" class="mono" font-size="10.5" fill="#006330">+ "families": 7, "variants": 14</text>
+  <text x="814" y="274" font-size="11" fill="#383f47">4 MB Block SHA-256 &amp; DTCG Schema Verified</text>
+
+  <!-- Terminal Card -->
+  <rect x="798" y="314" width="340" height="206" rx="10" fill="#eff3f7" stroke="#97a0a7" stroke-width="1" />
+  <text x="812" y="336" class="mono" font-size="11" font-weight="600" fill="#383f47">TERMINAL · pnpm test &amp;&amp; pnpm test:asar</text>
+  <line x1="798" y1="348" x2="1138" y2="348" stroke="#97a0a7" stroke-width="0.8" />
+  <text x="812" y="370" class="mono" font-size="10.5" fill="#005697">$ pnpm build &amp;&amp; pnpm test</text>
+  <text x="812" y="392" class="mono" font-size="10.5" fill="#006330">✓ 14 OKLCH variants compiled</text>
+  <text x="812" y="412" class="mono" font-size="10.5" fill="#006330">✓ 415/415 Vitest gates passed</text>
+  <text x="812" y="432" class="mono" font-size="10.5" fill="#006330">✓ 17/17 ASAR &amp; sandbox checks passed</text>
+  <text x="812" y="456" class="mono" font-size="10.5" fill="#383f47">✓ macOS _CodeSignature untouched</text>
+  <text x="812" y="476" class="mono" font-size="10.5" fill="#383f47">✓ Windows &amp; macOS ZIPs signed w/ SHA256</text>
+
+  <!-- Bottom 7-Family Swatch Strip -->
+  
+    <g transform="translate(44, 556)">
+      <rect width="148" height="62" rx="10" fill="#eff3f7" stroke="#005697" stroke-width="1.8" />
+      <rect x="10" y="11" width="38" height="22" rx="6" fill="#ecf1f5" stroke="#97a0a7" stroke-width="0.8" />
+      <rect x="26" y="15" width="22" height="14" rx="4" fill="#f5f9fc" />
+      <circle cx="57" cy="22" r="7" fill="#005697" />
+      <circle cx="72" cy="22" r="4.5" fill="#005697" />
+      <text x="10" y="48" font-size="12" font-weight="600" fill="#192028">Orbital</text>
+      <text x="138" y="48" font-size="10" text-anchor="end" fill="#5c636a">255° Cobalt</text>
+    </g>
+    <g transform="translate(204, 556)">
+      <rect width="148" height="62" rx="10" fill="#f0f3f7" stroke="#5c636a" stroke-width="1" />
+      <rect x="10" y="11" width="38" height="22" rx="6" fill="#edf0f6" stroke="#97a0a7" stroke-width="0.8" />
+      <rect x="26" y="15" width="22" height="14" rx="4" fill="#f6f9fd" />
+      <circle cx="57" cy="22" r="7" fill="#1153a0" />
+      <circle cx="72" cy="22" r="4.5" fill="#005697" />
+      <text x="10" y="48" font-size="12" font-weight="600" fill="#1a2028">Prism</text>
+      <text x="138" y="48" font-size="10" text-anchor="end" fill="#5d626a">256° Aurora</text>
+    </g>
+    <g transform="translate(364, 556)">
+      <rect width="148" height="62" rx="10" fill="#eef3f7" stroke="#5c636a" stroke-width="1" />
+      <rect x="10" y="11" width="38" height="22" rx="6" fill="#ebf1f5" stroke="#97a0a7" stroke-width="0.8" />
+      <rect x="26" y="15" width="22" height="14" rx="4" fill="#f5f9fc" />
+      <circle cx="57" cy="22" r="7" fill="#005c83" />
+      <circle cx="72" cy="22" r="4.5" fill="#005697" />
+      <text x="10" y="48" font-size="12" font-weight="600" fill="#172127">Zenith</text>
+      <text x="138" y="48" font-size="10" text-anchor="end" fill="#5b6369">236° Azure</text>
+    </g>
+    <g transform="translate(524, 556)">
+      <rect width="148" height="62" rx="10" fill="#eef4f3" stroke="#5c636a" stroke-width="1" />
+      <rect x="10" y="11" width="38" height="22" rx="6" fill="#ebf2f1" stroke="#97a0a7" stroke-width="0.8" />
+      <rect x="26" y="15" width="22" height="14" rx="4" fill="#f4faf9" />
+      <circle cx="57" cy="22" r="7" fill="#006158" />
+      <circle cx="72" cy="22" r="4.5" fill="#005697" />
+      <text x="10" y="48" font-size="12" font-weight="600" fill="#152220">Lagoon</text>
+      <text x="138" y="48" font-size="10" text-anchor="end" fill="#596563">184° Teal</text>
+    </g>
+    <g transform="translate(684, 556)">
+      <rect width="148" height="62" rx="10" fill="#f7f1ef" stroke="#5c636a" stroke-width="1" />
+      <rect x="10" y="11" width="38" height="22" rx="6" fill="#f5efec" stroke="#97a0a7" stroke-width="0.8" />
+      <rect x="26" y="15" width="22" height="14" rx="4" fill="#fcf7f5" />
+      <circle cx="57" cy="22" r="7" fill="#923605" />
+      <circle cx="72" cy="22" r="4.5" fill="#005697" />
+      <text x="10" y="48" font-size="12" font-weight="600" fill="#271d18">Solar</text>
+      <text x="138" y="48" font-size="10" text-anchor="end" fill="#695f5b">42° Amber</text>
+    </g>
+    <g transform="translate(844, 556)">
+      <rect width="148" height="62" rx="10" fill="#f7f1f1" stroke="#5c636a" stroke-width="1" />
+      <rect x="10" y="11" width="38" height="22" rx="6" fill="#f5eeee" stroke="#97a0a7" stroke-width="0.8" />
+      <rect x="26" y="15" width="22" height="14" rx="4" fill="#fcf7f7" />
+      <circle cx="57" cy="22" r="7" fill="#952a3b" />
+      <circle cx="72" cy="22" r="4.5" fill="#005697" />
+      <text x="10" y="48" font-size="12" font-weight="600" fill="#271c1d">Nova</text>
+      <text x="138" y="48" font-size="10" text-anchor="end" fill="#6a5f5f">16° Rose</text>
+    </g>
+    <g transform="translate(1004, 556)">
+      <rect width="148" height="62" rx="10" fill="#f2f2f7" stroke="#5c636a" stroke-width="1" />
+      <rect x="10" y="11" width="38" height="22" rx="6" fill="#f0eff5" stroke="#97a0a7" stroke-width="0.8" />
+      <rect x="26" y="15" width="22" height="14" rx="4" fill="#f8f8fc" />
+      <circle cx="57" cy="22" r="7" fill="#5a3f98" />
+      <circle cx="72" cy="22" r="4.5" fill="#005697" />
+      <text x="10" y="48" font-size="12" font-weight="600" fill="#201e27">Nebula</text>
+      <text x="138" y="48" font-size="10" text-anchor="end" fill="#626069">294° Violet</text>
+    </g>
+</svg>
