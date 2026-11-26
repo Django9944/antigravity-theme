@@ -37,10 +37,13 @@ jobs:
       version: ${{ steps.detect.outputs.version }}
       needs_github_release: ${{ steps.detect.outputs.needs_github_release }}
       needs_npm_publish: ${{ steps.detect.outputs.needs_npm_publish }}
+      needs_auto_patch_pr: ${{ steps.detect.outputs.needs_auto_patch_pr }}
+      next_patch_version: ${{ steps.detect.outputs.next_patch_version }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Setup pnpm
@@ -88,6 +91,113 @@ jobs:
           else
             echo "needs_npm_publish=true" >> "$GITHUB_OUTPUT"
           fi
+
+          if [ "$count" -eq 0 ] && gh release view "$TAG" >/dev/null 2>&1; then
+            PATCH_INFO="$(node scripts/prepare-auto-patch-changeset.mjs --check --json)"
+            echo "$PATCH_INFO"
+            SHOULD_PATCH="$(node -e "const d = JSON.parse(process.argv[1]); console.log(d.shouldRelease ? 'true' : 'false');" "$PATCH_INFO")"
+            NEXT_PATCH="$(node -e "const d = JSON.parse(process.argv[1]); console.log(d.nextPatchVersion || '');" "$PATCH_INFO")"
+            echo "needs_auto_patch_pr=${SHOULD_PATCH}" >> "$GITHUB_OUTPUT"
+            echo "next_patch_version=${NEXT_PATCH}" >> "$GITHUB_OUTPUT"
+          else
+            echo "needs_auto_patch_pr=false" >> "$GITHUB_OUTPUT"
+            echo "next_patch_version=" >> "$GITHUB_OUTPUT"
+          fi
+
+  auto_patch_pr:
+    name: Open or Update Auto-Patch Release PR
+    needs: prepare
+    if: ${{ github.event_name == 'push' && needs.prepare.outputs.has_changesets == 'false' && needs.prepare.outputs.needs_github_release == 'false' && needs.prepare.outputs.needs_auto_patch_pr == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies & generate patch version bump
+        id: bump
+        run: |
+          pnpm install --frozen-lockfile
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B chore/auto-patch-release
+          node scripts/prepare-auto-patch-changeset.mjs --write > /tmp/patch-info.json
+          cat /tmp/patch-info.json
+          pnpm ci:version
+          NEXT_VER="$(node -p "require('./package.json').version")"
+          echo "next_version=${NEXT_VER}" >> "$GITHUB_OUTPUT"
+          git add -A
+          git commit -m "chore(release): prepare v${NEXT_VER}"
+          git push origin chore/auto-patch-release --force
+
+      - name: Open or update Auto-Patch Release PR
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          NEXT_VER: ${{ steps.bump.outputs.next_version }}
+        with:
+          script: |
+            const fs = require('node:fs');
+            const nextVer = process.env.NEXT_VER;
+            const info = JSON.parse(fs.readFileSync('/tmp/patch-info.json', 'utf8'));
+            const branch = 'chore/auto-patch-release';
+            const title = `chore(release): release v${nextVer}`;
+            const commitLines = (info.commits || []).map((c) => `- ${c.subject} (\`${c.shortSha}\`)`).join('\n');
+            const body = [
+              `Automated patch release prepared from unreleased commits on \`main\` since \`${info.baseRef}\`.`,
+              '',
+              '### Included Changes',
+              commitLines || '- Maintenance & host compatibility updates',
+              '',
+              '### Automated Actions',
+              `- Bumped version to \`v${nextVer}\` via Changesets (\`patch\`)`,
+              '- Rebuilt `dist/` & `manifest.json` (`pnpm build`)',
+              '- Synchronized `CHANGELOG.md`, `README.md`, and `README.zh-CN.md` (`pnpm sync:readme`)',
+              '',
+              'Merging this PR will trigger `Release` to pack and publish `v' + nextVer + '`.',
+            ].join('\n');
+
+            const openPrs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `${context.repo.owner}:${branch}`,
+              base: 'main',
+            });
+
+            if (openPrs.data.length > 0) {
+              const pr = openPrs.data[0];
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                title,
+                body,
+              });
+              return;
+            }
+
+            await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              head: branch,
+              base: 'main',
+              body,
+            });
 
   version_pr:
     name: Open or Update Changesets Version PR

@@ -57,8 +57,10 @@ jobs:
               const delim = `EOF_${crypto.randomBytes(12).toString("hex")}`;
               fs.appendFileSync(outFile, `${key}<<${delim}\n${val}\n${delim}\n`);
             };
+            const rawLatest = String(report.latestHeading ?? "unknown");
+            const cleanLatest = rawLatest.replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").trim();
             writeMultiline("has_changes", String(report.hasChanges));
-            writeMultiline("latest", String(report.latestHeading ?? "unknown"));
+            writeMultiline("latest", cleanLatest);
             writeMultiline("added_entries", JSON.stringify(report.addedEntries ?? []));
             writeMultiline("added_host_vars", JSON.stringify(report.addedHostVariables ?? []));
           ' <<< "$REPORT"

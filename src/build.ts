@@ -117,7 +117,7 @@ export function buildAllThemes(): void {
 
     // Sync root desktop installer manifest.json with package version
     const rootManifestPath = resolve(ROOT_DIR, 'manifest.json');
-    let existingVerifiedHostVersion = '2.34.0';
+    let existingVerifiedHostVersion = '2.35.2';
     if (existsSync(rootManifestPath)) {
       try {
         const prev = JSON.parse(readFileSync(rootManifestPath, 'utf8')) as {

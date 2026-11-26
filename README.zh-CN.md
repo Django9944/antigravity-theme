@@ -29,7 +29,7 @@
 
 ### 三步一键启用
 
-1. **下载安装包**：前往 [GitHub Releases](https://github.com/Django9944/antigravity-theme/releases) 下载对应系统的 **`antigravity-theme-v0.2.0-macos.zip`** 或 **`antigravity-theme-v0.2.0-windows.zip`** 并解压。
+1. **下载安装包**：前往 [GitHub Releases](https://github.com/Django9944/antigravity-theme/releases) 下载对应系统的 **`antigravity-theme-v0.2.1-macos.zip`** 或 **`antigravity-theme-v0.2.1-windows.zip`** 并解压。
 2. **双击脚本一键操作**：
 
 | 操作 | macOS (`Antigravity.app`) | Windows (`%LOCALAPPDATA%\Programs\Antigravity`) |
@@ -105,7 +105,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -Uninstall    
 
 ## 当前项目状态与本地开发
 
-- **当前版本**：`v0.2.0`
+- **当前版本**：`v0.2.1`
 - **发布渠道**：[GitHub Releases](https://github.com/Django9944/antigravity-theme/releases) 与 npm（`@django9944/antigravity-theme`）
 - **开源协议**：[MIT License](./LICENSE)
 
@@ -128,7 +128,13 @@ pnpm preview          # 在 http://127.0.0.1:4173/preview/ 启动三栏交互仿
 
 <!-- RELEASE_HISTORY:START -->
 
-### [v0.2.0](https://github.com/Django9944/antigravity-theme/releases/tag/v0.2.0) （当前最新版本 / Latest）
+### [v0.2.1](https://github.com/Django9944/antigravity-theme/releases/tag/v0.2.1) （当前最新版本 / Latest）
+
+- **桌面运行时质感与性能打磨**：改用纯黑悬浮投影与主题色系磨砂玻璃弹窗，解除总览面板与弹窗退场动画阻塞，优化折叠态模糊卸载与引擎体积，并完成 Hook v2 去重与安装器加固。
+- **自适应首页预览与文档对齐**：新增明暗自适应 SVG 首页预览图与本地化发版历史同步，明确独立项目定位与安全/贡献治理规范。
+- **上游 `2.35.2` 兼容校验与全自动发版链路**：验证 Antigravity `2.35.2` 实机 `app.asar` 注入与字节级剥离完全兼容，同步 `verifiedHostVersion` 与上游基线，支持官方发版后自动更新、小改动自动补丁发版（`v0.2.x`）与自动提 PR。
+
+### [v0.2.0](https://github.com/Django9944/antigravity-theme/releases/tag/v0.2.0)
 
 - **7 大主题色系 × Dark / Light（14 款 OKLCH 变体）+ `Stock` 还原**：在旗舰 `Orbital`（`antigravity-dark`、`antigravity-light`）基础上新增 6 大天文极光色系（`prism`、`zenith`、`lagoon`、`solar`、`nova`、`nebula` × Dark/Light），全量通过 APCA 与 WCAG 2.1 对比度门禁并支持无痕切回 `stock`。
 - **模块化语义桌面运行时（`dist/runtime/current.{css,js}`）**：新增由 SemanticIR 编译的桌面运行时，提供极光多层网格玻璃、右上角悬浮主题胶囊切换器、双媒体胶囊、xterm ANSI 桥接及弹窗质感优化。

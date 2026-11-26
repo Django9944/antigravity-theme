@@ -3,6 +3,14 @@
 All notable changes to `@django9944/antigravity-theme` will be documented in this file.
 This project adheres to [Semantic Versioning](https://semver.org/) and is managed with [Changesets](https://github.com/changesets/changesets).
 
+## 0.2.1
+
+### Patch Changes
+
+- **Desktop Runtime Polish & Performance**: Switched floating popups to pure-black shadows with theme-tinted frosted glass, unblocked overview panel and popup exit transitions, offloaded collapse blur, deduplicated the Hook v2 ASAR engine, and hardened installers.
+- **Adaptive SVG Hero Previews & Governance Docs**: Added light/dark adaptive SVG hero previews (`preview/hero-{dark,light}.svg`), localized zh-CN release history sync, and aligned standalone repository governance docs.
+- **Antigravity `2.35.2` Verification & Automated Release Pipeline**: Verified `app.asar` Hook v2 compatibility against Antigravity `2.35.2`, synced `verifiedHostVersion` & `.upstream-baseline.json`, and automated host-version PRs, upstream baseline sync PRs, and patch releases (`v0.2.x`).
+
 ## 0.2.0
 
 ### Minor Changes

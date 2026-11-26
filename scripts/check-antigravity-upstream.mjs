@@ -15,6 +15,36 @@ const ROOT = path.resolve(__dirname, '..');
 const MANIFEST_PATH = path.join(ROOT, 'manifest.json');
 const PATCHER = path.join(ROOT, 'core', 'asar-patcher.js');
 
+function sortKeysDeep(value) {
+    if (Array.isArray(value)) {
+        return value.map((item) => sortKeysDeep(item));
+    }
+    if (value !== null && typeof value === 'object') {
+        const sorted = {};
+        for (const key of Object.keys(value).sort()) {
+            sorted[key] = sortKeysDeep(value[key]);
+        }
+        return sorted;
+    }
+    return value;
+}
+
+export function syncManifestHostVersion(manifestPath, latestHostVersion) {
+    const cleanVer = String(latestHostVersion || '').trim();
+    if (!/^\d+\.\d+\.\d+(?:[+-][0-9A-Za-z.-]+)?$/.test(cleanVer)) {
+        throw new Error(`Invalid host version for manifest sync: ${String(latestHostVersion)}`);
+    }
+    const raw = fs.readFileSync(manifestPath, 'utf8');
+    const manifest = JSON.parse(raw);
+    const previousVersion = typeof manifest.verifiedHostVersion === 'string' ? manifest.verifiedHostVersion : '';
+    if (previousVersion === cleanVer) {
+        return { updated: false, previousVersion, verifiedHostVersion: cleanVer };
+    }
+    manifest.verifiedHostVersion = cleanVer;
+    fs.writeFileSync(manifestPath, `${JSON.stringify(sortKeysDeep(manifest), null, 2)}\n`, 'utf8');
+    return { updated: true, previousVersion, verifiedHostVersion: cleanVer };
+}
+
 export function parseElectronUpdaterYaml(yamlText) {
     const text = String(yamlText || '');
     const versionMatch = text.match(/^version:\s*([^\r\n]+)/m);
@@ -177,6 +207,7 @@ async function runCli() {
     const args = process.argv.slice(2);
     const asJson = args.includes('--json');
     const verifyRemote = args.includes('--verify-remote-asar');
+    const syncManifest = args.includes('--sync-manifest');
     const localIdx = args.indexOf('--verify-local-asar');
     const localAsar = localIdx >= 0 ? args[localIdx + 1] : '';
 
@@ -206,6 +237,11 @@ async function runCli() {
         asarVerification = await downloadAndVerifyRemoteMacAsar(platforms.mac_arm64.url);
     }
 
+    let manifestSync = null;
+    if (syncManifest && latestVersion && (!asarVerification || asarVerification.compatible)) {
+        manifestSync = syncManifestHostVersion(MANIFEST_PATH, latestVersion);
+    }
+
     const result = {
         checkedAt: new Date().toISOString(),
         themeVersion: manifest.version,
@@ -214,7 +250,8 @@ async function runCli() {
         buildId,
         isNewHostVersion: Boolean(latestVersion && latestVersion !== verifiedHostVersion),
         platforms,
-        asarVerification
+        asarVerification,
+        manifestSync
     };
 
     if (asJson) {
@@ -230,6 +267,9 @@ async function runCli() {
         if (asarVerification) {
             console.log(`ASAR Compatibility    : ${asarVerification.compatible ? 'COMPATIBLE (INJECT & STRIP OK)' : 'INCOMPATIBLE'}`);
             console.log(`Matched Anchor        : ${asarVerification.doctor?.matchedAnchor || '<NONE>'}`);
+        }
+        if (manifestSync) {
+            console.log(`Manifest Host Sync    : ${manifestSync.updated ? `${manifestSync.previousVersion} -> ${manifestSync.verifiedHostVersion}` : `Already at ${manifestSync.verifiedHostVersion}`}`);
         }
         console.log('============================================');
     }

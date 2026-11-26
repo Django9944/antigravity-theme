@@ -9,7 +9,16 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { parseElectronUpdaterYaml, verifyAsarFile } from '../scripts/check-antigravity-upstream.mjs';
+import {
+    parseElectronUpdaterYaml,
+    syncManifestHostVersion,
+    verifyAsarFile
+} from '../scripts/check-antigravity-upstream.mjs';
+import {
+    bumpPatchVersion,
+    createPatchChangesetContent,
+    isReleasableCommit
+} from '../scripts/prepare-auto-patch-changeset.mjs';
 
 const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
@@ -691,6 +700,40 @@ try {
             }
         });
     }
+
+    test('Host manifest sync & auto-patch changeset helpers work deterministically', () => {
+
+        const testManifest = path.join(tmpDir, 'manifest.json');
+        fs.copyFileSync(MANIFEST_PATH, testManifest);
+        const first = syncManifestHostVersion(testManifest, '2.99.1');
+        assert.equal(first.updated, true);
+        assert.equal(first.verifiedHostVersion, '2.99.1');
+
+        const parsed = JSON.parse(fs.readFileSync(testManifest, 'utf8'));
+        assert.equal(parsed.verifiedHostVersion, '2.99.1');
+        assert.equal(parsed.hookVersion, 'v2');
+
+        const second = syncManifestHostVersion(testManifest, '2.99.1');
+        assert.equal(second.updated, false);
+        assert.throws(() => syncManifestHostVersion(testManifest, 'invalid'), /Invalid host version/);
+
+        assert.equal(bumpPatchVersion('0.2.0'), '0.2.1');
+        assert.equal(bumpPatchVersion('0.2.9'), '0.2.10');
+        assert.throws(() => bumpPatchVersion('bad'), /Invalid SemVer/);
+
+        assert.equal(isReleasableCommit('fix(runtime): polish popup shadow', ['src/runtime/styles/host-surfaces.css']), true);
+        assert.equal(isReleasableCommit('chore(host): sync verifiedHostVersion to 2.35.2', ['manifest.json']), true);
+        assert.equal(isReleasableCommit('chore(release): release v0.2.1', ['package.json']), false);
+        assert.equal(isReleasableCommit('docs: typo fix [skip release]', ['src/build.ts']), false);
+        assert.equal(isReleasableCommit('ci: update workflow schedule', ['.github/workflows/ci.yml']), false);
+        assert.equal(isReleasableCommit('chore(upstream): sync baseline', ['.upstream-baseline.json']), false);
+
+        const md = createPatchChangesetContent('@django9944/antigravity-theme', [
+            { shortSha: 'abc1234', subject: 'fix(runtime): improve popup blur' }
+        ]);
+        assert.ok(md.includes('"@django9944/antigravity-theme": patch'));
+        assert.ok(md.includes('fix(runtime): improve popup blur (`abc1234`)'));
+    });
 } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
 }

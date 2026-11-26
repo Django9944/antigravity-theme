@@ -8,6 +8,11 @@ export const RELEASE_HISTORY_START = '<!-- RELEASE_HISTORY:START -->';
 export const RELEASE_HISTORY_END = '<!-- RELEASE_HISTORY:END -->';
 
 const ZH_BULLET_TRANSLATIONS: Readonly<Record<string, readonly string[]>> = {
+  '0.2.1': [
+    '**桌面运行时质感与性能打磨**：改用纯黑悬浮投影与主题色系磨砂玻璃弹窗，解除总览面板与弹窗退场动画阻塞，优化折叠态模糊卸载与引擎体积，并完成 Hook v2 去重与安装器加固。',
+    '**自适应首页预览与文档对齐**：新增明暗自适应 SVG 首页预览图与本地化发版历史同步，明确独立项目定位与安全/贡献治理规范。',
+    '**上游 `2.35.2` 兼容校验与全自动发版链路**：验证 Antigravity `2.35.2` 实机 `app.asar` 注入与字节级剥离完全兼容，同步 `verifiedHostVersion` 与上游基线，支持官方发版后自动更新、小改动自动补丁发版（`v0.2.x`）与自动提 PR。',
+  ],
   '0.2.0': [
     '**7 大主题色系 × Dark / Light（14 款 OKLCH 变体）+ `Stock` 还原**：在旗舰 `Orbital`（`antigravity-dark`、`antigravity-light`）基础上新增 6 大天文极光色系（`prism`、`zenith`、`lagoon`、`solar`、`nova`、`nebula` × Dark/Light），全量通过 APCA 与 WCAG 2.1 对比度门禁并支持无痕切回 `stock`。',
     '**模块化语义桌面运行时（`dist/runtime/current.{css,js}`）**：新增由 SemanticIR 编译的桌面运行时，提供极光多层网格玻璃、右上角悬浮主题胶囊切换器、双媒体胶囊、xterm ANSI 桥接及弹窗质感优化。',
@@ -145,17 +150,27 @@ export function syncReadmeReleaseHistory(rootDir = DEFAULT_ROOT_DIR): {
   const zhBlock = renderReadmeReleaseHistory(releases, 'zh-CN');
 
   let enContent = replaceBetweenMarkers(readFileSync(enPath, 'utf8'), enBlock, 'README.md');
-  enContent = enContent.replace(
-    /^(- \*\*Current Version\*\*: `)v?[0-9]+\.[0-9]+\.[0-9]+(?:[+-][0-9A-Za-z.-]+)?(`)/m,
-    `$1v${pkg.version}$2`,
-  );
+  enContent = enContent
+    .replace(
+      /^(- \*\*Current Version\*\*: `)v?[0-9]+\.[0-9]+\.[0-9]+(?:[+-][0-9A-Za-z.-]+)?(`)/m,
+      `$1v${pkg.version}$2`,
+    )
+    .replace(
+      /antigravity-theme-v[0-9]+\.[0-9]+\.[0-9]+(?:[+-][0-9A-Za-z.-]+)?-(macos|windows)\.zip/g,
+      `antigravity-theme-v${pkg.version}-$1.zip`,
+    );
   writeFileSync(enPath, enContent, 'utf8');
 
   let zhContent = replaceBetweenMarkers(readFileSync(zhPath, 'utf8'), zhBlock, 'README.zh-CN.md');
-  zhContent = zhContent.replace(
-    /^(- \*\*当前版本\*\*：`)v?[0-9]+\.[0-9]+\.[0-9]+(?:[+-][0-9A-Za-z.-]+)?(`)/m,
-    `$1v${pkg.version}$2`,
-  );
+  zhContent = zhContent
+    .replace(
+      /^(- \*\*当前版本\*\*：`)v?[0-9]+\.[0-9]+\.[0-9]+(?:[+-][0-9A-Za-z.-]+)?(`)/m,
+      `$1v${pkg.version}$2`,
+    )
+    .replace(
+      /antigravity-theme-v[0-9]+\.[0-9]+\.[0-9]+(?:[+-][0-9A-Za-z.-]+)?-(macos|windows)\.zip/g,
+      `antigravity-theme-v${pkg.version}-$1.zip`,
+    );
   writeFileSync(zhPath, zhContent, 'utf8');
 
   return { version: pkg.version, releaseCount: releases.length };

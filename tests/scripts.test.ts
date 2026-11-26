@@ -121,30 +121,40 @@ describe('Release Notes & README Iteration Sync', () => {
       cpSync(resolve(ROOT_DIR, file), resolve(dir, file));
     }
 
+    const pkg = JSON.parse(readFileSync(resolve(dir, 'package.json'), 'utf8')) as { version: string };
+    const currentVer = pkg.version;
+    const currentTag = `v${currentVer}`;
+
     const releases = parseChangelogReleases(readFileSync(resolve(dir, 'CHANGELOG.md'), 'utf8'));
     expect(releases.length).toBeGreaterThanOrEqual(2);
-    expect(releases[0]?.version).toBe('0.2.0');
+    expect(releases[0]?.version).toBe(currentVer);
     expect(releases.some((r) => r.version === '0.1.0')).toBe(true);
     expect(releases[0]?.bullets.length).toBeGreaterThan(0);
 
     const syncRes = syncReadmeReleaseHistory(dir);
-    expect(syncRes.version).toBe('0.2.0');
+    expect(syncRes.version).toBe(currentVer);
     expect(syncRes.releaseCount).toBe(releases.length);
 
     const enReadme = readFileSync(resolve(dir, 'README.md'), 'utf8');
     const zhReadme = readFileSync(resolve(dir, 'README.zh-CN.md'), 'utf8');
-    expect(enReadme).toContain('### [v0.2.0](https://github.com/Django9944/antigravity-theme/releases/tag/v0.2.0) (Latest Release)');
-    expect(zhReadme).toContain('### [v0.2.0](https://github.com/Django9944/antigravity-theme/releases/tag/v0.2.0) （当前最新版本 / Latest）');
+    expect(enReadme).toContain(
+      `### [${currentTag}](https://github.com/Django9944/antigravity-theme/releases/tag/${currentTag}) (Latest Release)`,
+    );
+    expect(zhReadme).toContain(
+      `### [${currentTag}](https://github.com/Django9944/antigravity-theme/releases/tag/${currentTag}) （当前最新版本 / Latest）`,
+    );
+    expect(enReadme).toContain(`antigravity-theme-${currentTag}-macos.zip`);
+    expect(zhReadme).toContain(`antigravity-theme-${currentTag}-windows.zip`);
     expect(zhReadme).toContain('7 大主题色系 × Dark / Light');
 
-    const notes = generateReleaseNotes(dir, '0.2.0');
+    const notes = generateReleaseNotes(dir, currentVer);
     expect(notes).toContain('## Project Overview');
     expect(notes).toContain('OKLCH matte & aurora glass theme system');
     expect(notes).toContain('zero-resign ASAR Hook `v2`');
-    expect(notes).toContain("## What's Changed in `v0.2.0` (Iteration Notes)");
-    expect(notes).toContain('antigravity-theme-v0.2.0.zip');
-    expect(notes).toContain('antigravity-theme-v0.2.0-macos.zip');
-    expect(notes).toContain('antigravity-theme-v0.2.0-windows.zip');
+    expect(notes).toContain(`## What's Changed in \`${currentTag}\` (Iteration Notes)`);
+    expect(notes).toContain(`antigravity-theme-${currentTag}.zip`);
+    expect(notes).toContain(`antigravity-theme-${currentTag}-macos.zip`);
+    expect(notes).toContain(`antigravity-theme-${currentTag}-windows.zip`);
     expect(notes).toContain('SHA256SUMS.txt');
   });
 });
@@ -228,8 +238,11 @@ describe('packRelease Purity & Version Enforcement', () => {
     const expectedSums =
       res.archives.map((entry) => `${entry.checksum}  ${entry.name}`).join('\n') + '\n';
     expect(readFileSync(res.checksumsPath, 'utf8')).toBe(expectedSums);
-    expect(basename(res.archives[0]!.archivePath)).toMatch(/^antigravity-theme-v0\.2\.0\.(zip|tar\.gz)$/);
-    expect(basename(res.archives[1]!.archivePath)).toMatch(/^antigravity-theme-v0\.2\.0-macos\.(zip|tar\.gz)$/);
-    expect(basename(res.archives[2]!.archivePath)).toMatch(/^antigravity-theme-v0\.2\.0-windows\.(zip|tar\.gz)$/);
+    const pkgVer = (JSON.parse(readFileSync(resolve(ROOT_DIR, 'package.json'), 'utf8')) as { version: string })
+      .version;
+    const escapedVer = pkgVer.replace(/\./g, '\\.');
+    expect(basename(res.archives[0]!.archivePath)).toMatch(new RegExp(`^antigravity-theme-v${escapedVer}\\.(zip|tar\\.gz)$`));
+    expect(basename(res.archives[1]!.archivePath)).toMatch(new RegExp(`^antigravity-theme-v${escapedVer}-macos\\.(zip|tar\\.gz)$`));
+    expect(basename(res.archives[2]!.archivePath)).toMatch(new RegExp(`^antigravity-theme-v${escapedVer}-windows\\.(zip|tar\\.gz)$`));
   });
 });

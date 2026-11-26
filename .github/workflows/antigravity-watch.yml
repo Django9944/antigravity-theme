@@ -12,25 +12,34 @@ on:
         type: boolean
         default: false
 
-permissions:
-  issues: write
+permissions: {}
+
+concurrency:
+  group: antigravity-watch
+  cancel-in-progress: false
 
 jobs:
   watch-antigravity:
     name: Monitor Official Antigravity Releases & Verify ASAR Compatibility
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
 
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
+          cache: pnpm
 
       - name: Query official Antigravity update manifest
         id: probe
@@ -68,11 +77,103 @@ jobs:
         if: steps.probe.outputs.is_new == 'true' || steps.issue_state.outputs.already_tracked == 'false' || github.event.inputs.force_verify_asar == 'true'
         run: |
           set +e
-          node scripts/check-antigravity-upstream.mjs --json --verify-remote-asar > verified.json
+          node scripts/check-antigravity-upstream.mjs --json --verify-remote-asar --sync-manifest > verified.json
           EXIT_CODE=$?
           set -e
           cat verified.json
+          COMPAT="$(node -e "console.log(require('./verified.json').asarVerification?.compatible ? 'true' : 'false')")"
           echo "verify_exit=${EXIT_CODE}" >> "$GITHUB_OUTPUT"
+          echo "compatible=${COMPAT}" >> "$GITHUB_OUTPUT"
+
+      - name: Sync upstream baseline & push host version branch when compatible
+        id: sync_pr
+        if: steps.probe.outputs.is_new == 'true' && steps.verify_asar.outputs.compatible == 'true'
+        env:
+          LATEST_VER: ${{ steps.probe.outputs.latest_ver }}
+          BUILD_ID: ${{ steps.probe.outputs.build_id }}
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm check:upstream -- --apply || true
+          pnpm build
+
+          if [ -z "$(git status --porcelain manifest.json .upstream-baseline.json)" ]; then
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          SYNC_BRANCH="chore/host-version-sync"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$SYNC_BRANCH"
+          git add manifest.json .upstream-baseline.json
+          git commit -m "chore(host): sync verifiedHostVersion to ${LATEST_VER}"
+          git push origin "$SYNC_BRANCH" --force
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update Host Version Sync PR
+        id: host_pr
+        if: steps.sync_pr.outputs.pushed == 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          LATEST_VER: ${{ steps.probe.outputs.latest_ver }}
+          BUILD_ID: ${{ steps.probe.outputs.build_id }}
+        with:
+          script: |
+            const ver = process.env.LATEST_VER;
+            const buildId = process.env.BUILD_ID;
+            const syncBranch = 'chore/host-version-sync';
+            const { execSync } = require('node:child_process');
+            const remoteExists = execSync(`git ls-remote --heads origin ${syncBranch}`, { encoding: 'utf8' }).trim();
+            if (!remoteExists) {
+              core.setOutput('pr_url', '');
+              return;
+            }
+            const title = `chore(host): sync verifiedHostVersion to ${ver}`;
+            const body = [
+              `Automated host compatibility watch verified Antigravity **\`${ver}\`** (\`${buildId}\`) against real \`app.asar\` injection & byte-exact stripping.`,
+              '',
+              '- Updated `manifest.json` (`verifiedHostVersion`)',
+              '- Synced `.upstream-baseline.json` (when changelog entry is available)',
+              '',
+              'Once merged, `Release` workflow will automatically open a patch release PR if needed.',
+            ].join('\n');
+
+            const openPrs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `${context.repo.owner}:${syncBranch}`,
+              base: 'main',
+            });
+
+            if (openPrs.data.length > 0) {
+              const pr = openPrs.data[0];
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                title,
+                body,
+              });
+              core.setOutput('pr_url', pr.html_url);
+              return;
+            }
+
+            const created = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              head: syncBranch,
+              base: 'main',
+              body,
+            });
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: created.data.number,
+              labels: ['upstream-sync'],
+            });
+            core.setOutput('pr_url', created.data.html_url);
 
       - name: Create or update compatibility tracking Issue
         if: steps.probe.outputs.is_new == 'true' || steps.issue_state.outputs.already_tracked == 'false' || github.event.inputs.force_verify_asar == 'true'
@@ -80,6 +181,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_NUM: ${{ steps.issue_state.outputs.issue_num }}
           ALREADY_TRACKED: ${{ steps.issue_state.outputs.already_tracked }}
+          HOST_PR_URL: ${{ steps.host_pr.outputs.pr_url }}
         run: |
           TITLE="[Antigravity Watch] Official IDE Update & Compatibility Status"
           BODY="$(node -e "
@@ -87,11 +189,12 @@ jobs:
             const v = d.asarVerification || {};
             const doc = v.doctor || {};
             const ok = Boolean(v.compatible);
+            const prUrl = process.env.HOST_PR_URL || '';
             const badge = ok ? '✅ COMPATIBLE (真实 app.asar 注入 & 字节级剥离校验通过)' : '❌ INCOMPATIBLE (注入锚点或结构变更，需适配 manifest.json)';
             const hints = Array.isArray(v.candidateHints) && v.candidateHints.length
               ? '\n### 候选锚点代码片段 (\`dist/utils.js\`)\n\`\`\`js\n' + v.candidateHints.join('\n') + '\n\`\`\`\n'
               : '';
-            console.log([
+            const lines = [
               '<!-- antigravity-build:' + d.buildId + ' -->',
               '云端巡检已从 Google Antigravity 官方自动更新通道拉取最新版本并完成真实 \`app.asar\` 注入回归测试：',
               '',
@@ -105,8 +208,12 @@ jobs:
               '| **macOS arm64 官方包** | ' + (d.platforms?.mac_arm64?.url || 'N/A') + ' |',
               '| **macOS x64 官方包** | ' + (d.platforms?.mac_x64?.url || 'N/A') + ' |',
               '| **Windows x64 官方包** | ' + (d.platforms?.win_x64?.url || 'N/A') + ' |',
-              hints
-            ].join('\n'));
+            ];
+            if (prUrl) {
+              lines.push('| **自动同步 PR** | ' + prUrl + ' |');
+            }
+            if (hints) lines.push(hints);
+            console.log(lines.join('\n'));
           ")"
 
           COMPAT="$(node -e "console.log(require('./verified.json').asarVerification?.compatible ? 'true' : 'false')")"
@@ -116,7 +223,11 @@ jobs:
           if [ -n "$ISSUE_NUM" ]; then
             gh issue edit "$ISSUE_NUM" --body "$BODY"
             if [ "$ALREADY_TRACKED" != "true" ]; then
-              gh issue comment "$ISSUE_NUM" --body "🔔 检测到 Antigravity 官方发布新构建 \`${VER}\` (\`${BUILD}\`)，云端真实 \`app.asar\` 校验结果：**compatible=${COMPAT}**"
+              PR_NOTE=""
+              if [ -n "$HOST_PR_URL" ]; then
+                PR_NOTE="，已自动创建同步 PR：${HOST_PR_URL}"
+              fi
+              gh issue comment "$ISSUE_NUM" --body "🔔 检测到 Antigravity 官方发布新构建 \`${VER}\` (\`${BUILD}\`)，云端真实 \`app.asar\` 校验结果：**compatible=${COMPAT}**${PR_NOTE}"
             fi
           else
             gh issue create --title "$TITLE" --body "$BODY"
