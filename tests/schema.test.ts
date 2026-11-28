@@ -481,6 +481,7 @@ describe('Distributable Theme Pack Schema & Purity (Layer 1)', () => {
     const requiredShadowVars = ['--ag-shadow-popover', '--ag-shadow-tooltip', '--ag-shadow-floating'] as const;
     const requiredPopoverBridgeVars = ['--popover', '--color-popover', '--menu', '--color-menu'] as const;
     const darkOpaquePopovers: string[] = [];
+    const darkModalSurfaces: string[] = [];
 
     for (const theme of themes) {
       if (theme.id === 'stock') continue;
@@ -489,6 +490,11 @@ describe('Distributable Theme Pack Schema & Purity (Layer 1)', () => {
       for (const tokenSet of [lightMap, darkMap]) {
         expect(tokenSet['--ag-popover-border']).toBeTruthy();
         expect(tokenSet['--ag-surface-popover']).toMatch(/^rgba\(/);
+        const modalSurface = tokenSet['--ag-surface-modal'];
+        expect(modalSurface, `${theme.id} missing --ag-surface-modal`).toMatch(/^rgba\(/);
+        const alphaMatch = /^rgba\(\d+,\s*\d+,\s*\d+,\s*([0-9.]+)\)$/.exec(modalSurface!);
+        expect(alphaMatch, `Invalid rgba format for --ag-surface-modal: ${modalSurface}`).not.toBeNull();
+        expect(Number(alphaMatch![1])).toBeGreaterThanOrEqual(0.90);
         expect(tokenSet['--ag-surface-popover-opaque']).toMatch(/^#[0-9a-f]{6}$/);
         expect(tokenSet['--ag-popover-backdrop']).toMatch(/^blur\(/);
         for (const bridgeKey of requiredPopoverBridgeVars) {
@@ -503,11 +509,14 @@ describe('Distributable Theme Pack Schema & Purity (Layer 1)', () => {
         }
       }
       darkOpaquePopovers.push(darkMap['--ag-surface-popover-opaque']!);
+      darkModalSurfaces.push(darkMap['--ag-surface-modal']!);
     }
     expect(new Set(darkOpaquePopovers).size).toBe(7);
+    expect(new Set(darkModalSurfaces).size).toBe(7);
 
     const baseCss = readFileSync(resolve(ROOT_DIR, 'src/runtime/styles/host-surfaces.css'), 'utf8');
     const darkCss = readFileSync(resolve(ROOT_DIR, 'src/runtime/styles/host-dark-overrides.css'), 'utf8');
+    const companionCss = readFileSync(resolve(ROOT_DIR, 'src/runtime/styles/companion.css'), 'utf8');
     for (const [label, css] of [
       ['host-surfaces.css', baseCss],
       ['host-dark-overrides.css', darkCss],
@@ -517,6 +526,10 @@ describe('Distributable Theme Pack Schema & Purity (Layer 1)', () => {
         (clean.match(/\}/g) || []).length,
       );
       expect(css, `${label} must apply --ag-popover-backdrop`).toContain('var(--ag-popover-backdrop)');
+      expect(css, `${label} must style [role="alertdialog"]`).toContain('[role="alertdialog"]');
+      expect(css, `${label} must style [data-alert-dialog-popup]`).toContain('[data-alert-dialog-popup]');
+      expect(css, `${label} must style [aria-modal="true"]`).toContain('[aria-modal="true"]');
+      expect(css, `${label} must apply --ag-surface-modal`).toContain('var(--ag-surface-modal)');
       expect(
         css,
         `${label} must not use accent RGB in large floating box-shadows`,
@@ -530,6 +543,11 @@ describe('Distributable Theme Pack Schema & Purity (Layer 1)', () => {
         `${label} must not lock overview-panel-host or popup menus at opacity: 1 !important during exit transitions`,
       ).not.toMatch(/\[data-testid\^="overview-panel-host-"[^\]{]*\{[^}]*opacity:\s*1\s*!important/);
     }
+    expect(baseCss).toContain('--ag-surface-modal: var(--ag-surface-popover-opaque);');
+    expect(companionCss).toContain(':not([role="alertdialog"])');
+    expect(companionCss).toContain(':not([aria-modal="true"])');
+    expect(companionCss).toContain(':not([data-alert-dialog-popup])');
+    expect(companionCss).toContain(':not([class*="fixed"][class*="inset-0"] *)');
     expect(baseCss).toContain(
       '[data-testid^="overview-panel-host-"]:is([data-starting-style], [data-ending-style])',
     );

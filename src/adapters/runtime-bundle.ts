@@ -75,6 +75,9 @@ function buildRuntimeTokenMap(
   const popoverGlassBg = isDark
     ? `rgba(${popoverRgb.join(', ')}, 0.78)`
     : `rgba(${popoverRgb.join(', ')}, 0.88)`;
+  const modalGlassBg = isDark
+    ? `rgba(${popoverRgb.join(', ')}, 0.92)`
+    : `rgba(${popoverRgb.join(', ')}, 0.95)`;
   const popoverBorder = isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(15, 23, 42, 0.10)';
 
   const rawEntries: Array<readonly [string, string]> = [
@@ -172,6 +175,7 @@ function buildRuntimeTokenMap(
         : '0 8px 20px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06)',
     ],
     ['--ag-surface-popover', popoverGlassBg],
+    ['--ag-surface-modal', modalGlassBg],
     ['--ag-surface-popover-opaque', popoverOpaqueHex],
     ['--ag-surface-user-bubble', ir.runtime.userBubbleSolid],
     ['--ag-terminal-panel-bg', ir.runtime.terminalPanelBg],
