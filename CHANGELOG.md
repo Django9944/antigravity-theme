@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.2
+
+### Patch Changes
+
+- Automated patch release: fix(runtime): increase confirmation modal opacity and backdrop blur (`b9ad054`)
+
 All notable changes to `@django9944/antigravity-theme` will be documented in this file.
 This project adheres to [Semantic Versioning](https://semver.org/) and is managed with [Changesets](https://github.com/changesets/changesets).
 
