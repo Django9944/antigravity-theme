@@ -29,7 +29,7 @@
 
 ### 三步一键启用
 
-1. **下载安装包**：前往 [GitHub Releases](https://github.com/Django9944/antigravity-theme/releases) 下载对应系统的 **`antigravity-theme-v0.2.1-macos.zip`** 或 **`antigravity-theme-v0.2.1-windows.zip`** 并解压。
+1. **下载安装包**：前往 [GitHub Releases](https://github.com/Django9944/antigravity-theme/releases) 下载对应系统的 **`antigravity-theme-v0.2.2-macos.zip`** 或 **`antigravity-theme-v0.2.2-windows.zip`** 并解压。
 2. **双击脚本一键操作**：
 
 | 操作 | macOS (`Antigravity.app`) | Windows (`%LOCALAPPDATA%\Programs\Antigravity`) |
@@ -105,7 +105,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -Uninstall    
 
 ## 当前项目状态与本地开发
 
-- **当前版本**：`v0.2.1`
+- **当前版本**：`v0.2.2`
 - **发布渠道**：[GitHub Releases](https://github.com/Django9944/antigravity-theme/releases) 与 npm（`@django9944/antigravity-theme`）
 - **开源协议**：[MIT License](./LICENSE)
 
@@ -128,7 +128,11 @@ pnpm preview          # 在 http://127.0.0.1:4173/preview/ 启动三栏交互仿
 
 <!-- RELEASE_HISTORY:START -->
 
-### [v0.2.1](https://github.com/Django9944/antigravity-theme/releases/tag/v0.2.1) （当前最新版本 / Latest）
+### [v0.2.2](https://github.com/Django9944/antigravity-theme/releases/tag/v0.2.2) （当前最新版本 / Latest）
+
+- Automated patch release: fix(runtime): increase confirmation modal opacity and backdrop blur (`b9ad054`)
+
+### [v0.2.1](https://github.com/Django9944/antigravity-theme/releases/tag/v0.2.1)
 
 - **桌面运行时质感与性能打磨**：改用纯黑悬浮投影与主题色系磨砂玻璃弹窗，解除总览面板与弹窗退场动画阻塞，优化折叠态模糊卸载与引擎体积，并完成 Hook v2 去重与安装器加固。
 - **自适应首页预览与文档对齐**：新增明暗自适应 SVG 首页预览图与本地化发版历史同步，明确独立项目定位与安全/贡献治理规范。

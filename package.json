@@ -1,6 +1,6 @@
 {
   "name": "@django9944/antigravity-theme",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "OKLCH matte & aurora glass theme system (7 families × Dark/Light) + zero-resign macOS/Windows desktop ASAR patcher for Antigravity.",
   "license": "MIT",
   "type": "module",

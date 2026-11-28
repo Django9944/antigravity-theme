@@ -29,7 +29,7 @@
 
 ### 3-Step Desktop Onboarding
 
-1. **Download**: Grab **`antigravity-theme-v0.2.1-macos.zip`** or **`antigravity-theme-v0.2.1-windows.zip`** from [GitHub Releases](https://github.com/Django9944/antigravity-theme/releases) and extract it.
+1. **Download**: Grab **`antigravity-theme-v0.2.2-macos.zip`** or **`antigravity-theme-v0.2.2-windows.zip`** from [GitHub Releases](https://github.com/Django9944/antigravity-theme/releases) and extract it.
 2. **One-Click Install (Double-Click Launchers)**:
 
 | Action | macOS (`Antigravity.app`) | Windows (`%LOCALAPPDATA%\Programs\Antigravity`) |
@@ -105,7 +105,7 @@ Try every variant, toggle Aurora mesh backdrops, test `#FFFFFF` / `#000000` wors
 
 ## Project Status & Local Development
 
-- **Current Version**: `v0.2.1`
+- **Current Version**: `v0.2.2`
 - **Distribution**: [GitHub Releases](https://github.com/Django9944/antigravity-theme/releases) (`ZIP` bundles + `SHA256SUMS.txt`) & npm (`@django9944/antigravity-theme`)
 - **License**: [MIT License](./LICENSE)
 
@@ -128,7 +128,11 @@ pnpm preview          # Launch interactive 3-pane preview at http://127.0.0.1:41
 
 <!-- RELEASE_HISTORY:START -->
 
-### [v0.2.1](https://github.com/Django9944/antigravity-theme/releases/tag/v0.2.1) (Latest Release)
+### [v0.2.2](https://github.com/Django9944/antigravity-theme/releases/tag/v0.2.2) (Latest Release)
+
+- Automated patch release: fix(runtime): increase confirmation modal opacity and backdrop blur (`b9ad054`)
+
+### [v0.2.1](https://github.com/Django9944/antigravity-theme/releases/tag/v0.2.1)
 
 - **Desktop Runtime Polish & Performance**: Switched floating popups to pure-black shadows with theme-tinted frosted glass, unblocked overview panel and popup exit transitions, offloaded collapse blur, deduplicated the Hook v2 ASAR engine, and hardened installers.
 - **Adaptive SVG Hero Previews & Governance Docs**: Added light/dark adaptive SVG hero previews (`preview/hero-{dark,light}.svg`), localized zh-CN release history sync, and aligned standalone repository governance docs.

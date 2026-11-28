@@ -6,7 +6,7 @@
     if (window.__antigravityThemeEngineLoaded) return;
     window.__antigravityThemeEngineLoaded = true;
 
-    const THEME_PACK_VERSION = "v0.2.1";
+    const THEME_PACK_VERSION = "v0.2.2";
     const THEME_PACK_REPO = "Django9944/antigravity-theme";
     const UPDATE_CACHE_KEY = 'ag_custom_theme_update_cache_v1';
     const UPDATE_DISABLE_KEY = 'ag_custom_theme_disable_update_check';
